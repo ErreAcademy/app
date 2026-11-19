@@ -932,7 +932,7 @@ function ctxFor(date){
   const P=PERIOD[S.program], raw=Math.floor(diffD(monOf(date),S.start)/7)+1;
   let wk=1,mes=1; if(raw>=1){wk=((raw-1)%P.weeks)+1;mes=Math.floor((raw-1)/P.weeks)+1;}
   const sched=(S.user&&S.user.sched)||[0,2,4], pos=sched.indexOf(wdOf(date));
-  const BD=DAYS.filter(q=>!q.x);let dd=(raw>=1&&pos>=0&&BD.length)?BD[pos%BD.length]:null,p2=pos;const ov=(typeof cxOv==='function')?cxOv(date):null;if(ov){if(ov.type==='rest')dd=null;else if(ov.type==='workout'){const xd=DAYS.find(q=>q.id==='x'+ov.id);if(xd){dd=xd;if(p2<0)p2=0;}}}return {raw,wk,mes,pos:p2,d:dd};
+  const BD=DAYS.filter(q=>!q.x);let dd=(raw>=1&&pos>=0&&BD.length)?BD[pos%BD.length]:null,p2=pos;const ov=(typeof cxOv==='function')?cxOv(date):null;if(ov){if(ov.type==='rest')dd=null;else if(ov.type==='workout'){const xd=DAYS.find(q=>q.id==='x'+ov.id);if(xd){dd=xd;if(p2<0)p2=0;}}}let ss=[];if(typeof cxExtras==='function'){const ex=cxExtras(date).map(t=>DAYS.find(q=>q.id==='x'+t.id)).filter(Boolean);if(ex.length){const all=(dd?[dd]:[]).concat(ex);ss=all.map(q=>q.x?(q.label||q.name):(q.name||q.label||'Workout'));const i=Math.min((typeof CXS!=='undefined'&&CXS[date])||0,all.length-1);dd=all[i];if(p2<0)p2=0;}}return {raw,wk,mes,pos:p2,d:dd,ss};
 }
 function apply(date){S.sel=date;const c=ctxFor(date);S.week=c.wk;S.day=c.d?DAYS.indexOf(c.d):-1;S.pos=c.pos;S.raw=c.raw;S.mes=c.mes;return c;}
 function withDate(date,fn){const o={sel:S.sel,week:S.week,day:S.day,pos:S.pos,raw:S.raw,mes:S.mes};apply(date);try{return fn();}finally{Object.assign(S,o);}}
@@ -2365,8 +2365,12 @@ function cxSync(){
 }
 function cxCard(){return cxList().filter(t=>t.date===S.sel&&t.type==='cardio').pop()||null;}
 const cxTier=t=>((cxCard()||{}).tier)||t;
-function cxOv(date){const L=cxList().filter(t=>t.date===date);return L.find(t=>t.type==='rest')||L.find(t=>t.type==='workout')||null;}
-function cxNotes(){const cc=cxCard(),ch=cc?`<div class="cxnote" style="background:#FDECF1;border-color:#F0BCCB"><b style="color:#D03A68">Cardio asignado por tu coach</b>${esc(((typeof CMODS!=='undefined'&&CMODS[cc.mod])||{n:'Cardio'}).n)}${cc.tier?' · '+esc(cc.tier):''}${cc.min?' · '+cc.min+' min':''}${cc.text?'<br>'+esc(cc.text):''}</div>`:'';const L=cxList().filter(t=>t.date===S.sel&&t.type==='note');return ch+L.map(t=>`<div class="cxnote"><b>Nota de tu coach</b>${esc(t.text||'')}</div>`).join('');}
+function cxOv(date){const L=cxList().filter(t=>t.date===date);return L.find(t=>t.type==='rest')||L.find(t=>t.type==='workout'&&!t.extra)||null;}
+const CXS={};
+function cxExtras(date){return cxList().filter(t=>t.date===date&&t.type==='workout'&&t.extra);}
+function cxSessBar(){const c=ctxFor(S.sel),ss=c.ss||[];if(ss.length<2)return '';const i=Math.min(CXS[S.sel]||0,ss.length-1);return `<div class="cxnote" style="background:#EEF3FB;border-color:#C9D8EE"><b style="color:#2A5BA8">Hoy tienes ${ss.length} sesiones</b><span class="chips" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${ss.map((n,k)=>`<button class="chip${k===i?' on':''}" data-act="cxsess" data-v="${k}">${k+1}. ${esc(n)}</button>`).join('')}</span></div>`;}
+
+function cxNotes(){const cc=cxCard(),ch=cc?`<div class="cxnote" style="background:#FDECF1;border-color:#F0BCCB"><b style="color:#D03A68">Cardio asignado por tu coach</b>${esc(((typeof CMODS!=='undefined'&&CMODS[cc.mod])||{n:'Cardio'}).n)}${cc.tier?' · '+esc(cc.tier):''}${cc.min?' · '+cc.min+' min':''}${cc.text?'<br>'+esc(cc.text):''}</div>`:'';const L=cxList().filter(t=>t.date===S.sel&&t.type==='note');return cxSessBar()+ch+L.map(t=>`<div class="cxnote"><b>Nota de tu coach</b>${esc(t.text||'')}</div>`).join('');}
 async function cpSaveTasks(list){
   const value={tasks:list};
   await DB.upsert('client_data',[{client_id:CP.cid,key:'ctasks',value,updated_at:new Date().toISOString()}],'client_id,key');
@@ -2379,9 +2383,9 @@ function cpMvAsk(from,dg,to){if(!from||!to||from===to)return;CP.mv={from,dg,to};
 function cpMvModal(){const m=CP.mv;if(!m){const o=document.getElementById('cpmv');if(o)o.remove();return;}
   let o=document.getElementById('cpmv');if(!o){o=document.createElement('div');o.id='cpmv';o.className='cpdv';document.body.appendChild(o);}
   const L=cxListOf(CP.d),tk=m.dg==='workout'?null:L.find(x=>x.id===m.dg),nm=m.dg==='workout'?'el entrenamiento':tk?({rest:'el descanso',cardio:'el cardio',note:'la nota'}[tk.type]||'la tarea'):'la tarea';
-  const wk=m.dg==='workout'||(tk&&(tk.type==='rest'||tk.type==='workout')),occ=wk?cpWith(()=>!!cpDayInfo(m.to).d):(tk&&tk.type==='cardio'?L.some(x=>x.date===m.to&&x.type==='cardio'):false);
-  const canSwap=m.dg==='workout'&&occ,msg=occ?`El ${fdate(m.to)} ya tiene ${tk&&tk.type==='cardio'?'un cardio':'un entrenamiento'}. No se reemplaza.${canSwap?' Puedes intercambiar los dos días.':' Elige otro día.'}`:`Vas a pasar ${nm} del ${fdate(m.from)} al ${fdate(m.to)}.`;
-  const btns=occ?(canSwap?'<button class="cpmvbt pri" data-act="cpmvdo" data-m="swap">Intercambiar</button>':'')+'<button class="cpmvbt" data-act="cpmvno">Cancelar</button>':'<button class="cpmvbt pri" data-act="cpmvdo" data-m="move">Mover</button><button class="cpmvbt" data-act="cpmvdo" data-m="copy">Duplicar</button><button class="cpmvbt" data-act="cpmvno">Cancelar</button>';
+  const wk=m.dg==='workout'||(tk&&tk.type==='workout'),occ=wk?cpWith(()=>!!cpDayInfo(m.to).d):(tk&&tk.type==='cardio'?L.some(x=>x.date===m.to&&x.type==='cardio'):(tk&&tk.type==='rest'?cpWith(()=>!!cpDayInfo(m.to).d):false));
+  const canSwap=false,msg=wk&&occ?`El ${fdate(m.to)} ya tiene un entrenamiento. Se queda y este se suma como segunda sesión.`:occ?`El ${fdate(m.to)} ya tiene ${tk&&tk.type==='cardio'?'un cardio':'un entrenamiento'}. No se reemplaza.${canSwap?' Puedes intercambiar los dos días.':' Elige otro día.'}`:`Vas a pasar ${nm} del ${fdate(m.from)} al ${fdate(m.to)}.`;
+  const btns=occ&&!wk?(canSwap?'<button class="cpmvbt pri" data-act="cpmvdo" data-m="swap">Intercambiar</button>':'')+'<button class="cpmvbt" data-act="cpmvno">Cancelar</button>':'<button class="cpmvbt pri" data-act="cpmvdo" data-m="move">Mover</button><button class="cpmvbt" data-act="cpmvdo" data-m="copy">Duplicar</button><button class="cpmvbt" data-act="cpmvno">Cancelar</button>';
   o.innerHTML=`<div class="cpdc" style="max-width:420px"><div class="cpdhd"><div><b>¿Qué quieres hacer?</b><small>${fmtL(m.from)} → ${fmtL(m.to)}</small></div><button class="cpdx" data-act="cpmvno" aria-label="Cerrar">✕</button></div><div class="cpmvb"><p>${msg}</p><div>${btns}</div></div></div>`;}
 async function cpMvDo(mode){const copy=mode===true||mode==='copy',swap=mode==='swap',m=CP.mv;if(!m)return;CP.mv=null;cpMvModal();const from=m.from,to=m.to;
   try{let L=cxListOf(CP.d).slice();const now=new Date().toISOString();
@@ -2395,9 +2399,10 @@ async function cpMvDo(mode){const copy=mode===true||mode==='copy',swap=mode==='s
       let day=tk?(tk.day||((L.find(q=>q.id===tk.ref)||{}).day)):cpWith(()=>{const d=cpDayInfo(from).d;return d&&!d.x?d:null;});
       if(!day){toast('No se pudo leer ese entrenamiento');return;}
       day=JSON.parse(JSON.stringify(day));
-      L.filter(x=>x.date===to&&(x.type==='rest'||x.type==='workout')).forEach(x=>{L=cxDropT(L,x.id);});
+      const occ=cpWith(()=>!!cpDayInfo(to).d);
+      L.filter(x=>x.date===to&&x.type==='rest').forEach(x=>{L=cxDropT(L,x.id);});
       if(!copy&&tk)L=cxDropT(L,tk.id);
-      L.push({id:cpTid(),date:to,type:'workout',title:day.name||day.label||'Workout',day,by:ME.id,at:now});
+      const nt={id:cpTid(),date:to,type:'workout',title:day.name||day.label||'Workout',day,by:ME.id,at:now};if(occ)nt.extra=true;L.push(nt);
       if(!copy){L=L.filter(x=>!(x.date===from&&x.type==='rest'));await cpSaveTasks(L);
         if(cpWith(()=>{const d=cpDayInfo(from).d;return d&&!d.x;})){L.push({id:cpTid(),date:from,type:'rest',title:'Descanso',by:ME.id,at:now});}}
     }else{
@@ -2405,12 +2410,14 @@ async function cpMvDo(mode){const copy=mode===true||mode==='copy',swap=mode==='s
       const t2=Object.assign({},tk,{id:copy?cpTid():tk.id,date:to,at:now});delete t2.series;
       if(tk.type==='workout'){if(!t2.day&&tk.ref)t2.day=(L.find(q=>q.id===tk.ref)||{}).day;delete t2.ref;}
       const sameK=x=>x.date===to&&x.id!==tk.id&&((tk.type==='rest'||tk.type==='workout')&&(x.type==='rest'||x.type==='workout')||(tk.type==='cardio'&&x.type==='cardio'));
-      L.filter(sameK).forEach(x=>{L=cxDropT(L,x.id);});
+      if(tk.type==='workout'){const occ=cpWith(()=>!!cpDayInfo(to).d);if(occ&&!(L.some(x=>x.date===to&&x.type==='workout'&&!x.extra)))t2.extra=true;else if(occ)t2.extra=true;else delete t2.extra;L.filter(x=>x.date===to&&x.type==='rest').forEach(x=>{L=cxDropT(L,x.id);});}
+      else L.filter(sameK).forEach(x=>{L=cxDropT(L,x.id);});
       if(!copy)L=cxDropT(L,tk.id);
       L.push(t2);
     }
     await cpSaveTasks(L);CP.cd=to;coachRender();toast((copy?'Duplicado':'Movido')+' ✓ El cliente lo verá al abrir su app');
   }catch(x){console.warn(x);toast('No se pudo mover. Intenta de nuevo.');}}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act=cxsess]');if(!t)return;e.stopPropagation();CXS[S.sel]=+t.dataset.v;render();},true);
 document.addEventListener('dragstart',e=>{const p=e.target.closest&&e.target.closest('[data-dg]');if(!p||CP.view!=='client')return;const c=p.closest('.cpc');CP.drag={from:p.dataset.v,dg:p.dataset.dg};try{e.dataTransfer.setData('text/plain',p.dataset.dg);e.dataTransfer.effectAllowed='move';}catch(x){}});
 document.addEventListener('dragover',e=>{if(!CP.drag)return;const c=e.target.closest&&e.target.closest('.cpc[data-v]');document.querySelectorAll('.cpc.cpdrop').forEach(x=>x!==c&&x.classList.remove('cpdrop'));if(c){e.preventDefault();c.classList.add('cpdrop');}});
 document.addEventListener('drop',e=>{if(!CP.drag)return;const c=e.target.closest&&e.target.closest('.cpc[data-v]');document.querySelectorAll('.cpc.cpdrop').forEach(x=>x.classList.remove('cpdrop'));if(!c){CP.drag=null;return;}e.preventDefault();const d=CP.drag;CP.drag=null;cpMvAsk(d.from,d.dg,c.dataset.v);});
@@ -2467,6 +2474,7 @@ function cpPlanBody(){
       if(inM&&(vw!=='lista')&&st){if(st==='ok')ok++;else if(st==='miss'||(st==='part'&&dt<tdy))miss++;else plan++;}
       const w=S.weights[dt],stp=S.steps[dt],pct=inf.total?Math.round(inf.done/inf.total*100):0;
       const pills=(inf.d?`<button class="cpp ${st}" draggable="true" data-dg="workout" data-act="cpday" data-v="${dt}" title="${esc(inf.d.name||'')}"><i>${st==='ok'?'✓':st==='part'?pct+'%':st==='miss'?'!':'•'}</i><span>${inf.d.x?'':'Día '+inf.n+'<em> · '}${esc(inf.d.x?(inf.d.label||inf.d.name||'Workout'):(inf.d.name||''))}${inf.d.x?'':'</em>'}</span></button>`:'')
+        +L.filter(t=>t.type==='workout'&&t.extra).map(t=>`<button class="cpp plan" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>+</i><span>${esc(t.title||'Workout')}</span></button>`).join('')
         +L.filter(t=>t.type==='rest').map(t=>`<button class="cpp rest" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>☾</i><span>Descanso</span></button>`).join('')
         +L.filter(t=>t.type==='cardio'&&!inf.d).map(t=>`<button class="cpp card" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>🏃</i><span>Cardio${t.min?' · '+t.min+' min':''}</span></button>`).join('')
         +L.filter(t=>t.type==='note').map(t=>`<button class="cpp note" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>✎</i><span>${esc(t.text||'Nota')}</span></button>`).join('');
