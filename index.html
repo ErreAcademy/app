@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ERRE · App (prototipo)</title>
+<title>ERRE Complete</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&display=swap">
 <style>
 :root{
@@ -1013,7 +1013,7 @@ function profileView(){
     <label class="pfl">Meta diaria de pasos</label><input class="fld" inputmode="numeric" data-pf="stepGoal" value="${S.stepGoal}">
     <label class="pfl">Frecuencia cardíaca máxima (lpm, opcional)</label><input class="fld" inputmode="numeric" placeholder="${fcMax()?'Estimada: '+fcMax():'Ej. 190'}" data-pf="fcmax" value="${u.fcmax||''}"></section>
    <section class="sec"><div class="sec-h"><b>Recordatorios</b></div>
-    ${tg('train','Hora de entrenar','Te avisamos en tus días de fuerza')}${tg('weigh','Pesarme','Una vez al día, en ayunas')}${tg('breath','Respiración de la mañana','5 minutos para empezar bien')}
+    ${tg('train','Hora de entrenar','Te avisamos en tus días de fuerza')}${tg('weigh','Pesarme','Una vez al día, en ayunas')}${modOn('recovery')?tg('breath','Respiración de la mañana','5 minutos para empezar bien'):''}
     <div class="note">Los recordatorios llegan como notificación cuando la app esté instalada en tu celular.</div></section>
    <section class="sec"><div class="sec-h"><b>Privacidad y ayuda</b></div>
     <div class="pfrow"><span><b>Tus fotos</b><small>${c?'Solo las ves tú y, si quieres, tu coach':'Solo las ves tú'}</small></span></div>
@@ -1107,8 +1107,8 @@ const cap=x=>x.charAt(0).toUpperCase()+x.slice(1);
 
 function shellHeader(){
   const p=PIL[S.tab], u=S.user||{};
-  const title=S.tab==='inicio'?`Hola, ${u.name||'Camila'}`:p.n;
-  const sub=S.tab==='inicio'?fmtL(S.sel):S.tab==='entrenar'?(S.program==='complete'?'Método Complete · Coaching 1:1':`Método Complete · Basic · Nivel ${u.level||'Principiante'} · Bloque 1`):p.verbo;
+  const title=S.profile?'Tu perfil':S.tab==='inicio'?`Hola, ${u.name||'Camila'}`:p.n;
+  const sub=S.profile?'Tus datos y ajustes':S.tab==='inicio'?fmtL(S.sel):S.tab==='entrenar'?(S.program==='complete'?'Método Complete · Coaching 1:1':`Método Complete · Basic · Nivel ${u.level||'Principiante'} · Bloque 1`):p.verbo;
   return `<header class="top">${logo(S.tab==='progreso'?'#C0392B':p.c)}<div class="who"><h1 style="font-size:16px">${title}</h1><small>${sub}</small></div><div class="hr"><button class="pill" data-act="chat" style="color:var(--ink)">Coach${isC()&&S.chat.filter(m=>m.from==='coach').length>S.chatRead?'<i class="cdot"></i>':''}</button><button class="avatar t-${tier()}" data-act="profile" aria-label="Mi perfil">${avHTML()}</button></div></header>`;
 }
 function homeView(){return homeWrap(homeView0());}
@@ -1124,7 +1124,7 @@ function homeView0(){
   const act=rows.filter(r=>!r.rest&&r.p!=='peso'&&r.p!=='pasos'), full=act.filter(r=>r.total&&r.done>=r.total).length, isT=S.sel===today();
   return `${calendar()}${S.raw>=1?mesoLine():emptyCard('Tu programa empieza más adelante',`Arranca la semana del ${pd(S.start).toLocaleDateString('es-CO',{day:'numeric',month:'long'})}. Mientras, puedes ir con tu respiración, hábitos y alimentación.`)}
    <div class="segbar">${act.map(r=>`<i style="background:${r.total&&r.done>=r.total?PIL[r.p].c:'var(--line)'}"></i>`).join('')}</div>
-   <div class="sub2">${full===act.length?(isT?'Día completo. Buen trabajo.':'Día completo.'):`${isT?'Llevas':'Completaste'} ${full} de ${act.length} tareas${isT?' hoy':''}.`}</div>
+   <div class="sub2">${full===act.length?(isT?'Día completo. Buen trabajo.':'Día completo.'):`${isT?'Llevas':'Completaste'} ${full} de ${act.length} ${act.length===1?'tarea':'tareas'}${isT?' hoy':''}.`}</div>
    <h2 class="h2">${isT?'Tareas de hoy':'Tareas del '+fmtL(S.sel).split(',')[0].toLowerCase()+' '+pd(S.sel).getDate()}</h2>
    ${rows.filter(r=>r.p!=='peso'&&r.p!=='pasos').map(r=>{const ok=r.total&&r.done>=r.total;return `<button class="tcard" data-act="${r.p==='peso'?'wopen':r.p==='pasos'?'sopen':'tab'}" data-v="${r.p}" style="--c:${PIL[r.p].c}"><span class="bar"></span><span class="tb"><small style="color:${PIL[r.p].c}">${PIL[r.p].n}</small><b>${r.t}</b><em>${r.s}</em></span><span class="st${ok?' ok':''}" style="${ok?`background:${PIL[r.p].c};border-color:${PIL[r.p].c}`:''}">${ok?'✓':r.rest?'–':'›'}</span></button>`;}).join('')}
    <div class="mini2">${['peso','pasos'].map(p=>{const r=rows.find(x=>x.p===p),ok=r.done>=r.total,pend=!ok&&S.sel===today();const pct=p==='pasos'?Math.min(100,Math.round((sv||0)/S.stepGoal*100)):0;return `<button class="mini${ok?' ok':''}${pend&&p==='peso'?' pend':''}" data-act="${p==='peso'?'wopen':'sopen'}"><small>${PIL[p].n}</small><b>${p==='peso'?(wv!=null?wv.toFixed(1)+' kg':'Pésate'):(sv?sv.toLocaleString('es-CO'):'Registrar')}</b><em>${ok?'✓ Listo':(p==='peso'?(stk>=2?'Racha '+stk+' d':'Toca y desliza · 10 s'):'Meta '+S.stepGoal.toLocaleString('es-CO'))}</em>${p==='pasos'?`<div class="mbar"><i style="width:${pct}%"></i></div>`:`<div class="mspk">${miniSpark()}</div>`}</button>`;}).join('')}</div>`;
