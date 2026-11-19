@@ -576,7 +576,7 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .pgs{border:1px solid var(--line);border-radius:12px;background:var(--card);margin:8px 0}.pgh{width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px;background:none;border:0;text-align:left}.pgh b{display:block;font-size:15px}.pgh small{color:var(--gray);font-size:12px}.pgh i{font-style:normal;color:var(--gray)}.pgb{padding:0 14px 14px}
 .lvr{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}.lvr:last-of-type{border-bottom:0}.lvn{width:32px;height:32px;border-radius:50%;background:var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 32px}.lvr.done .lvn{background:var(--ink);color:#fff}.lvr.cur .lvn{background:var(--red,#C0392B);color:#fff}.lvr.lock{opacity:.6}.lvr b{display:block}.lvr small{color:var(--gray);font-size:12px}
 .hitoc{background:var(--red-tint,#fbeceb);border:1px solid var(--red,#C0392B);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14px;font-weight:600}
-.prerow.coach{background:var(--red-tint);margin:0 -8px;padding:10px 8px;border-radius:12px;border-bottom:0}.coachtag{margin-left:auto;font-style:normal;font-size:11px;font-weight:700;color:var(--red-strong);background:#fff;border:1px solid var(--red-strong);border-radius:99px;padding:3px 9px;white-space:nowrap}.mic{display:inline-flex;align-items:center;gap:5px}.lvn .ico{display:block}.lvr.lock .lvn{color:var(--gray)}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
+.prerow.coach{background:var(--red-tint);margin:0 -8px;padding:10px 8px;border-radius:12px;border-bottom:0}.coachtag{margin-left:auto;font-style:normal;font-size:11px;font-weight:700;color:var(--red-strong);background:#fff;border:1px solid var(--red-strong);border-radius:99px;padding:3px 9px;white-space:nowrap}.mic{display:inline-flex;align-items:center;gap:5px}.lvn .ico{display:block}.lvr.lock .lvn{color:var(--gray)}.gcard{border-left:4px solid var(--gc,var(--line))}.gic{width:42px;height:42px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 42px;background:color-mix(in srgb,var(--gc) 14%,#fff);color:var(--gc)}.gcard.gdone{border-left-color:#2E8B57;background:#F1F8F3}.gcard.gdone .gic{background:#2E8B57;color:#fff}.gcard.gdone .gt small{color:#2E8B57;font-weight:600}.wchips .chip{font-size:12px}.draftbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#FFF6E5;border:1px solid #E9C77A;border-radius:12px;padding:10px 14px;margin:0 0 14px}.draftbar span{flex:1;min-width:180px}.draftbar b{display:block}.draftbar small{color:var(--gray)}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
 </style>
 </head>
 <body>
@@ -814,7 +814,7 @@ function subBlock(d,b,wk){
   if(b.k==='warm'){
     const dn=!!S.warmFA[cKey(d)];
     st=fa?(dn?'Hecho':'Pendiente'):(c.total?c.done+' de '+c.total:'');
-    body=`<div class="chips wchips"><button class="chip${fa?' on':''}" data-act="wm" data-v="fa">▶ Follow along</button><button class="chip${!fa?' on':''}" data-act="wm" data-v="ex">Ejercicios por separado</button></div>`+
+    body=`<div class="chips wchips"><button class="chip${fa?' on':''}" data-act="wm" data-v="fa">Opción 1 · Follow along</button><button class="chip${!fa?' on':''}" data-act="wm" data-v="ex">Opción 2 · Ejercicios por separado</button></div>`+
       (fa?`<div class="vbox" style="margin:8px 0 10px"><div class="vph"><b>▶</b><small>Calentamiento conmigo · video de YouTube</small></div><p>Hazlo en vivo conmigo, de principio a fin.</p></div><button class="btn${dn?' solid':''}" data-act="wfa" style="width:100%">${dn?'Calentamiento hecho ✓':'Marcar como hecho'}</button>`:items());
   } else if(b.k==='calm'){ st=c.total?c.done+' de '+c.total:''; body=items(); } else { st=c.total?c.done+' de '+c.total+' series':''; body=items(); }
   return `<section class="sec"><div class="sec-h"><b>${SUBT[b.k]||b.t}</b><em>${st}</em></div>${body}</section>`;
@@ -856,7 +856,7 @@ function openFinish(g){
 }
 function trainView(){
   if(S.raw<1) return calendar()+emptyCard('Tu programa empieza más adelante',`Arranca la semana del ${pd(S.start).toLocaleDateString('es-CO',{day:'numeric',month:'long'})}.`);
-  if(S.day<0) return calendar()+mesoLine()+emptyCard('Día de descanso','Hoy toca recuperar. Camina y muévete suave, y cuida tu sueño: el cuerpo se adapta cuando descansas.')+`<div class="grp">Otro cardio o actividad</div>${extrasHTML()}`;
+  if(S.day<0) return calendar()+mesoLine()+emptyCard('Día de descanso','Hoy toca recuperar. Camina y muévete suave, y cuida tu sueño: el cuerpo se adapta cuando descansas.')+`<div class="grp">Otra actividad física</div>${extrasHTML()}`;
   const d=DAYS[S.day], P=PERIOD[S.program], wk=Math.min(S.week,P.weeks), tier=CARDIO[S.goal][wk-1];
   const bl=k=>d.blocks.find(b=>b.k===k);
   const G=[
@@ -883,7 +883,8 @@ function trainView(){
    ${mesoLine()}
    <h2 class="h2" style="margin:4px 0 10px">Día ${S.pos+1} · ${d.name}</h2>
    <div class="progress"><i style="width:${pct}%"></i></div>
-   ${gd.map(g=>{const ok=!!S.fb[fbKey(g.k)]||(g.ct&&g.cx>=g.ct);return `<button class="gcard" data-act="gopen" data-b="${g.k}"><span class="gt"><b>${g.t}</b><small>${g.s}</small></span><span class="gc${ok?' ok':''}">${ok?'✓':g.ct?g.cx+'/'+g.ct:''}</span><i class="chev">›</i></button>`;}).join('')}
+   ${gd.map(g=>{const ok=!!S.fb[fbKey(g.k)]||(g.ct&&g.cx>=g.ct);const gcol={g_fuerza:['#C0392B','fuerza'],g_cardio:['#2F7DA8','cardio'],g_calm:['#7B5EA7','calma']}[g.k];return `<button class="gcard${ok?' gdone':''}" data-act="gopen" data-b="${g.k}" style="--gc:${gcol[0]}"><span class="gic">${ok?'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':ICON(gcol[1],22)}</span><span class="gt"><b>${g.t}</b><small>${ok?'Completado':g.s}</small></span><span class="gc${ok?' ok':''}">${ok?'':g.ct?g.cx+'/'+g.ct:''}</span><i class="chev">›</i></button>`;}).join('')}
+   <div class="grp" style="margin-top:16px">Otra actividad física</div>${extrasHTML()}
    <div class="foot">${done} de ${total} completados · toca una pestaña para entrar</div>`;
 }
 
@@ -1203,7 +1204,7 @@ function hrNote(hr,z){const zz=zoneOfHr(hr);if(!zz)return '';
   return `<div class="note"><i class="zd" style="background:${ZC[zz]}"></i><b>Zona ${zz}</b> · ${msg}</div>`;}
 function extrasHTML(){
   const a=S.cardioX[S.sel]||[];
-  return `${a.map((x,i)=>{const z=x.hr?zoneOfHr(x.hr):(x.z||null);return `<div class="xrow2"><div><b>${x.name}</b><small>${x.min} min${x.hr?` · ${x.hr} lpm`:''}${z?` · <i class="zd" style="background:${ZC[z]}"></i>Zona ${z}${!x.hr&&x.z?' · por sensación':''}`:''}</small>${x.note?`<small>${x.note}</small>`:''}</div><button class="x" data-act="cxdel" data-v="${i}" aria-label="Quitar">×</button></div>`;}).join('')}<button class="btn" data-act="cxopen" style="width:100%;margin-top:8px">+ Añadir otro cardio</button>`;
+  return `${a.map((x,i)=>{const z=x.hr?zoneOfHr(x.hr):(x.z||null);return `<div class="xrow2"><div><b>${x.name}</b><small>${x.min} min${x.hr?` · ${x.hr} lpm`:''}${z?` · <i class="zd" style="background:${ZC[z]}"></i>Zona ${z}${!x.hr&&x.z?' · por sensación':''}`:''}</small>${x.note?`<small>${x.note}</small>`:''}</div><button class="x" data-act="cxdel" data-v="${i}" aria-label="Quitar">×</button></div>`;}).join('')}<button class="btn" data-act="cxopen" style="width:100%;margin-top:8px">+ Agregar otra actividad física</button>`;
 }
 function openZones(){
   const m=fcMax(), a=ageOf(), u=S.user||{};
@@ -1223,8 +1224,8 @@ const FEELZ=[[1,'Muy suave','Podría cantar'],[2,'Suave','Hablo fluido'],[3,'Mod
 let cxz=null;
 function openCardioX(){
   cxz=null;
-  sheet(`<h3>Añadir otro cardio</h3><div class="sub">Algo extra que hiciste: bailar, un deporte, una caminata larga…</div>
-   <div class="chips">${['Bailar','Deporte','Caminata','Bicicleta','Natación','Otro'].map(n=>`<button class="chip" data-act="cxq" data-v="${n}">${n}</button>`).join('')}</div>
+  sheet(`<h3>Agregar otra actividad física</h3><div class="sub">Lo que hiciste hoy además (o en vez) de tu rutina: caminar, bailar, nadar, yoga…</div>
+   <div class="chips">${['Caminata','Bailar','Natación','Yoga','Pilates','Senderismo','Bicicleta','Deporte','Otro'].map(n=>`<button class="chip" data-act="cxq" data-v="${n}">${n}</button>`).join('')}</div>
    <input id="cxn" class="search" placeholder="¿Qué hiciste? Ej. Salí a bailar" style="margin-bottom:8px">
    <input id="cxm" class="search" inputmode="numeric" placeholder="Minutos" style="margin-bottom:12px">
    <div class="fbq" style="margin-top:4px">¿Cómo mides la intensidad?</div>
@@ -1929,6 +1930,9 @@ l1:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M8 3v4M16 
 l2:'<path d="M17 4l3 3-3 3"/><path d="M4 11V9a2 2 0 0 1 2-2h16"/><path d="M7 20l-3-3 3-3"/><path d="M20 13v2a2 2 0 0 1-2 2H2"/>',
 l3:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
 l4:'<path d="M2.5 19l6.5-12 4 7 3-4.5 5.5 9.5z"/>',
+cardio:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+calma:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+act:'<circle cx="14.5" cy="4.5" r="1.8"/><path d="M6 21l3.5-6 3 2.5L15 12l3.5 2.5M9.5 15l-1.5-5 5.5-1.5 2 3"/>',
 l5:'<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>'};
 const ICON=(n,s)=>`<svg class="ico" width="${s||18}" height="${s||18}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]||''}</svg>`;
 /* ================= ERRE · conexión real (Supabase) ================= */
@@ -2165,7 +2169,7 @@ function cardioWrap(h){
 const cpW=()=>window.innerWidth>=1000;
 function cpShell(inner){
   const nav=[['clientes','Clientes'],['editor','Editor de rutinas']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
-  return `<div class="cpshell"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
+  return `<div class="cpshell"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
 }
 const dAgo=s=>{if(!s)return '—';const n=Math.floor((Date.now()-new Date(s+'T12:00:00'))/864e5);return n<=0?'Hoy':n===1?'Ayer':'hace '+n+' d';};
 function cpClientsPage(){
@@ -2459,6 +2463,26 @@ function progBody(g,ms,nxt){
 }
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pgtog"]');if(!t)return;const k=t.dataset.k;S.exp[k]=!(S.exp[k]===undefined?false:S.exp[k]);save();render();});
 
+/* ---- borrador del editor de rutinas ---- */
+const DRAFT_K='erre_rt_draft';
+const draftGet=()=>{try{return JSON.parse(localStorage.getItem(DRAFT_K)||'null');}catch(e){return null;}};
+const draftClear=()=>{try{localStorage.removeItem(DRAFT_K);}catch(e){}};
+setInterval(()=>{try{if(typeof RT!=='undefined'&&RT.open&&RT.dirty&&PROFILE&&PROFILE.role==='coach'){localStorage.setItem(DRAFT_K,JSON.stringify({kind:RT.kind,id:RT.id,cid:RT.cid,tkind:RT.tkind,folder:RT.folder,name:RT.name,days:RT.days,sel:RT.sel,at:Date.now(),me:ME&&ME.id}));}}catch(e){}},2500);
+function draftBanner(){
+  if(typeof RT!=='undefined'&&RT.open)return '';
+  const d=draftGet();if(!d||!d.days||(ME&&d.me&&d.me!==ME.id))return '';
+  const mins=Math.max(1,Math.round((Date.now()-d.at)/60000)),ago=mins<60?mins+' min':mins<1440?Math.round(mins/60)+' h':Math.round(mins/1440)+' d';
+  return `<div class="draftbar"><span><b>Borrador sin terminar</b><small>${esc(d.name||'Sin nombre')} · hace ${ago}${d.kind==='client'?' · rutina de cliente':''}</small></span><button class="btn solid" data-act="draftgo">Continuar</button><button class="btn" data-act="draftno">Descartar</button></div>`;
+}
+document.addEventListener('click',async e=>{
+  const t=e.target.closest&&e.target.closest('[data-act="draftgo"],[data-act="draftno"]');if(!t)return;e.stopPropagation();
+  const d=draftGet();
+  if(t.dataset.act==='draftno'){if(confirm('¿Descartar el borrador?')){draftClear();coachRender();}return;}
+  if(!d)return;
+  if(d.kind==='client'&&d.cid){try{await coachOpen(d.cid);}catch(x){}}
+  rtOpen(d.kind,{tkind:d.tkind,folder:d.folder,id:d.id,cid:d.cid,name:d.name,days:d.days});RT.dirty=true;RT.sel=Math.min(d.sel||0,RT.days.length-1);rtShow();
+},true);
+
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
 const E_EXTRA={
@@ -2714,7 +2738,7 @@ function rtTplList(){
 function rtField(t){const d=RT.days[+t.dataset.di];if(!d)return null;const b=rtBlock(d,t.dataset.bk);return b&&b.items[+t.dataset.ii];}
 function rtInput(e){
   const t=e.target;if(!t.dataset||!t.dataset.rt||!RT.open)return;const k=t.dataset.rt,v=t.value;RT.dirty=true;
-  if(k==='name'){RT.name=v;return;}
+  if(k==='name'){RT.name=v;RT.dirty=true;return;}
   if(k==='folder'){RT.folder=v||null;return;}
   if(k==='dname'){RT.days[RT.sel].name=v;return;}
   if(k==='dcardio'){RT.days[RT.sel].cardioDefault=v;return;}
@@ -2744,7 +2768,7 @@ document.addEventListener('click',async e=>{
     if(tp.tkind==='workout'){const base=(CP.routine&&CP.routine.days)||[];rtOpen('client',{cid:CP.cid,name:(CP.routine&&CP.routine.name)||('Rutina de '+((CP.d.profile.full_name||'cliente').split(' ')[0])),days:base.concat(rtClone(tp.days))});RT.dirty=true;RT.sel=RT.days.length-1;rtShow();}
     else{if(CP.routine&&CP.routine.days&&CP.routine.days.length&&!confirm('Esto reemplaza la rutina actual de este cliente al guardar. ¿Continuar?'))return;
       rtOpen('client',{cid:CP.cid,name:tp.name,days:tp.days});RT.dirty=true;}}
-  else if(a==='rtback'){if(RT.dirty&&!confirm('Hay cambios sin guardar. ¿Salir sin guardar?'))return;rtClose();if(RT.kind==='template'){coachHome();}else{coachRender();}}
+  else if(a==='rtback'){if(RT.dirty&&!confirm('Tus cambios quedan guardados como borrador y podrás continuar después. ¿Salir del editor?'))return;rtClose();if(RT.kind==='template'){coachHome();}else{coachRender();}}
   else if(a==='rtday'){RT.sel=+t.dataset.i;rtShow();}
   else if(a==='rtaddday'){RT.days.push(RD.torsoC(RT.days.length+1));RT.days[RT.days.length-1].name='Nuevo día';rtFixIds();RT.sel=RT.days.length-1;RT.dirty=true;rtShow();}
   else if(a==='rtdup'){const c=rtClone(RT.days[RT.sel]);RT.days.splice(RT.sel+1,0,c);rtFixIds();RT.sel++;RT.dirty=true;rtShow();}
@@ -2793,7 +2817,7 @@ document.addEventListener('click',async e=>{
       if(RT.kind==='client'){await DB.saveRoutine(RT.cid,RT.name.trim(),RT.days,ME.id);CP.routine={name:RT.name.trim(),days:rtClone(RT.days)};
         try{await DB.sendCoach(RT.cid,ME.id,'Actualicé tu rutina. Revísala en la pestaña Entrenar de tu app.');}catch(x){}}
       else{const r=await DB.saveTemplate(RT.id,RT.name.trim(),RT.days,ME.id,RT.tkind,RT.folder||null);RT.id=r&&r.id||RT.id;await rtLoadTpls();}
-      RT.dirty=false;RT.busy=false;toast(RT.kind==='client'?'Rutina publicada ✓':'Plantilla guardada ✓');rtClose();if(RT.kind==='template')coachHome();else coachRender();
+      draftClear();RT.dirty=false;RT.busy=false;toast(RT.kind==='client'?'Rutina publicada ✓':'Plantilla guardada ✓');rtClose();if(RT.kind==='template')coachHome();else coachRender();
     }catch(x){console.warn(x);RT.busy=false;RT.err='No se pudo guardar. Intenta de nuevo.';rtShow();}}
   else if(a==='rtastpl'){const n=prompt('Nombre del programa',RT.name||'');if(!n)return;
     try{await DB.saveTemplate(null,n.trim(),RT.days,ME.id,'program',null);await rtLoadTpls();toast('Guardado en Programas ✓');}catch(x){RT.err='No se pudo guardar.';rtShow();}}
