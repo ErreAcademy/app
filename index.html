@@ -2309,7 +2309,7 @@ function cardioWrap(h){
 const cpW=()=>window.innerWidth>=1000;
 function cpWideCls(el){el.classList.toggle('cpwide',cpW());el.style.maxWidth=(CP.wide&&CP.view==='client'&&cpW())?'none':'';}
 function cpShell(inner){
-  const nav=[['inicio','Inicio'],['clientes','Clientes'],['editor','Editor de rutinas']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
+  const nav=[['inicio','Inicio'],['clientes','Clientes'],['editor','Programas y workouts']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
   return `<div class="cpshell${CP.wide&&CP.view==='client'?' cpfull':''}"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small>${pushCoachBtn()}<button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
 }
 const dAgo=s=>{if(!s)return '—';const n=Math.floor((Date.now()-new Date(s+'T12:00:00'))/864e5);return n<=0?'Hoy':n===1?'Ayer':'hace '+n+' d';};
@@ -2328,7 +2328,7 @@ function cpHomeData(){
   C.forEach(c=>{
     if(c.status==='pending'){al.push({s:0,k:c.id+'|pend',cid:c.id,t:'Cuenta nueva por activar',q:'Se registró en la app. Ábrela, actívala y elige su plan.'});return;}
     const has=M.rt[c.id]&&M.rt[c.id].n,last=M.last[c.id],coachP=c.plan!=='basic',pf=prefs[c.id]||{};
-    if(!has)al.push({s:0,k:c.id+'|norut',cid:c.id,t:'Sin rutina asignada',q:'Asígnale un programa para que pueda entrenar.'});
+    if(!has)al.push({s:0,k:c.id+'|norut',cid:c.id,t:'Sin programa asignado',q:'Asígnale un programa para que pueda entrenar.'});
     else{
       if(last){const n=diffD(tdy,last);if(n>=4)al.push({s:1,k:c.id+'|inact|'+last,cid:c.id,t:'Lleva '+n+' días sin entrenar',q:'Última sesión: '+fdate(last)+'.'});}
       else al.push({s:2,k:c.id+'|nosess',cid:c.id,t:'Aún no registra ninguna sesión',q:'Escríbele para que arranque.'});
@@ -2356,7 +2356,7 @@ function cpClientsPage(){
   return `<div class="cphead"><h2 class="h2" style="margin:0">Clientes</h2><em class="cpcount">${all.length}</em></div>
    <div class="cptabs">${['todos','basic','complete','elite'].map(k=>`<button class="cptab${CP.pf===k?' on':''}" data-act="cppf" data-v="${k}">${k==='todos'?'Todos':PNAME[k]} <em>${cnt(k)}</em></button>`).join('')}</div>
    <input class="fld" id="cpQ" placeholder="Buscar cliente…" value="${esc(CP.q)}" autocomplete="off" style="margin:10px 0">
-   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Rutina</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><b>${esc(c.full_name||'Sin nombre')}</b>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em>${c.status==='pending'?' <em class="cpwarn">Pendiente</em>':''}</span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin rutina</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
+   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Programa</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><b>${esc(c.full_name||'Sin nombre')}</b>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em>${c.status==='pending'?' <em class="cpwarn">Pendiente</em>':''}</span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin programa</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
 }
 async function coachHome(){CP.view='list';coachRender();try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{CP.home=await DB.homeData();}catch(e){console.warn('home',e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
@@ -2372,7 +2372,7 @@ function coachRender(keepInput){
     const body=CP.sec==='editor'?rtTplList():CP.sec==='inicio'?cpHomePage():cpClientsPage();
     el.innerHTML=cpShell(body);cpWideCls(el);const qi=document.getElementById('cpQ');if(qi&&CP.sec==='clientes'&&keepInput){qi.focus();qi.setSelectionRange(qi.value.length,qi.value.length);}return;
   }
-  const d=CP.d,SB=[['plan','Planificación','Organiza entrenamientos, tareas y objetivos'],['rutina','Rutina','Asigna y edita su programa'],['resumen','Información','Perfil, plan, módulos y fidelidad'],['alim','Nutrición','Planes y seguimiento nutricional'],['arch','Archivos','Documentos compartidos'],['evol','Evolución','Peso, pasos, sueño y sesiones'],['chat','Chat','Habla directo con tu cliente'],['llamada','Llamada 1:1','Agenda y avisa a tu cliente']],tabs=SB.map(x=>x[0]),TL=Object.fromEntries(SB.map(x=>[x[0],x[1]]));
+  const d=CP.d,SB=[['plan','Planificación','Organiza entrenamientos, tareas y objetivos'],['rutina','Programa','Asigna y edita su programa'],['resumen','Información','Perfil, plan, módulos y fidelidad'],['alim','Nutrición','Planes y seguimiento nutricional'],['arch','Archivos','Documentos compartidos'],['evol','Evolución','Peso, pasos, sueño y sesiones'],['chat','Chat','Habla directo con tu cliente'],['llamada','Llamada 1:1','Agenda y avisa a tu cliente']],tabs=SB.map(x=>x[0]),TL=Object.fromEntries(SB.map(x=>[x[0],x[1]]));
   const nm=d?esc(d.profile.full_name||'Cliente'):'Cargando…';
   let body='<p class="lead">Cargando…</p>';
   if(d){
@@ -2551,7 +2551,7 @@ function cpDayInfo(date){return withDate(date,()=>{
 const cpSt=(i,date)=>!i.d?'':(i.total>0&&i.done>=i.total)?'ok':i.done>0?'part':date<today()?'miss':'plan';
 const cpMonL=ym=>{const [y,m]=ym.split('-').map(Number);return cap(new Date(y,m-1,1,12).toLocaleDateString('es-CO',{month:'long',year:'numeric'}));};
 function cpPlanBody(){
-  const d=CP.d;if(!(CP.routine&&CP.routine.days&&CP.routine.days.length)&&!cxListOf(d).length)return '<div class="note">Esta persona aún no tiene rutina. Asígnale un programa en Rutina, o agrega tareas con el botón + Tarea.</div><button class="btn solid" data-act="cptnew" data-v="'+today()+'" style="margin-top:10px">+ Tarea</button>';
+  const d=CP.d;if(!(CP.routine&&CP.routine.days&&CP.routine.days.length)&&!cxListOf(d).length)return '<div class="note">Esta persona aún no tiene programa. Asígnale uno en la pestaña Programa, o agrega tareas con el botón + Tarea.</div><button class="btn solid" data-act="cptnew" data-v="'+today()+'" style="margin-top:10px">+ Tarea</button>';
   const cd=CP.cd=CP.cd||today(),vw=CP.cv=CP.cv||'mes',ym=cd.slice(0,7),tdy=today();
   return cpWith(()=>{
     let ds=[];
@@ -2616,7 +2616,7 @@ function cpCardForm(dt,ci,dy){
    <label class="pfl">Minutos (opcional)</label><input class="fld" id="cpEn" inputmode="numeric" value="${ci.ov&&ci.ov.min||''}" placeholder="Ej. 20">
    <label class="pfl">Nota para el cliente (opcional)</label><input class="fld" id="cpEx" value="${esc((ci.ov&&ci.ov.text)||'')}" placeholder="Ej. Hazlo después de pierna">
    <button class="btn solid" data-act="cpcard" data-v="${dt}|day" style="width:100%;margin-top:8px">Guardar solo para este día</button>
-   ${dy&&!dy.x?`<button class="btn" data-act="cpcard" data-v="${dt}|routine" style="width:100%;margin-top:6px">Cambiar el cardio de este día en la rutina</button><div class="note" style="margin-top:6px">Esa opción cambia la modalidad en todas las semanas.</div>`:''}</div></div>`;
+   ${dy&&!dy.x?`<button class="btn" data-act="cpcard" data-v="${dt}|routine" style="width:100%;margin-top:6px">Cambiar el cardio de este workout en el programa</button><div class="note" style="margin-top:6px">Esa opción cambia la modalidad en todas las semanas.</div>`:''}</div></div>`;
 }
 function cpChipHTML(dt,key){
   return cpWith(()=>withDate(dt,()=>{
@@ -2682,13 +2682,13 @@ document.addEventListener('click',async e=>{
   if(a==='cpwide'){CP.wide=!CP.wide;coachRender();return;}
   if(a==='cpedit'){const date=t.dataset.v,dy=cpWith(()=>withDate(date,()=>ctxFor(date).d));if(!dy)return;cpDayClose();
     if(dy.x){const tk2=cxListOf(CP.d).find(x=>'x'+x.id===dy.id);if(!tk2)return;rtOpen('client',{cid:CP.cid,name:'Workout asignado',days:[tk2.day||(cxListOf(CP.d).find(q=>q.id===tk2.ref)||{}).day]});RT.xt=tk2.id;RT.sel=0;rtShow();}
-    else{const ix=((CP.routine&&CP.routine.days)||[]).findIndex(x=>x.id===dy.id);if(ix<0){toast('No se encontró ese día en la rutina');return;}rtOpen('client',{cid:CP.cid,name:CP.routine.name,days:CP.routine.days});RT.sel=ix;rtShow();}
+    else{const ix=((CP.routine&&CP.routine.days)||[]).findIndex(x=>x.id===dy.id);if(ix<0){toast('No se encontró ese workout en el programa');return;}rtOpen('client',{cid:CP.cid,name:CP.routine.name,days:CP.routine.days});RT.sel=ix;rtShow();}
     return;}
   if(a==='cpcard'){const [date,sc]=t.dataset.v.split('|'),g=id=>((document.getElementById(id)||{}).value||'').trim(),mod=g('cpEm'),tier=g('cpEt'),mn=+g('cpEn')||0,tx=g('cpEx');
     try{
       if(sc==='day'){const task={id:cpTid(),date,type:'cardio',title:'Cardio',mod,tier,min:mn,text:tx,by:'coach',at:Date.now()};await cpSaveTasks(cxListOf(CP.d).filter(x=>!(x.date===date&&x.type==='cardio')).concat(task));toast('Cardio asignado para ese día ✓');}
-      else{const dy=cpWith(()=>withDate(date,()=>ctxFor(date).d)),ix=dy?((CP.routine&&CP.routine.days)||[]).findIndex(x=>x.id===dy.id):-1;if(ix<0){toast('No se encontró ese día en la rutina');return;}
-        CP.routine.days[ix].cardioDefault=mod;await DB.saveRoutine(CP.cid,CP.routine.name,CP.routine.days,ME.id);toast('Cardio de la rutina actualizado ✓');}
+      else{const dy=cpWith(()=>withDate(date,()=>ctxFor(date).d)),ix=dy?((CP.routine&&CP.routine.days)||[]).findIndex(x=>x.id===dy.id):-1;if(ix<0){toast('No se encontró ese workout en el programa');return;}
+        CP.routine.days[ix].cardioDefault=mod;await DB.saveRoutine(CP.cid,CP.routine.name,CP.routine.days,ME.id);toast('Cardio del programa actualizado ✓');}
       cpDayClose();coachRender();}catch(x){console.warn(x);toast('No se pudo guardar el cardio');}return;}
   if(a==='cpdis'){const o=cpDisGet();o[t.dataset.k]=Date.now();cpDisSet(o);coachRender();return;}
   if(a==='cprestore'){cpDisSet({});coachRender();return;}
@@ -3500,9 +3500,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1657';
+const APP_VER='19nov-1659';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1657')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1659')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
@@ -3730,8 +3730,8 @@ document.addEventListener('input',e=>{if(e.target.id==='exY'){const m=(e.target.
 const RT_BT={warm:'Calentamiento',main:'Rutina central (básicos)',acc:'Accesorios y core',calm:'Vuelta a la calma'};
 function rtEditorHTML(){
   const days=RT.days,d=days[RT.sel];
-  const hdr=`<button class="lblbtn" data-act="rtback" style="color:var(--gray);margin:10px 0 4px">‹ ${RT.kind==='template'?'Editor de rutinas':'Volver al cliente'}</button>
-   <h2 class="h2" style="margin-top:4px">${RT.kind==='template'?(RT.tkind==='workout'?'Workout':'Programa'):'Rutina'}</h2>
+  const hdr=`<button class="lblbtn" data-act="rtback" style="color:var(--gray);margin:10px 0 4px">‹ ${RT.kind==='template'?'Programas y workouts':'Volver al cliente'}</button>
+   <h2 class="h2" style="margin-top:4px">${RT.kind==='template'?(RT.tkind==='workout'?'Workout':'Programa'):'Programa del cliente'}</h2>
    <label class="pfl">Nombre</label><input class="fld" data-rt="name" value="${esc(RT.name)}" placeholder="${RT.tkind==='workout'?'Ej. Tren superior · Empuje':'Ej. N1 · 4 días · Mujer'}">
    ${RT.kind==='template'?`<label class="pfl" style="margin-top:8px">Carpeta</label><select class="fld" data-rt="folder">${fOpts(RT.tkind,RT.folder)}</select>`:''}
    ${RT.err?`<div class="note" style="border-color:var(--red);color:var(--red-strong)">${RT.err}</div>`:''}
@@ -3759,7 +3759,7 @@ function rtEditorHTML(){
     ${warn.length?`<div class="note" style="border-color:var(--red)"><b>Avisos del método</b><br>${warn.map(esc).join('<br>')}</div>`:''}
     ${blocks}
     <button class="btn solid" data-act="rtsave" style="width:100%;margin-top:14px;padding:14px"${RT.busy?' disabled':''}>${RT.busy?'Guardando…':(RT.kind==='template'?'Guardar plantilla':'Guardar y publicar al cliente')}</button>
-    ${RT.kind==='client'?`<button class="btn" data-act="rtasday" style="width:100%;margin-top:8px">Guardar este día como workout</button><button class="btn" data-act="rtastpl" style="width:100%;margin-top:8px">Guardar la rutina completa como programa</button>`:`<button class="btn" data-act="rtdeltpl" style="width:100%;margin-top:8px;color:var(--red-strong)">Eliminar plantilla</button>`}`;
+    ${RT.kind==='client'?`<button class="btn" data-act="rtasday" style="width:100%;margin-top:8px">Guardar este día como workout (1 día)</button><button class="btn" data-act="rtastpl" style="width:100%;margin-top:8px">Guardar todo como programa (varios días)</button>`:`<button class="btn" data-act="rtdeltpl" style="width:100%;margin-top:8px;color:var(--red-strong)">Eliminar plantilla</button>`}`;
 }
 const RTW=()=>window.innerWidth>=1000;
 RT.lib={g:'Todos',pat:'',q:'',bk:'main',t:'Calentamiento',st:'Todos',fav:false,tag:''};RT.favs=new Set();
@@ -3794,17 +3794,17 @@ function rtClientTab(){
   const crumbs=[];let f=RT.fo.find(x=>x.id===cur);while(f){crumbs.unshift(f);f=RT.fo.find(x=>x.id===f.parent_id);}
   const subs=RT.fo.filter(x=>x.kind===k&&(x.parent_id||null)===(cur||null)).sort((a,b)=>a.name.localeCompare(b.name));
   const items=RT.tpls.filter(x=>(x.tkind||'program')===k&&(x.folder_id||null)===(cur||null));
-  const left=`<section class="sec"><div class="sec-h"><b>Rutina actual</b><em>${has?CP.routine.days.length+' días':'Sin rutina'}</em></div>
-    ${has?`<div class="note" style="margin-bottom:10px"><b>${esc(CP.routine.name||'Rutina')}</b></div><div class="cpdays">${CP.routine.days.map(dayCard).join('')}</div>
-     <button class="btn solid" data-act="rtedit" style="width:100%;margin-top:12px;padding:12px">Editar rutina</button><button class="btn" data-act="rtdelroutine" style="width:100%;margin-top:8px;color:var(--red-strong)">Quitar rutina actual</button>`:'<div class="note">Esta persona aún no tiene rutina. Asígnale un programa de la derecha, o empieza en blanco.</div>'}
+  const left=`<section class="sec"><div class="sec-h"><b>Programa actual</b><em>${has?CP.routine.days.length+(CP.routine.days.length===1?' workout':' workouts'):'Sin programa'}</em></div>
+    ${has?`<div class="note" style="margin-bottom:10px"><b>${esc(CP.routine.name||'Programa')}</b></div><div class="cpdays">${CP.routine.days.map(dayCard).join('')}</div>
+     <button class="btn solid" data-act="rtedit" style="width:100%;margin-top:12px;padding:12px">Editar programa</button><button class="btn" data-act="rtdelroutine" style="width:100%;margin-top:8px;color:var(--red-strong)">Quitar programa actual</button>`:'<div class="note">Esta persona aún no tiene programa. Asígnale uno de la derecha, o empieza en blanco.</div>'}
     <button class="btn" data-act="rtblank" style="width:100%;margin-top:8px">Empezar en blanco</button></section>`;
   const right=`<section class="sec"><div class="sec-h"><b>Asignar</b></div>
     <div class="chips">${['program','workout'].map(x=>`<button class="chip${k===x?' on':''}" data-act="rtasel" data-v="${x}">${tkLbl(x)}</button>`).join('')}</div>
-    <div class="note" style="margin:8px 0">${k==='workout'?'Un workout se suma como un día nuevo a la rutina.':'Un programa reemplaza la rutina completa del cliente.'}</div>
+    <div class="note" style="margin:8px 0">${k==='workout'?'Un workout se suma como un día nuevo al programa.':'Un programa reemplaza el programa completo del cliente.'}</div>
     <div class="crumbs"><button class="lblbtn" data-act="rtasopen" data-id="">${tkLbl(k)}</button>${crumbs.map(c=>` › <button class="lblbtn" data-act="rtasopen" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>
     ${subs.map(x=>`<button class="pfrow rtitem" data-act="rtasopen" data-id="${x.id}"><span><b>📁 ${esc(x.name)}</b></span><span>›</span></button>`).join('')}
     ${items.map(t=>`<button class="pfrow rtitem" data-act="rtapply" data-id="${t.id}"><span><b>${esc(t.name)}</b><small>${t.days.length} ${t.days.length===1?'día':'días'}</small></span><span class="cpasg">Asignar</span></button>`).join('')}
-    ${(!subs.length&&!items.length)?'<div class="note">Esta carpeta está vacía. Créalos en el Editor de rutinas.</div>':''}</section>`;
+    ${(!subs.length&&!items.length)?'<div class="note">Esta carpeta está vacía. Créalos en Programas y workouts.</div>':''}</section>`;
   return cpW()?`<div class="cpcols"><div>${left}</div><div>${right}</div></div>`:left+right;
 }
 const fpath=id=>{const o=[];let f=RT.fo.find(x=>x.id===id);while(f){o.unshift(f.name);f=RT.fo.find(x=>x.id===f.parent_id);}return o.join(' › ');};
@@ -3815,16 +3815,16 @@ function rtTplList(){
   const subs=RT.fo.filter(x=>x.kind===k&&(x.parent_id||null)===(cur||null)).sort((a,b)=>a.name.localeCompare(b.name));
   const items=RT.tpls.filter(x=>(x.tkind||'program')===k&&(x.folder_id||null)===(cur||null));
   const cnt=id=>{const ids=new Set([id]);let ch=true;while(ch){ch=false;RT.fo.forEach(x=>{if(ids.has(x.parent_id)&&!ids.has(x.id)){ids.add(x.id);ch=true;}});}return RT.tpls.filter(t=>ids.has(t.folder_id)).length;};
-  return `<section class="sec"><div class="sec-h"><b>Editor de rutinas</b><em>${RT.tpls.length}</em></div>
+  return `<section class="sec"><div class="sec-h"><b>Programas y workouts</b><em>${RT.tpls.length}</em></div>
    <div class="chips">${['workout','program'].map(x=>`<button class="chip${k===x?' on':''}" data-act="rtlbkind" data-v="${x}">${tkLbl(x)}</button>`).join('')}</div>
-   <div class="note" style="margin:8px 0">${k==='workout'?'Un workout es un solo día de entreno (ej. Tren superior). Puedes sumarlo a la rutina de cualquier cliente.':'Un programa es la rutina completa de varios días (ej. N1 · 4 días · Mujer).'}</div>
+   <div class="note" style="margin:8px 0">${k==='workout'?'Un workout es una sola sesión de un día (ej. Tren superior). Puedes sumarlo al programa de cualquier cliente.':'Un programa es el plan completo de varios días: cada día es un workout (ej. N1 · 4 días · Mujer).'}</div>
    <div class="crumbs"><button class="lblbtn" data-drop="" data-act="rtlbopen" data-id="">${tkLbl(k)}</button>${crumbs.map(c=>` › <button class="lblbtn" data-drop="${c.id}" data-act="rtlbopen" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div><div class="note" style="margin:0 0 8px;font-size:12px">Arrastra un elemento sobre una carpeta (o sobre la ruta de arriba) para moverlo.</div>
    ${subs.map(x=>`<div class="pfrow rtfold" draggable="true" data-drag="f:${x.id}" data-drop="${x.id}"><button class="rtfb" data-act="rtlbopen" data-id="${x.id}"><i>📁</i><span><b>${esc(x.name)}</b><small>${cnt(x.id)} elementos</small></span></button><span class="rtfa"><button class="rtb" data-act="rtlbren" data-id="${x.id}" aria-label="Renombrar">✎</button><button class="rtb" data-act="rtlbdelf" data-id="${x.id}" aria-label="Eliminar carpeta">✕</button></span></div>`).join('')}
    ${items.map(t=>`<button class="pfrow rtitem" draggable="true" data-drag="t:${t.id}" data-act="rttpl" data-id="${t.id}"><span><b>${esc(t.name)}</b><small>${t.days.length} ${t.days.length===1?'día':'días'}</small></span><span>›</span></button>`).join('')}
    ${(!subs.length&&!items.length)?'<div class="note">Esta carpeta está vacía.</div>':''}
    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-act="rtlbnewf" style="flex:1">+ Carpeta</button><button class="btn solid" data-act="rtlbnew" style="flex:1">+ ${k==='workout'?'Workout':'Programa'}</button></div>
    ${(!RT.tpls.length)?'<button class="btn" data-act="rtseed" style="width:100%;margin-top:8px">Cargar los 6 programas N1 de ERRE</button>':''}</section>
-   <section class="sec"><div class="sec-h"><b>Ejercicios propios</b></div><div class="note">¿Falta un ejercicio en la biblioteca? Agrégalo y queda disponible para todas las rutinas.</div>
+   <section class="sec"><div class="sec-h"><b>Ejercicios propios</b></div><div class="note">¿Falta un ejercicio en la biblioteca? Agrégalo y queda disponible para todos los programas.</div>
    <input class="fld" id="cxN" placeholder="Nombre del ejercicio"><input class="fld" id="cxP" placeholder="Patrón (ej. Sentadilla)" style="margin-top:6px"><input class="fld" id="cxM" placeholder="Músculo" style="margin-top:6px">
    <select class="fld" id="cxE" style="margin-top:6px">${['Máquina','Mancuerna','Barra','Polea','Banda','Peso corporal'].map(x=>`<option>${x}</option>`).join('')}</select>
    <button class="btn solid" data-act="cxadd" style="width:100%;margin-top:8px">Agregar ejercicio</button></section>`;
@@ -3861,13 +3861,13 @@ document.addEventListener('click',async e=>{
   e.stopPropagation();
   const di=+t.dataset.di,bk=t.dataset.bk,ii=+t.dataset.ii;
   if(a==='rtdelroutine'){
-    if(!confirm('¿Quitar la rutina actual de este cliente? Dejará de verla en su app. Las plantillas no se tocan y puedes asignarle otra o empezar en blanco.'))return;
-    try{await DB.delRoutine(CP.cid);CP.routine=null;CP.err='';coachRender();toast('Rutina quitada');}catch(x){CP.err='No se pudo quitar la rutina.';coachRender();}return;}
+    if(!confirm('¿Quitar el programa actual de este cliente? Dejará de verla en su app. Las plantillas no se tocan y puedes asignarle otra o empezar en blanco.'))return;
+    try{await DB.delRoutine(CP.cid);CP.routine=null;CP.err='';coachRender();toast('Programa quitado');}catch(x){CP.err='No se pudo quitar la rutina.';coachRender();}return;}
   if(a==='rtedit'){rtOpen('client',{cid:CP.cid,name:CP.routine.name,days:CP.routine.days});}
-  else if(a==='rtblank'){if(CP.routine&&!confirm('Esto reemplaza la rutina actual al guardar. ¿Continuar?'))return;rtOpen('client',{cid:CP.cid,name:'Rutina de '+((CP.d.profile.full_name||'cliente').split(' ')[0]),days:[RD.torsoC(1)]});}
+  else if(a==='rtblank'){if(CP.routine&&!confirm('Esto reemplaza el programa actual al guardar. ¿Continuar?'))return;rtOpen('client',{cid:CP.cid,name:'Rutina de '+((CP.d.profile.full_name||'cliente').split(' ')[0]),days:[RD.torsoC(1)]});}
   else if(a==='rtapply'){const tp=RT.tpls.find(x=>x.id===t.dataset.id);if(!tp)return;
     if(tp.tkind==='workout'){const base=(CP.routine&&CP.routine.days)||[];rtOpen('client',{cid:CP.cid,name:(CP.routine&&CP.routine.name)||('Rutina de '+((CP.d.profile.full_name||'cliente').split(' ')[0])),days:base.concat(rtClone(tp.days))});RT.dirty=true;RT.sel=RT.days.length-1;rtShow();}
-    else{if(CP.routine&&CP.routine.days&&CP.routine.days.length&&!confirm('Esto reemplaza la rutina actual de este cliente al guardar. ¿Continuar?'))return;
+    else{if(CP.routine&&CP.routine.days&&CP.routine.days.length&&!confirm('Esto reemplaza el programa actual de este cliente al guardar. ¿Continuar?'))return;
       rtOpen('client',{cid:CP.cid,name:tp.name,days:tp.days});RT.dirty=true;}}
   else if(a==='rtback'){if(RT.dirty&&!confirm('Tus cambios quedan guardados como borrador y podrás continuar después. ¿Salir del editor?'))return;rtClose();if(RT.kind==='template'){coachHome();}else{coachRender();}}
   else if(a==='rtday'){RT.sel=+t.dataset.i;rtShow();}
@@ -3940,7 +3940,7 @@ document.addEventListener('click',async e=>{
       if(RT.kind==='client'){await DB.saveRoutine(RT.cid,RT.name.trim(),RT.days,ME.id);CP.routine={name:RT.name.trim(),days:rtClone(RT.days)};
         try{await DB.sendCoach(RT.cid,ME.id,'Actualicé tu rutina. Revísala en la pestaña Entrenar de tu app.');}catch(x){}}
       else{const r=await DB.saveTemplate(RT.id,RT.name.trim(),RT.days,ME.id,RT.tkind,RT.folder||null);RT.id=r&&r.id||RT.id;await rtLoadTpls();}
-      draftClear();RT.dirty=false;RT.busy=false;toast(RT.kind==='client'?'Rutina publicada ✓':'Plantilla guardada ✓');rtClose();if(RT.kind==='template')coachHome();else coachRender();
+      draftClear();RT.dirty=false;RT.busy=false;toast(RT.kind==='client'?'Programa publicado ✓':'Plantilla guardada ✓');rtClose();if(RT.kind==='template')coachHome();else coachRender();
     }catch(x){console.warn(x);RT.busy=false;RT.err='No se pudo guardar. Intenta de nuevo.';rtShow();}}
   else if(a==='rtastpl'){const n=prompt('Nombre del programa',RT.name||'');if(!n)return;
     try{await DB.saveTemplate(null,n.trim(),RT.days,ME.id,'program',null);await rtLoadTpls();toast('Guardado en Programas ✓');}catch(x){RT.err='No se pudo guardar.';rtShow();}}
