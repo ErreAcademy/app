@@ -500,6 +500,22 @@ header.top .who small{display:block;color:var(--gray);font-size:12px}
 .rtwrap{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:24px;align-items:start}
 .rtlib{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;margin-top:14px}
 .rtnum{width:22px;flex:0 0 22px;text-align:center;font-size:12px;color:var(--gray);font-weight:600}
+.thm{width:46px;height:46px;flex:0 0 46px;border-radius:9px;overflow:hidden;background:var(--line);display:inline-flex;align-items:center;justify-content:center;position:relative}
+.thm img{width:100%;height:100%;object-fit:cover;display:block}
+.thm.ph{font-weight:700;color:var(--gray);font-size:16px;text-transform:uppercase}
+.thm.big{width:84px;height:84px;flex:0 0 84px;border-radius:12px}
+.rtname{display:flex;align-items:center;gap:10px}.rtnm{min-width:0;flex:1}.rtnm b,.rtnm small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pkrow{gap:10px}.pkt{flex:1;min-width:0}
+.pend{display:flex;gap:12px;border:1.5px solid var(--ink);background:var(--card);border-radius:14px;padding:12px;margin:10px 0}
+.pendb{flex:1;min-width:0}.pendb b{display:block;font-size:14px}.pendb small{display:block;font-size:12px;color:var(--gray)}
+.pendbtn{display:flex;gap:8px;margin-top:10px}.pendbtn .btn{flex:1}
+.crumbs{font-size:13px;margin:6px 0 8px}.crumbs .lblbtn{font-size:13px;color:var(--ink)}
+.rtfold{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.rtfb{display:flex;align-items:center;gap:10px;background:none;border:0;text-align:left;flex:1;padding:6px 0}.rtfb i{font-style:normal;font-size:22px}
+.rtfb b{display:block;font-size:14px}.rtfb small{display:block;font-size:12px;color:var(--gray)}.rtfa{display:flex;gap:4px}
+.rtitem{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 0;display:flex;justify-content:space-between;align-items:center}
+.rtitem b{display:block;font-size:14px}.rtitem small{display:block;font-size:12px;color:var(--gray)}
+.exo .thm{width:40px;height:40px;flex:0 0 40px;margin-right:10px}
 </style>
 </head>
 <body>
@@ -1215,7 +1231,7 @@ function exHTML(d,b,i,it,pr,key,L){
   const meta=(!warm&&!it.extra&&!it.fixed)?`<div class="meta"><button data-act="info" data-v="descanso">Descanso <b>${pr.rest}</b></button><button data-act="info" data-v="rir">RIR <b>${pr.rir}</b></button><button data-act="info" data-v="tempo">Tempo <b>${pr.tempo}</b></button></div>`:'';
   return `<div class="ex2${open?' open':''}">
     <div class="exrow">
-      <button class="exo" data-act="exp" data-k="${ek}"><span class="exn"><b>${x.n}</b><small>${summ}${swapped?' · Sustituido':''}${it.extra?' · Añadido por ti':''}</small></span>
+      <button class="exo" data-act="exp" data-k="${ek}">${typeof thumb==='function'?thumb(exId):''}<span class="exn"><b>${x.n}</b><small>${summ}${swapped?' · Sustituido':''}${it.extra?' · Añadido por ti':''}</small></span>
       ${warm?'':`<span class="exs${all?' ok':''}">${all?'✓':dn+'/'+pr.sets}</span>`}<i class="chev">›</i></button>
       ${warm?`<button class="xchk${all?' on':''}" data-act="wdone" data-k="${key}" data-n="${pr.sets}" aria-label="Hecho">✓</button>`:''}
     </div>
@@ -1856,10 +1872,14 @@ function realDB(){
     async saveRoutine(cid,name,days,uid){const ex=await sb.from('routines').select('id').eq('client_id',cid).eq('is_template',false).maybeSingle();if(ex.error)throw ex.error;
       const row={name,days,updated_at:new Date().toISOString()};
       if(ex.data){ok(await sb.from('routines').update(row).eq('id',ex.data.id));}else{ok(await sb.from('routines').insert(Object.assign({client_id:cid,is_template:false,created_by:uid},row)));}},
-    async templates(){return ok(await sb.from('routines').select('id,name,days').eq('is_template',true).order('name'));},
-    async saveTemplate(id,name,days,uid){const row={name,days,updated_at:new Date().toISOString()};
+    async templates(){return ok(await sb.from('routines').select('id,name,days,tkind,folder_id').eq('is_template',true).order('name'));},
+    async saveTemplate(id,name,days,uid,tkind,folder_id){const row={name,days,updated_at:new Date().toISOString()};if(tkind)row.tkind=tkind;if(folder_id!==undefined)row.folder_id=folder_id;
       if(id){ok(await sb.from('routines').update(row).eq('id',id));return {id};}
-      const r=ok(await sb.from('routines').insert(Object.assign({client_id:null,is_template:true,created_by:uid},row)).select('id').single());return r;},
+      return ok(await sb.from('routines').insert(Object.assign({client_id:null,is_template:true,created_by:uid},row)).select('id').single());},
+    async folders(){return ok(await sb.from('routine_folders').select('id,kind,parent_id,name').order('name'));},
+    async addFolder(kind,parent_id,name,uid){return ok(await sb.from('routine_folders').insert({kind,parent_id,name,created_by:uid}).select('id,kind,parent_id,name').single());},
+    async renameFolder(id,name){ok(await sb.from('routine_folders').update({name}).eq('id',id));},
+    async delFolder(id){ok(await sb.from('routine_folders').delete().eq('id',id));},
     async delTemplate(id){ok(await sb.from('routines').delete().eq('id',id));},
     async customEx(){return ok(await sb.from('custom_exercises').select('id,data'));},
     async saveCustomEx(id,data,uid){ok(await sb.from('custom_exercises').insert({id,data,created_by:uid}));},
@@ -2236,7 +2256,7 @@ const RT_SEED=[
 ].map(([name,l])=>({name,days:l.map((k,i)=>RD[k](i+1))}));
 
 /* ---------- estado del editor ---------- */
-const RT={x:{},pk:null,open:false,kind:'client',id:null,cid:null,name:'',days:[],dirty:false,sel:0,picker:null,tpls:[],err:'',busy:false};
+const RT={x:{},pk:null,pend:null,fo:[],lb:{kind:'program',folder:null},tkind:'program',folder:null,open:false,kind:'client',id:null,cid:null,name:'',days:[],dirty:false,sel:0,picker:null,tpls:[],err:'',busy:false};
 const RDEF={tempo:'2-0-1-0',rir:'2',rest:75};
 const rtClone=o=>JSON.parse(JSON.stringify(o));
 const rtBlock=(d,k)=>d.blocks.find(b=>b.k===k);
@@ -2253,6 +2273,7 @@ function rtWarn(d){
   Object.keys(seen).forEach(p=>{if(seen[p]>1)w.push('Patrón repetido: '+p+'.');});
   return w;
 }
+const thumb=(k,c)=>{const e=E[k]||{};return e.yt?`<span class="thm ${c||''}"><img src="https://i.ytimg.com/vi/${e.yt}/hqdefault.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></span>`:`<span class="thm ph ${c||''}">${esc((e.g||'·').slice(0,1))}</span>`;};
 function rtSummary(it){
   if(it.fixed)return `${esc(it.fixed.sets)} × ${esc(it.fixed.reps)}`;
   const ov=it.ov||{};const pr=(typeof presc==='function')?presc(it):{};
@@ -2261,7 +2282,7 @@ function rtSummary(it){
 function rtItemHTML(di,bk,ii,it,num){
   const fixed=!!it.fixed,pre=`data-di="${di}" data-bk="${bk}" data-ii="${ii}"`,key=di+'|'+bk+'|'+ii,ex=E[it.ex]||{n:'Ejercicio',pat:'',eq:''};
   const ov=it.ov||{},more=!!RT.x[key];
-  return `<div class="rtit"><div class="rtrow"><span class="rtnum">${num||''}</span><button class="rtname" data-act="rtpick" ${pre}><b>${esc(ex.n)}</b><small>${esc([ex.g,ex.pat,ex.eq].filter(Boolean).join(' · '))}</small></button>
+  return `<div class="rtit"><div class="rtrow"><span class="rtnum">${num||''}</span><button class="rtname" data-act="rtpick" ${pre}>${thumb(it.ex)}<span class="rtnm"><b>${esc(ex.n)}</b><small>${esc([ex.g,ex.pat,ex.eq].filter(Boolean).join(' · '))}</small></span></button>
    <span class="rtbtns"><button class="rtb" data-act="rtmove" data-d="-1" ${pre} aria-label="Subir">↑</button><button class="rtb" data-act="rtmove" data-d="1" ${pre} aria-label="Bajar">↓</button><button class="rtb" data-act="rtdel" ${pre} aria-label="Quitar">✕</button></span></div>
    ${fixed?`<div class="rtgrid"><label>Series<input class="fld" data-rt="fsets" ${pre} inputmode="numeric" value="${esc(it.fixed.sets)}"></label><label>Reps / tiempo<input class="fld" data-rt="freps" ${pre} value="${esc(it.fixed.reps)}"></label></div>`:
    `<div class="rtgrid g3"><label>Series<input class="fld" data-rt="ovs" ${pre} inputmode="numeric" placeholder="auto" value="${esc(ov.sets||'')}"></label><label>Reps<input class="fld" data-rt="ovr" ${pre} placeholder="auto" value="${esc(ov.reps||'')}"></label>
@@ -2275,7 +2296,19 @@ function pkList(P0,act){
   const P=P0||RT.pk,q=nrm(P.q);act=act||'rtpickex';
   let ids=Object.keys(E).filter(k=>(P.g==='Todos'||E[k].g===P.g)&&(!P.pat||E[k].pat===P.pat)&&(!q||nrm(E[k].n+' '+(E[k].pat||'')+' '+(E[k].mus||'')+' '+(E[k].eq||'')).includes(q)));
   ids.sort((a,b)=>(E[a].lvl||1)-(E[b].lvl||1)||E[a].n.localeCompare(E[b].n));
-  return `<div class="pkcount">${ids.length} ejercicios</div>`+ids.slice(0,80).map(k=>`<button class="pkrow" data-act="${act}" data-id="${k}"><span><b>${esc(E[k].n)}${E[k].yt?' <em class="pkyt">▶</em>':''}</b><small>${esc([E[k].s||E[k].mus,E[k].eq].filter(Boolean).join(' · '))}</small></span><i class="pklv l${E[k].lvl||1}">${LVN[E[k].lvl||1]}</i></button>`).join('')+(ids.length>80?'<div class="note">Afina con un filtro o la búsqueda.</div>':'');
+  return `<div class="pkcount">${ids.length} ejercicios</div>`+ids.slice(0,80).map(k=>`<button class="pkrow" data-act="${act}" data-id="${k}">${thumb(k)}<span class="pkt"><b>${esc(E[k].n)}${E[k].yt?' <em class="pkyt">▶</em>':''}</b><small>${esc([E[k].s||E[k].mus,E[k].eq].filter(Boolean).join(' · '))}</small></span><i class="pklv l${E[k].lvl||1}">${LVN[E[k].lvl||1]}</i></button>`).join('')+(ids.length>80?'<div class="note">Afina con un filtro o la búsqueda.</div>':'');
+}
+function pendSave(P){if(!P)return;const g=i=>(document.getElementById(i)||{}).value;P.s=g('pdS')||'';P.r=g('pdR')||'';P.k=g('pdK')||'';}
+function pendHTML(P,bk){
+  if(!P)return '';const e=E[P.id]||{},w=bk==='warm'||bk==='calm',bn=(RT_BK.find(x=>x[0]===bk)||[])[1]||'';
+  return `<div class="pend">${thumb(P.id,'big')}<div class="pendb"><b>${esc(e.n)}</b><small>${esc([e.g,e.pat,e.eq].filter(Boolean).join(' · '))}</small>
+   <div class="rtgrid g3" style="margin-top:8px"><label>Series<input class="fld" id="pdS" value="${esc(P.s||'')}" inputmode="numeric" placeholder="${w?'2':'auto'}"></label><label>${w?'Reps / tiempo':'Reps'}<input class="fld" id="pdR" value="${esc(P.r||'')}" placeholder="${w?(bk==='calm'?'30 s':'10-12'):'auto'}"></label>${w?'':`<label>Carga kg<input class="fld" id="pdK" value="${esc(P.k||'')}" inputmode="decimal"></label>`}</div>
+   <div class="pendbtn"><button class="btn solid" data-act="rtpendok">Añadir a ${esc(bn)}</button><button class="btn" data-act="rtpendno">Cancelar</button></div></div></div>`;
+}
+function rtPendAdd(di,bk,P){
+  const S_=(document.getElementById('pdS')||{}).value||'',R_=(document.getElementById('pdR')||{}).value||'',K_=(document.getElementById('pdK')||{}).value||'';
+  rtAddItem(di,bk,P.id);const b=rtBlock(RT.days[di],bk),it=b.items[b.items.length-1];
+  if(it.fixed){if(S_)it.fixed.sets=S_;if(R_)it.fixed.reps=R_;}else{it.ov={};if(+S_)it.ov.sets=+S_;if(R_)it.ov.reps=R_;if(!Object.keys(it.ov).length)delete it.ov;if(K_)it.ref=+String(K_).replace(',','.')||0;}
 }
 function pkRender(){
   const P=RT.pk,pats={};Object.keys(E).forEach(k=>{if(P.g==='Todos'||E[k].g===P.g){const p=E[k].pat;if(p)pats[p]=1;}});
@@ -2283,6 +2316,7 @@ function pkRender(){
    <input class="fld" id="pkQ" placeholder="Buscar ejercicio…" value="${esc(P.q)}" autocomplete="off">
    <div class="pkchips">${['Todos'].concat(R_GRPX).map(g=>`<button class="chip${P.g===g?' on':''}" data-act="rtpkg" data-v="${g}">${g}</button>`).join('')}</div>
    <div class="pkchips pat">${Object.keys(pats).sort().map(p=>`<button class="chip sm${P.pat===p?' on':''}" data-act="rtpkp" data-v="${esc(p)}">${esc(p)}</button>`).join('')}</div>
+   ${P.pend?pendHTML(P.pend,P.bk):''}
    <div id="pkList">${pkList()}</div>`;
   sheet(html);const s=document.getElementById('sheet');s.scrollTop=0;
 }
@@ -2294,12 +2328,13 @@ document.addEventListener('input',e=>{if(e.target.id==='lbQ'){RT.lib.q=e.target.
 const RT_BT={warm:'Calentamiento',main:'Rutina central (básicos)',acc:'Accesorios y core',calm:'Vuelta a la calma'};
 function rtEditorHTML(){
   const days=RT.days,d=days[RT.sel];
-  const hdr=`<button class="lblbtn" data-act="rtback" style="color:var(--gray);margin:10px 0 4px">‹ ${RT.kind==='template'?'Plantillas':'Volver al cliente'}</button>
-   <h2 class="h2" style="margin-top:4px">${RT.kind==='template'?'Plantilla':'Rutina'}</h2>
-   <label class="pfl">Nombre</label><input class="fld" data-rt="name" value="${esc(RT.name)}" placeholder="Ej. N1 · 4 días · Mujer">
+  const hdr=`<button class="lblbtn" data-act="rtback" style="color:var(--gray);margin:10px 0 4px">‹ ${RT.kind==='template'?'Editor de rutinas':'Volver al cliente'}</button>
+   <h2 class="h2" style="margin-top:4px">${RT.kind==='template'?(RT.tkind==='workout'?'Workout':'Programa'):'Rutina'}</h2>
+   <label class="pfl">Nombre</label><input class="fld" data-rt="name" value="${esc(RT.name)}" placeholder="${RT.tkind==='workout'?'Ej. Tren superior · Empuje':'Ej. N1 · 4 días · Mujer'}">
+   ${RT.kind==='template'?`<label class="pfl" style="margin-top:8px">Carpeta</label><select class="fld" data-rt="folder">${fOpts(RT.tkind,RT.folder)}</select>`:''}
    ${RT.err?`<div class="note" style="border-color:var(--red);color:var(--red-strong)">${RT.err}</div>`:''}
    <div class="note">Series y repeticiones de básicos y accesorios siguen el mesociclo de 6 semanas. Si escribes un valor en "Series" o "Repeticiones", ese valor manda para ese ejercicio. En blanco = automático.</div>
-   <div class="chips" style="margin:10px 0">${days.map((x,i)=>`<button class="chip${RT.sel===i?' on':''}" data-act="rtday" data-i="${i}">${esc(x.label)}</button>`).join('')}<button class="chip" data-act="rtaddday">+ Día</button></div>`;
+   ${RT.kind==='template'&&RT.tkind==='workout'?'':`<div class="chips" style="margin:10px 0">${days.map((x,i)=>`<button class="chip${RT.sel===i?' on':''}" data-act="rtday" data-i="${i}">${esc(x.label)}</button>`).join('')}<button class="chip" data-act="rtaddday">+ Día</button></div>`}`;
   if(!d)return hdr+'<div class="note">Aún no hay días. Pulsa "+ Día".</div>';
   const warn=rtWarn(d);
   let num=0;
@@ -2310,11 +2345,11 @@ function rtEditorHTML(){
   return hdr+`<section class="sec"><div class="sec-h"><b>${esc(d.label)}</b></div>
     <label class="pfl">Nombre del día</label><input class="fld" data-rt="dname" value="${esc(d.name)}">
     ${cardioOpts?`<label class="pfl" style="margin-top:8px">Cardio por defecto</label><select class="fld" data-rt="dcardio">${cardioOpts}</select>`:''}
-    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-act="rtdup" style="flex:1">Duplicar día</button><button class="btn" data-act="rtdelday" style="flex:1">Eliminar día</button></div></section>
+    ${RT.kind==='template'&&RT.tkind==='workout'?'':`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-act="rtdup" style="flex:1">Duplicar día</button><button class="btn" data-act="rtdelday" style="flex:1">Eliminar día</button></div>`}</section>
     ${warn.length?`<div class="note" style="border-color:var(--red)"><b>Avisos del método</b><br>${warn.map(esc).join('<br>')}</div>`:''}
     ${blocks}
     <button class="btn solid" data-act="rtsave" style="width:100%;margin-top:14px;padding:14px"${RT.busy?' disabled':''}>${RT.busy?'Guardando…':(RT.kind==='template'?'Guardar plantilla':'Guardar y publicar al cliente')}</button>
-    ${RT.kind==='client'?`<button class="btn" data-act="rtastpl" style="width:100%;margin-top:8px">Guardar como plantilla</button>`:`<button class="btn" data-act="rtdeltpl" style="width:100%;margin-top:8px;color:var(--red-strong)">Eliminar plantilla</button>`}`;
+    ${RT.kind==='client'?`<button class="btn" data-act="rtasday" style="width:100%;margin-top:8px">Guardar este día como workout</button><button class="btn" data-act="rtastpl" style="width:100%;margin-top:8px">Guardar la rutina completa como programa</button>`:`<button class="btn" data-act="rtdeltpl" style="width:100%;margin-top:8px;color:var(--red-strong)">Eliminar plantilla</button>`}`;
 }
 const RTW=()=>window.innerWidth>=1000;
 RT.lib={g:'Todos',pat:'',q:'',bk:'main'};
@@ -2327,6 +2362,7 @@ function libPanel(){
    <input class="fld" id="lbQ" placeholder="Buscar ejercicio…" value="${esc(L.q)}" autocomplete="off" style="margin-top:8px">
    <div class="pkchips">${['Todos'].concat(R_GRPX).map(g=>`<button class="chip${L.g===g?' on':''}" data-act="rtlibg" data-v="${g}">${g}</button>`).join('')}</div>
    <div class="pkchips pat">${Object.keys(pats).sort().map(p=>`<button class="chip sm${L.pat===p?' on':''}" data-act="rtlibp" data-v="${esc(p)}">${esc(p)}</button>`).join('')}</div>
+   ${RT.pend?pendHTML(RT.pend,L.bk):''}
    <div id="lbList">${pkList(L,'rtlibadd')}</div>`;
 }
 function rtShow(){const app=document.getElementById('app'),ed=authHead()+rtEditorHTML(),w=RTW();app.classList.toggle('wide',w);
@@ -2337,18 +2373,31 @@ function rtFixIds(){RT.days.forEach((d,i)=>{d.id='d'+(i+1);d.label='Día '+(i+1)
 /* tarjeta "Rutina" dentro de la ficha del cliente */
 function rtClientTab(){
   const has=CP.routine&&CP.routine.days&&CP.routine.days.length;
-  const tp=RT.tpls.map(t=>`<button class="pfrow" data-act="rtapply" data-id="${t.id}" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 0"><span><b>${esc(t.name)}</b><small>${t.days.length} días</small></span><span>›</span></button>`).join('');
+  const row=(t,lbl)=>`<button class="pfrow rtitem" data-act="rtapply" data-id="${t.id}"><span><b>${esc(t.name)}</b><small>${t.days.length} ${t.days.length===1?'día':'días'}${t.folder_id?' · '+esc(fpath(t.folder_id)):''} · ${lbl}</small></span><span>›</span></button>`;
+  const P=RT.tpls.filter(t=>(t.tkind||'program')==='program'),W=RT.tpls.filter(t=>t.tkind==='workout');
   return `<section class="sec"><div class="sec-h"><b>Rutina actual</b><em>${has?CP.routine.days.length+' días':'Sin rutina'}</em></div>
-    ${has?`<div class="note"><b>${esc(CP.routine.name||'Rutina')}</b> · ${CP.routine.days.map(x=>esc(x.name)).join(' · ')}</div><button class="btn solid" data-act="rtedit" style="width:100%;margin-top:8px;padding:12px">Editar rutina</button>`:'<div class="note">Esta persona aún no tiene rutina. Aplica una plantilla o empieza en blanco.</div>'}
+    ${has?`<div class="note"><b>${esc(CP.routine.name||'Rutina')}</b> · ${CP.routine.days.map(x=>esc(x.name)).join(' · ')}</div><button class="btn solid" data-act="rtedit" style="width:100%;margin-top:8px;padding:12px">Editar rutina</button>`:'<div class="note">Esta persona aún no tiene rutina. Aplica un programa o empieza en blanco.</div>'}
     <button class="btn" data-act="rtblank" style="width:100%;margin-top:8px">Empezar en blanco</button></section>
-   <section class="sec"><div class="sec-h"><b>Aplicar plantilla</b><em>${RT.tpls.length}</em></div>${tp||'<div class="note">Aún no tienes plantillas. Créalas desde el inicio del panel.</div>'}
-    ${has?'<div class="note">Aplicar una plantilla reemplaza la rutina actual (te pedimos confirmación).</div>':''}</section>`;
+   <section class="sec"><div class="sec-h"><b>Aplicar un programa</b><em>${P.length}</em></div>${P.map(t=>row(t,'reemplaza la rutina')).join('')||'<div class="note">Aún no tienes programas. Créalos en el Editor de rutinas del inicio.</div>'}</section>
+   <section class="sec"><div class="sec-h"><b>Sumar un workout</b><em>${W.length}</em></div>${W.map(t=>row(t,'se suma como un día nuevo')).join('')||'<div class="note">Aún no tienes workouts. Guarda un día como workout desde el editor.</div>'}</section>`;
 }
+const fpath=id=>{const o=[];let f=RT.fo.find(x=>x.id===id);while(f){o.unshift(f.name);f=RT.fo.find(x=>x.id===f.parent_id);}return o.join(' › ');};
+const fOpts=(kind,sel)=>`<option value="">(Sin carpeta)</option>`+RT.fo.filter(f=>f.kind===kind).map(f=>({id:f.id,p:fpath(f.id)})).sort((a,b)=>a.p.localeCompare(b.p)).map(f=>`<option value="${f.id}"${f.id===sel?' selected':''}>${esc(f.p)}</option>`).join('');
+const tkLbl=k=>k==='workout'?'Workouts':'Programas';
 function rtTplList(){
-  return `<section class="sec"><div class="sec-h"><b>Plantillas</b><em>${RT.tpls.length}</em></div>
-   ${RT.tpls.map(t=>`<button class="pfrow" data-act="rttpl" data-id="${t.id}" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 0"><span><b>${esc(t.name)}</b><small>${t.days.length} días</small></span><span>›</span></button>`).join('')||'<div class="note">Sin plantillas todavía.</div>'}
-   <button class="btn" data-act="rtnewtpl" style="width:100%;margin-top:8px">+ Nueva plantilla</button>
-   ${RT.tpls.length?'':'<button class="btn solid" data-act="rtseed" style="width:100%;margin-top:8px">Cargar las 6 plantillas N1 de ERRE</button>'}</section>
+  const L=RT.lb,k=L.kind,cur=L.folder,crumbs=[];let f=RT.fo.find(x=>x.id===cur);while(f){crumbs.unshift(f);f=RT.fo.find(x=>x.id===f.parent_id);}
+  const subs=RT.fo.filter(x=>x.kind===k&&(x.parent_id||null)===(cur||null)).sort((a,b)=>a.name.localeCompare(b.name));
+  const items=RT.tpls.filter(x=>(x.tkind||'program')===k&&(x.folder_id||null)===(cur||null));
+  const cnt=id=>{const ids=new Set([id]);let ch=true;while(ch){ch=false;RT.fo.forEach(x=>{if(ids.has(x.parent_id)&&!ids.has(x.id)){ids.add(x.id);ch=true;}});}return RT.tpls.filter(t=>ids.has(t.folder_id)).length;};
+  return `<section class="sec"><div class="sec-h"><b>Editor de rutinas</b><em>${RT.tpls.length}</em></div>
+   <div class="chips">${['workout','program'].map(x=>`<button class="chip${k===x?' on':''}" data-act="rtlbkind" data-v="${x}">${tkLbl(x)}</button>`).join('')}</div>
+   <div class="note" style="margin:8px 0">${k==='workout'?'Un workout es un solo día de entreno (ej. Tren superior). Puedes sumarlo a la rutina de cualquier cliente.':'Un programa es la rutina completa de varios días (ej. N1 · 4 días · Mujer).'}</div>
+   <div class="crumbs"><button class="lblbtn" data-act="rtlbopen" data-id="">${tkLbl(k)}</button>${crumbs.map(c=>` › <button class="lblbtn" data-act="rtlbopen" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>
+   ${subs.map(x=>`<div class="pfrow rtfold"><button class="rtfb" data-act="rtlbopen" data-id="${x.id}"><i>📁</i><span><b>${esc(x.name)}</b><small>${cnt(x.id)} elementos</small></span></button><span class="rtfa"><button class="rtb" data-act="rtlbren" data-id="${x.id}" aria-label="Renombrar">✎</button><button class="rtb" data-act="rtlbdelf" data-id="${x.id}" aria-label="Eliminar carpeta">✕</button></span></div>`).join('')}
+   ${items.map(t=>`<button class="pfrow rtitem" data-act="rttpl" data-id="${t.id}"><span><b>${esc(t.name)}</b><small>${t.days.length} ${t.days.length===1?'día':'días'}</small></span><span>›</span></button>`).join('')}
+   ${(!subs.length&&!items.length)?'<div class="note">Esta carpeta está vacía.</div>':''}
+   <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-act="rtlbnewf" style="flex:1">+ Carpeta</button><button class="btn solid" data-act="rtlbnew" style="flex:1">+ ${k==='workout'?'Workout':'Programa'}</button></div>
+   ${(!RT.tpls.length)?'<button class="btn" data-act="rtseed" style="width:100%;margin-top:8px">Cargar los 6 programas N1 de ERRE</button>':''}</section>
    <section class="sec"><div class="sec-h"><b>Ejercicios propios</b></div><div class="note">¿Falta un ejercicio en la biblioteca? Agrégalo y queda disponible para todas las rutinas.</div>
    <input class="fld" id="cxN" placeholder="Nombre del ejercicio"><input class="fld" id="cxP" placeholder="Patrón (ej. Sentadilla)" style="margin-top:6px"><input class="fld" id="cxM" placeholder="Músculo" style="margin-top:6px">
    <select class="fld" id="cxE" style="margin-top:6px">${['Máquina','Mancuerna','Barra','Polea','Banda','Peso corporal'].map(x=>`<option>${x}</option>`).join('')}</select>
@@ -2360,6 +2409,7 @@ function rtField(t){const d=RT.days[+t.dataset.di];if(!d)return null;const b=rtB
 function rtInput(e){
   const t=e.target;if(!t.dataset||!t.dataset.rt||!RT.open)return;const k=t.dataset.rt,v=t.value;RT.dirty=true;
   if(k==='name'){RT.name=v;return;}
+  if(k==='folder'){RT.folder=v||null;return;}
   if(k==='dname'){RT.days[RT.sel].name=v;return;}
   if(k==='dcardio'){RT.days[RT.sel].cardioDefault=v;return;}
   const it=rtField(t);if(!it)return;
@@ -2372,9 +2422,9 @@ function rtInput(e){
 }
 document.addEventListener('input',rtInput,true);
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.rt==='ex')rtInput(e);},true);
-async function rtLoadTpls(){try{RT.tpls=await DB.templates();}catch(e){console.warn(e);}}
+async function rtLoadTpls(){try{RT.tpls=await DB.templates();}catch(e){console.warn(e);}try{RT.fo=await DB.folders();}catch(e){console.warn(e);}}
 function rtOpen(kind,opt){
-  Object.assign(RT,{open:true,kind,id:opt.id||null,cid:opt.cid||null,name:opt.name||'',days:rtClone(opt.days||[]),dirty:false,sel:0,err:'',busy:false});
+  Object.assign(RT,{tkind:opt.tkind||'program',folder:opt.folder||null,pend:null,open:true,kind,id:opt.id||null,cid:opt.cid||null,name:opt.name||'',days:rtClone(opt.days||[]),dirty:false,sel:0,err:'',busy:false});
   if(!RT.days.length)RT.days.push(RD.torsoC(1));rtFixIds();rtShow();window.scrollTo(0,0);
 }
 function rtClose(){RT.open=false;const a=document.getElementById('app');if(a)a.classList.remove('wide');}
@@ -2384,8 +2434,10 @@ document.addEventListener('click',async e=>{
   const di=+t.dataset.di,bk=t.dataset.bk,ii=+t.dataset.ii;
   if(a==='rtedit'){rtOpen('client',{cid:CP.cid,name:CP.routine.name,days:CP.routine.days});}
   else if(a==='rtblank'){if(CP.routine&&!confirm('Esto reemplaza la rutina actual al guardar. ¿Continuar?'))return;rtOpen('client',{cid:CP.cid,name:'Rutina de '+((CP.d.profile.full_name||'cliente').split(' ')[0]),days:[RD.torsoC(1)]});}
-  else if(a==='rtapply'){const tp=RT.tpls.find(x=>x.id===t.dataset.id);if(!tp)return;if(CP.routine&&CP.routine.days&&CP.routine.days.length&&!confirm('Esto reemplaza la rutina actual de este cliente al guardar. ¿Continuar?'))return;
-    rtOpen('client',{cid:CP.cid,name:tp.name,days:tp.days});RT.dirty=true;}
+  else if(a==='rtapply'){const tp=RT.tpls.find(x=>x.id===t.dataset.id);if(!tp)return;
+    if(tp.tkind==='workout'){const base=(CP.routine&&CP.routine.days)||[];rtOpen('client',{cid:CP.cid,name:(CP.routine&&CP.routine.name)||('Rutina de '+((CP.d.profile.full_name||'cliente').split(' ')[0])),days:base.concat(rtClone(tp.days))});RT.dirty=true;RT.sel=RT.days.length-1;rtShow();}
+    else{if(CP.routine&&CP.routine.days&&CP.routine.days.length&&!confirm('Esto reemplaza la rutina actual de este cliente al guardar. ¿Continuar?'))return;
+      rtOpen('client',{cid:CP.cid,name:tp.name,days:tp.days});RT.dirty=true;}}
   else if(a==='rtback'){if(RT.dirty&&!confirm('Hay cambios sin guardar. ¿Salir sin guardar?'))return;rtClose();if(RT.kind==='template'){coachHome();}else{coachRender();}}
   else if(a==='rtday'){RT.sel=+t.dataset.i;rtShow();}
   else if(a==='rtaddday'){RT.days.push(RD.torsoC(RT.days.length+1));RT.days[RT.days.length-1].name='Nuevo día';rtFixIds();RT.sel=RT.days.length-1;RT.dirty=true;rtShow();}
@@ -2394,16 +2446,19 @@ document.addEventListener('click',async e=>{
   else if(a==='rtadd'){pkOpen('add',RT.sel,bk,-1);}
   else if(a==='rtpick'){pkOpen('replace',di,bk,ii);}
   else if(a==='rtmore'){const k=di+'|'+bk+'|'+ii;RT.x[k]=!RT.x[k];rtShow();}
-  else if(a==='rtlibbk'){RT.lib.bk=t.dataset.v;rtShow();}
-  else if(a==='rtlibg'){RT.lib.g=t.dataset.v;RT.lib.pat='';rtShow();}
-  else if(a==='rtlibp'){RT.lib.pat=RT.lib.pat===t.dataset.v?'':t.dataset.v;rtShow();}
-  else if(a==='rtlibadd'){rtAddItem(RT.sel,RT.lib.bk,t.dataset.id);rtShow();toast('Añadido a '+(RT_BK.find(x=>x[0]===RT.lib.bk)||[])[1]);}
-  else if(a==='rtpkx'){closeSheet();}
+  else if(a==='rtlibbk'){pendSave(RT.pend);RT.lib.bk=t.dataset.v;rtShow();}
+  else if(a==='rtlibg'){pendSave(RT.pend);RT.lib.g=t.dataset.v;RT.lib.pat='';rtShow();}
+  else if(a==='rtlibp'){pendSave(RT.pend);RT.lib.pat=RT.lib.pat===t.dataset.v?'':t.dataset.v;rtShow();}
+  else if(a==='rtlibadd'){RT.pend={id:t.dataset.id};rtShow();const q=document.getElementById('pdS');if(q)q.focus();}
+  else if(a==='rtpendno'){if(RT.pk&&RT.pk.pend){RT.pk.pend=null;pkRender();}else{RT.pend=null;rtShow();}}
+  else if(a==='rtpendok'){if(RT.pk&&RT.pk.pend){const P=RT.pk;rtPendAdd(P.di,P.bk,P.pend);P.pend=null;RT.dirty=true;closeSheet();rtShow();toast('Ejercicio añadido ✓');}
+    else if(RT.pend){rtPendAdd(RT.sel,RT.lib.bk,RT.pend);RT.pend=null;RT.dirty=true;rtShow();toast('Ejercicio añadido ✓');}}
+  else if(a==='rtpkx'){RT.pk=null;closeSheet();}
   else if(a==='rtpkg'){RT.pk.g=t.dataset.v;RT.pk.pat='';pkRender();}
   else if(a==='rtpkp'){RT.pk.pat=RT.pk.pat===t.dataset.v?'':t.dataset.v;pkRender();}
   else if(a==='rtpickex'){const P=RT.pk,id=t.dataset.id;
     if(P.mode==='replace'){RT.days[P.di].blocks.find(b=>b.k===P.bk).items[P.ii].ex=id;}
-    else{rtAddItem(P.di,P.bk,id);}
+    else{P.pend={id};pkRender();return;}
     RT.dirty=true;closeSheet();rtShow();}
   else if(a==='rtdel'){const b=rtBlock(RT.days[di],bk);b.items.splice(ii,1);RT.dirty=true;rtShow();}
   else if(a==='rtmove'){const b=rtBlock(RT.days[di],bk),j=ii+(+t.dataset.d);if(j<0||j>=b.items.length)return;const x=b.items.splice(ii,1)[0];b.items.splice(j,0,x);RT.dirty=true;rtShow();}
@@ -2413,15 +2468,22 @@ document.addEventListener('click',async e=>{
     try{
       if(RT.kind==='client'){await DB.saveRoutine(RT.cid,RT.name.trim(),RT.days,ME.id);CP.routine={name:RT.name.trim(),days:rtClone(RT.days)};
         try{await DB.sendCoach(RT.cid,ME.id,'Actualicé tu rutina. Revísala en la pestaña Entrenar de tu app.');}catch(x){}}
-      else{const r=await DB.saveTemplate(RT.id,RT.name.trim(),RT.days,ME.id);RT.id=r&&r.id||RT.id;await rtLoadTpls();}
+      else{const r=await DB.saveTemplate(RT.id,RT.name.trim(),RT.days,ME.id,RT.tkind,RT.folder||null);RT.id=r&&r.id||RT.id;await rtLoadTpls();}
       RT.dirty=false;RT.busy=false;toast(RT.kind==='client'?'Rutina publicada ✓':'Plantilla guardada ✓');rtClose();if(RT.kind==='template')coachHome();else coachRender();
     }catch(x){console.warn(x);RT.busy=false;RT.err='No se pudo guardar. Intenta de nuevo.';rtShow();}}
-  else if(a==='rtastpl'){const n=prompt('Nombre de la plantilla',RT.name||'');if(!n)return;
-    try{await DB.saveTemplate(null,n.trim(),RT.days,ME.id);await rtLoadTpls();toast('Guardada como plantilla ✓');}catch(x){RT.err='No se pudo guardar la plantilla.';rtShow();}}
+  else if(a==='rtastpl'){const n=prompt('Nombre del programa',RT.name||'');if(!n)return;
+    try{await DB.saveTemplate(null,n.trim(),RT.days,ME.id,'program',null);await rtLoadTpls();toast('Guardado en Programas ✓');}catch(x){RT.err='No se pudo guardar.';rtShow();}}
+  else if(a==='rtasday'){const d=RT.days[RT.sel],n=prompt('Nombre del workout',d.name||'');if(!n)return;
+    try{await DB.saveTemplate(null,n.trim(),[rtClone(d)],ME.id,'workout',null);await rtLoadTpls();toast('Guardado en Workouts ✓');}catch(x){RT.err='No se pudo guardar.';rtShow();}}
+  else if(a==='rtlbkind'){RT.lb={kind:t.dataset.v,folder:null};coachRender();}
+  else if(a==='rtlbopen'){RT.lb.folder=t.dataset.id||null;coachRender();}
+  else if(a==='rtlbnewf'){const n=prompt('Nombre de la carpeta');if(!n||!n.trim())return;try{await DB.addFolder(RT.lb.kind,RT.lb.folder||null,n.trim(),ME.id);await rtLoadTpls();coachRender();}catch(x){toast('No se pudo crear la carpeta');}}
+  else if(a==='rtlbren'){const f=RT.fo.find(x=>x.id===t.dataset.id),n=prompt('Nuevo nombre',f&&f.name);if(!n||!n.trim())return;try{await DB.renameFolder(f.id,n.trim());await rtLoadTpls();coachRender();}catch(x){toast('No se pudo renombrar');}}
+  else if(a==='rtlbdelf'){const id=t.dataset.id;if(RT.fo.some(x=>x.parent_id===id)||RT.tpls.some(x=>x.folder_id===id)){toast('Primero vacía la carpeta');return;}if(!confirm('¿Eliminar esta carpeta?'))return;try{await DB.delFolder(id);await rtLoadTpls();coachRender();}catch(x){toast('No se pudo eliminar');}}
+  else if(a==='rtlbnew'){rtOpen('template',{name:'',tkind:RT.lb.kind,folder:RT.lb.folder,days:[RD.torsoC(1)]});}
   else if(a==='rtdeltpl'){if(!confirm('¿Eliminar esta plantilla?'))return;try{await DB.delTemplate(RT.id);await rtLoadTpls();RT.dirty=false;rtClose();coachHome();toast('Plantilla eliminada');}catch(x){RT.err='No se pudo eliminar.';rtShow();}}
-  else if(a==='rttpl'){const tp=RT.tpls.find(x=>x.id===t.dataset.id);if(tp)rtOpen('template',{id:tp.id,name:tp.name,days:tp.days});}
-  else if(a==='rtnewtpl'){rtOpen('template',{name:'',days:[RD.torsoC(1)]});}
-  else if(a==='rtseed'){try{for(const s of RT_SEED)await DB.saveTemplate(null,s.name,s.days,ME.id);await rtLoadTpls();coachHome();toast('Plantillas cargadas ✓');}catch(x){toast('No se pudieron cargar');}}
+  else if(a==='rttpl'){const tp=RT.tpls.find(x=>x.id===t.dataset.id);if(tp)rtOpen('template',{id:tp.id,name:tp.name,days:tp.days,tkind:tp.tkind||'program',folder:tp.folder_id});}
+  else if(a==='rtseed'){try{let f=null;try{f=await DB.addFolder('program',null,'Nivel 1',ME.id);}catch(e){}for(const s of RT_SEED)await DB.saveTemplate(null,s.name,s.days,ME.id,'program',f?f.id:null);await rtLoadTpls();coachHome();toast('Plantillas cargadas ✓');}catch(x){toast('No se pudieron cargar');}}
   else if(a==='cxadd'){const n=(document.getElementById('cxN').value||'').trim(),p=(document.getElementById('cxP').value||'').trim()||'Otros',m=(document.getElementById('cxM').value||'').trim(),q=document.getElementById('cxE').value;
     if(!n){toast('Escribe el nombre');return;}
     const id='x_'+n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)+'_'+Date.now().toString(36).slice(-3);
