@@ -2708,7 +2708,7 @@ function gRstHas(g){const d=DAYS[S.day];if(!d)return false;const fk=fbKey(g);if(
   const bl=GBX[g]||[];if(Object.keys(S.logs||{}).some(k=>bl.some(b=>k.indexOf(S.sel+'|'+d.id+'|'+b+'|')===0)))return true;
   if(g==='g_cardio'){const c=(S.cardio||{})[cKey(d)];if(c&&(c.done||c.min||c.hr))return true;}
   if(g==='g_fuerza'&&S.warmFA&&S.warmFA[cKey(d)])return true;return false;}
-function gRstN(g){const d=DAYS[S.day];if(!d)return 0;let n=0;(GBX[g]||[]).forEach(b=>{const pre=S.sel+'|'+d.id+'|'+b+'|';Object.keys(S.logs||{}).forEach(k=>{if(k.indexOf(pre)===0)(S.logs[k]||[]).forEach(l=>{if(l&&(l.done||l.kg>0||l.reps>0||l.rpe))n++;});});});return n;}
+function gRstN(g){const d=DAYS[S.day];if(!d)return 0;let n=0;(GBX[g]||[]).forEach(b=>{const pre=S.sel+'|'+d.id+'|'+b+'|';Object.keys(S.logs||{}).forEach(k=>{if(k.indexOf(pre)===0)(Array.isArray(S.logs[k])?S.logs[k]:[]).forEach(l=>{if(l&&(l.done||l.kg>0||l.reps>0||l.rpe))n++;});});});return n;}
 function gRstBtn(g){if(!gRstHas(g))return '';const fin=!!(S.fb&&S.fb[fbKey(g)]);
   return `<button class="btn" data-act="grst" data-g="${g}" style="width:100%;margin-top:10px;color:var(--red-strong)">${fin?'Rehacer este entrenamiento':'Cancelar este entrenamiento'}</button>`;}
 document.addEventListener('click',e=>{
