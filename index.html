@@ -2294,7 +2294,7 @@ function rtItemHTML(di,bk,ii,it,num){
 /* ---------- selector de ejercicios (visual: grupo → patrón → buscar) ---------- */
 function pkList(P0,act){
   const P=P0||RT.pk,q=nrm(P.q);act=act||'rtpickex';
-  let ids=Object.keys(E).filter(k=>(P.g==='Todos'||E[k].g===P.g)&&(!P.pat||E[k].pat===P.pat)&&(!q||nrm(E[k].n+' '+(E[k].pat||'')+' '+(E[k].mus||'')+' '+(E[k].eq||'')).includes(q)));
+  let ids=Object.keys(E).filter(k=>(RT.all||E[k].yt||k.slice(0,2)==='x_')&&(P.g==='Todos'||E[k].g===P.g)&&(!P.pat||E[k].pat===P.pat)&&(!q||nrm(E[k].n+' '+(E[k].pat||'')+' '+(E[k].mus||'')+' '+(E[k].eq||'')).includes(q)));
   ids.sort((a,b)=>(E[a].lvl||1)-(E[b].lvl||1)||E[a].n.localeCompare(E[b].n));
   return `<div class="pkcount">${ids.length} ejercicios</div>`+ids.slice(0,80).map(k=>`<button class="pkrow" data-act="${act}" data-id="${k}">${thumb(k)}<span class="pkt"><b>${esc(E[k].n)}${E[k].yt?' <em class="pkyt">▶</em>':''}</b><small>${esc([E[k].s||E[k].mus,E[k].eq].filter(Boolean).join(' · '))}</small></span><i class="pklv l${E[k].lvl||1}">${LVN[E[k].lvl||1]}</i></button>`).join('')+(ids.length>80?'<div class="note">Afina con un filtro o la búsqueda.</div>':'');
 }
@@ -2355,13 +2355,14 @@ const RTW=()=>window.innerWidth>=1000;
 RT.lib={g:'Todos',pat:'',q:'',bk:'main'};
 const RT_BK=[['warm','Calentamiento'],['main','Central'],['acc','Accesorios'],['calm','Calma']];
 function libPanel(){
-  const L=RT.lib,pats={};Object.keys(E).forEach(k=>{if(L.g==='Todos'||E[k].g===L.g){const p=E[k].pat;if(p)pats[p]=1;}});
+  const L=RT.lib,pats={};Object.keys(E).forEach(k=>{if((RT.all||E[k].yt||k.slice(0,2)==='x_')&&(L.g==='Todos'||E[k].g===L.g)){const p=E[k].pat;if(p)pats[p]=1;}});
   return `<div class="pkhead"><b>Biblioteca de ejercicios</b></div>
    <div class="note" style="margin:0 0 8px">Toca un ejercicio para añadirlo a: <b>${(RT_BK.find(x=>x[0]===L.bk)||[])[1]}</b> · ${esc((RT.days[RT.sel]||{}).label||'')}</div>
    <div class="pkchips">${RT_BK.map(([k,n])=>`<button class="chip${L.bk===k?' on':''}" data-act="rtlibbk" data-v="${k}">${n}</button>`).join('')}</div>
    <input class="fld" id="lbQ" placeholder="Buscar ejercicio…" value="${esc(L.q)}" autocomplete="off" style="margin-top:8px">
    <div class="pkchips">${['Todos'].concat(R_GRPX).map(g=>`<button class="chip${L.g===g?' on':''}" data-act="rtlibg" data-v="${g}">${g}</button>`).join('')}</div>
    <div class="pkchips pat">${Object.keys(pats).sort().map(p=>`<button class="chip sm${L.pat===p?' on':''}" data-act="rtlibp" data-v="${esc(p)}">${esc(p)}</button>`).join('')}</div>
+   <button class="lblbtn" data-act="rtlball" style="font-size:12px;margin:6px 0;color:var(--gray)">${RT.all?'Ocultar los ejercicios sin video':'Mostrar también los ejercicios sin video'}</button>
    ${RT.pend?pendHTML(RT.pend,L.bk):''}
    <div id="lbList">${pkList(L,'rtlibadd')}</div>`;
 }
@@ -2447,6 +2448,7 @@ document.addEventListener('click',async e=>{
   else if(a==='rtpick'){pkOpen('replace',di,bk,ii);}
   else if(a==='rtmore'){const k=di+'|'+bk+'|'+ii;RT.x[k]=!RT.x[k];rtShow();}
   else if(a==='rtlibbk'){pendSave(RT.pend);RT.lib.bk=t.dataset.v;rtShow();}
+  else if(a==='rtlball'){RT.all=!RT.all;rtShow();}
   else if(a==='rtlibg'){pendSave(RT.pend);RT.lib.g=t.dataset.v;RT.lib.pat='';rtShow();}
   else if(a==='rtlibp'){pendSave(RT.pend);RT.lib.pat=RT.lib.pat===t.dataset.v?'':t.dataset.v;rtShow();}
   else if(a==='rtlibadd'){RT.pend={id:t.dataset.id};rtShow();const q=document.getElementById('pdS');if(q)q.focus();}
