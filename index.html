@@ -883,7 +883,7 @@ function trainView(){
    ${mesoLine()}
    <h2 class="h2" style="margin:4px 0 10px">Día ${S.pos+1} · ${d.name}</h2>
    <div class="progress"><i style="width:${pct}%"></i></div>
-   ${gd.map(g=>{const ok=!!S.fb[fbKey(g.k)]||(g.ct&&g.cx>=g.ct);const gcol={g_fuerza:['#C0392B','fuerza'],g_cardio:['#2F7DA8','cardio'],g_calm:['#7B5EA7','calma']}[g.k];return `<button class="gcard${ok?' gdone':''}" data-act="gopen" data-b="${g.k}" style="--gc:${gcol[0]}"><span class="gic">${ok?'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':ICON(gcol[1],22)}</span><span class="gt"><b>${g.t}</b><small>${ok?'Completado':g.s}</small></span><span class="gc${ok?' ok':''}">${ok?'':g.ct?g.cx+'/'+g.ct:''}</span><i class="chev">›</i></button>`;}).join('')}
+   ${gd.map(g=>{const ok=!!S.fb[fbKey(g.k)]||(g.ct&&g.cx>=g.ct);const gcol={g_fuerza:['#C0392B','fuerza'],g_cardio:['#E39A1C','cardio'],g_calm:['#3F6B86','calma']}[g.k];return `<button class="gcard${ok?' gdone':''}" data-act="gopen" data-b="${g.k}" style="--gc:${gcol[0]}"><span class="gic">${ok?'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':ICON(gcol[1],22)}</span><span class="gt"><b>${g.t}</b><small>${ok?'Completado':g.s}</small></span><span class="gc${ok?' ok':''}">${ok?'':g.ct?g.cx+'/'+g.ct:''}</span><i class="chev">›</i></button>`;}).join('')}
    <div class="grp" style="margin-top:16px">Otra actividad física</div>${extrasHTML()}
    <div class="foot">${done} de ${total} completados · toca una pestaña para entrar</div>`;
 }
@@ -1930,8 +1930,8 @@ l1:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M8 3v4M16 
 l2:'<path d="M17 4l3 3-3 3"/><path d="M4 11V9a2 2 0 0 1 2-2h16"/><path d="M7 20l-3-3 3-3"/><path d="M20 13v2a2 2 0 0 1-2 2H2"/>',
 l3:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
 l4:'<path d="M2.5 19l6.5-12 4 7 3-4.5 5.5 9.5z"/>',
-cardio:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
-calma:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+cardio:'<path d="M3 12.5h4l2.3-6.5 4.4 12 2.3-5.5H21"/>',
+calma:'<path d="M3 8.5h10a2.5 2.5 0 1 0-2.5-2.5M3 12.5h15a2.5 2.5 0 1 1-2.5 2.5M3 16.5h7a2 2 0 1 1-2 2"/>',
 act:'<circle cx="14.5" cy="4.5" r="1.8"/><path d="M6 21l3.5-6 3 2.5L15 12l3.5 2.5M9.5 15l-1.5-5 5.5-1.5 2 3"/>',
 l5:'<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>'};
 const ICON=(n,s)=>`<svg class="ico" width="${s||18}" height="${s||18}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]||''}</svg>`;
