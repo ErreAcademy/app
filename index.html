@@ -1069,7 +1069,7 @@ function profileView(){
     <label class="pfl">Frecuencia cardíaca máxima (lpm, opcional)</label><input class="fld" inputmode="numeric" placeholder="${fcMax()?'Estimada: '+fcMax():'Ej. 190'}" data-pf="fcmax" value="${u.fcmax||''}"></section>
    <section class="sec"><div class="sec-h"><b>Recordatorios</b></div>
     ${tg('train','Hora de entrenar','Te avisamos en tus días de fuerza')}${tg('weigh','Pesarme','Una vez al día, en ayunas')}${modOn('recovery')?tg('breath','Respiración de la mañana','5 minutos para empezar bien'):''}
-    <div class="note">Los recordatorios llegan como notificación cuando la app esté instalada en tu celular.</div></section>
+    ${typeof pushRow==="function"?pushRow():""}<div class="note">Los recordatorios por hora (entrenar, pesarme) los activamos pronto.</div></section>
    <section class="sec"><div class="sec-h"><b>Privacidad y ayuda</b></div>
     <div class="pfrow"><span><b>Tus fotos</b><small>${c?'Solo las ves tú y, si quieres, tu coach':'Solo las ves tú'}</small></span></div>
     <div class="pfrow"><span><b>Ayuda y soporte</b><small>Escríbenos si algo no funciona</small></span><button class="btn" data-act="support" style="flex:none;padding:7px 12px">Escribir</button></div></section>
@@ -2008,6 +2008,7 @@ function realDB(){
     async signIn(email,pw){const r=await sb.auth.signInWithPassword({email,password:pw});if(r.error)throw r.error;return r.data.session;},
     async sendCode(email){const r=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});if(r.error)throw r.error;},
     async verify(email,token){const r=await sb.auth.verifyOtp({email,token,type:'email'});if(r.error)throw r.error;return r.data.session;},
+    async push(body){try{const r=await sb.functions.invoke('push',{body});return r.data||null;}catch(e){return null;}},
     async aiWorkout(body){const r=await sb.functions.invoke('ai-workout',{body});if(r.error){let c=null;try{c=await r.error.context.json();}catch(e){}throw Object.assign(new Error('ai'),{code:(c&&c.error)||'error'});}return r.data;},
     async routine(cid){const r=await sb.from('routines').select('name,days').eq('client_id',cid).maybeSingle();if(r.error)throw r.error;return r.data;},
     async saveRoutine(cid,name,days,uid){const ex=await sb.from('routines').select('id').eq('client_id',cid).eq('is_template',false).maybeSingle();if(ex.error)throw ex.error;
@@ -2043,7 +2044,7 @@ function realDB(){
     async chat(uid){return ok(await sb.from('chat_messages').select('id,sender_id,kind,body,created_at').eq('client_id',uid).order('created_at'));},
     async upsert(table,rows,onConflict){ok(await sb.from(table).upsert(rows,{onConflict}));},
     async del(table,match){let q=sb.from(table).delete();for(const k in match)q=q.eq(k,match[k]);ok(await q);},
-    async insertChat(row){return ok(await sb.from('chat_messages').insert(row).select('id,created_at').single());},
+    async insertChat(row){const r=ok(await sb.from('chat_messages').insert(row).select('id,created_at').single());if(row.kind==='msg'&&PROFILE&&PROFILE.coach_id)pushTo(PROFILE.coach_id,(PROFILE.full_name||'Un cliente')+' te escribió',row.body,'chat-'+row.client_id);return r;},
     async updateChat(id,body){ok(await sb.from('chat_messages').update({body}).eq('id',id));},
     async upload(path,blob){const r=await sb.storage.from('photos').upload(path,blob,{upsert:true,contentType:'image/jpeg'});if(r.error)throw r.error;},
     async remove(paths){const r=await sb.storage.from('photos').remove(paths);if(r.error)throw r.error;},
@@ -2063,7 +2064,7 @@ function realDB(){
       return {profile,weights,steps,fb,chat,data,photos,call:calls[0]||null,wnotes:xv('wnotes'),sleep:xv('sleep'),excom:xv('excom')};
     },
     async updateClient(cid,f){ok(await sb.from('profiles').update(f).eq('id',cid));},
-    async sendCoach(cid,uid,body){return ok(await sb.from('chat_messages').insert({client_id:cid,sender_id:uid,kind:'msg',body}).select('id,created_at').single());},
+    async sendCoach(cid,uid,body){const r=ok(await sb.from('chat_messages').insert({client_id:cid,sender_id:uid,kind:'msg',body}).select('id,created_at').single());pushTo(cid,'Tu coach te escribió',body,'chat');return r;},
     async scheduleCall(cid,uid,iso){ok(await sb.from('calls').delete().eq('client_id',cid).gte('starts_at',new Date().toISOString()));ok(await sb.from('calls').insert({client_id:cid,starts_at:iso,created_by:uid}));},
     async resetClient(cid){ok(await sb.rpc('reset_client_records',{cid}));},
     async moveTemplate(id,folder_id){ok(await sb.from('routines').update({folder_id:folder_id||null}).eq('id',id));},
@@ -2082,6 +2083,7 @@ function realDB(){
   };
 }
 const DB=window.DB_MOCK||realDB();
+if(DB.saveRoutine){const _sr=DB.saveRoutine.bind(DB);DB.saveRoutine=async(cid,n,d,uid)=>{const r=await _sr(cid,n,d,uid);try{if(uid&&cid!==uid)pushPlan(cid);}catch(e){}return r;};}
 let ME=null,PROFILE=null,LG={step:'email',email:'',err:'',busy:false},CHATT=null;
 const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom','ctasks'];
 const LAST={weights:{},steps:{},slices:{},prefs:'',fb:{},profile:'',chatKey:{},photos:{},upl:{}};
@@ -2117,7 +2119,7 @@ async function pushAll(){
   for(const fk in S.fb){const [date,,g]=fk.split('|'),e=S.fb[fk],grp=R_GRP[g];if(!grp||!date)continue;
     const row={client_id:uid,log_date:date,grp,intensity:e.rpe||null,feel:R_FEEL[e.feel]||null,note:e.note||null},j=JSON.stringify(row);
     if(LAST.fb[fk]!==j)fbs.push([fk,row,j]);}
-  if(fbs.length){await DB.upsert('session_feedback',fbs.map(x=>x[1]),'client_id,log_date,grp');fbs.forEach(x=>LAST.fb[x[0]]=x[2]);}
+  if(fbs.length){await DB.upsert('session_feedback',fbs.map(x=>x[1]),'client_id,log_date,grp');fbs.forEach(x=>LAST.fb[x[0]]=x[2]);if(fbs.some(x=>x[1].feel==='molestia')&&PROFILE&&PROFILE.coach_id)pushTo(PROFILE.coach_id,'⚠ '+(PROFILE.full_name||'Un cliente')+' reportó una molestia','Revisa su sesión de hoy','mol-'+uid);}
   for(const fk of Object.keys(LAST.fb)){if(S.fb&&S.fb[fk])continue;const [date,,gg]=fk.split('|'),grp=R_GRP[gg];if(grp&&date){await DB.del('session_feedback',{client_id:uid,log_date:date,grp});}delete LAST.fb[fk];}
   const pc=profileCols();if(pc){const j=JSON.stringify(pc);if(j!==LAST.profile){await DB.saveProfile(uid,pc);LAST.profile=j;}}
   for(const m of S.chat){
@@ -2253,7 +2255,7 @@ const cpW=()=>window.innerWidth>=1000;
 function cpWideCls(el){el.classList.toggle('cpwide',cpW());el.style.maxWidth=(CP.wide&&CP.view==='client'&&cpW())?'none':'';}
 function cpShell(inner){
   const nav=[['inicio','Inicio'],['clientes','Clientes'],['editor','Editor de rutinas']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
-  return `<div class="cpshell${CP.wide&&CP.view==='client'?' cpfull':''}"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small><button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
+  return `<div class="cpshell${CP.wide&&CP.view==='client'?' cpfull':''}"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small>${pushCoachBtn()}<button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
 }
 const dAgo=s=>{if(!s)return '—';const n=Math.floor((Date.now()-new Date(s+'T12:00:00'))/864e5);return n<=0?'Hoy':n===1?'Ayer':'hace '+n+' d';};
 const CPDIS_K='erre_cp_dis';
@@ -2385,7 +2387,7 @@ function cxNotes(){const cc=cxCard(),ch=cc?`<div class="cxnote" style="backgroun
 async function cpSaveTasks(list){
   const value={tasks:list};
   await DB.upsert('client_data',[{client_id:CP.cid,key:'ctasks',value,updated_at:new Date().toISOString()}],'client_id,key');
-  CP.d.data=CP.d.data||{};CP.d.data.ctasks=value;
+  CP.d.data=CP.d.data||{};CP.d.data.ctasks=value;pushPlan(CP.cid);
 }
 const cpTid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const CPT_SOON=['Vídeo','Nutrición','Documento','Registrar evolución','Sesión presencial / online','Programar mensaje','Formulario'];
@@ -2693,7 +2695,7 @@ document.addEventListener('click',async e=>{
 
 async function enter(ses){
   ME=ses.user;const uid=ME.id;
-  PROFILE=await DB.profile(uid);
+  PROFILE=await DB.profile(uid);await pushRefresh();
   if(store.get('erre_uid')!==uid){resetLocal();store.set('erre_uid',uid);}
   if(PROFILE.role==='coach'){await coachHome();return;}
   if(!PROFILE.consent_at){$('#app').innerHTML=consentView();return;}
@@ -3412,10 +3414,35 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1152';
+const APP_VER='19nov-1153';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1152')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1153')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
+
+/* ---------- notificaciones push ---------- */
+const PUSH={on:false};
+const pushSupported=()=>('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window);
+const pushB64=s=>{const r=(s+'='.repeat((4-s.length%4)%4)).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(r);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));};
+function pushTo(to,title,body,tag){try{if(!DB.push||!to)return;DB.push({action:'notify',to,title,body:String(body||'').replace(/\s+/g,' ').slice(0,110),url:'./',tag:tag||'erre'});}catch(e){}}
+function pushPlan(cid){try{const k='pushPlan_'+cid,last=+localStorage.getItem(k)||0;if(Date.now()-last<15*60*1000)return;localStorage.setItem(k,String(Date.now()));pushTo(cid,'Tu coach actualizó tu plan','Entra para ver lo nuevo','plan');}catch(e){}}
+async function pushRefresh(){try{if(!pushSupported()||Notification.permission!=='granted'){PUSH.on=false;return;}const reg=await navigator.serviceWorker.getRegistration();PUSH.on=!!(reg&&await reg.pushManager.getSubscription());}catch(e){PUSH.on=false;}}
+async function pushOn(){
+  if(!pushSupported()||!DB.push){toast('Este dispositivo no permite avisos');return;}
+  const perm=await Notification.requestPermission();if(perm!=='granted'){toast('No diste permiso para los avisos');return;}
+  const k=await DB.push({action:'key'});if(!k||!k.key){toast('No se pudo activar. Intenta de nuevo.');return;}
+  const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushB64(k.key)});
+  const j=sub.toJSON();await DB.upsert('push_subs',[{user_id:ME.id,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,ua:navigator.userAgent.slice(0,120)}],'endpoint');
+  PUSH.on=true;toast('Avisos activados ✓');
+}
+async function pushOff(){try{const reg=await navigator.serviceWorker.getRegistration(),sub=reg&&await reg.pushManager.getSubscription();if(sub){const ep=sub.endpoint;await sub.unsubscribe();await DB.del('push_subs',{endpoint:ep});}}catch(e){}PUSH.on=false;toast('Avisos desactivados');}
+function pushRow(){
+  if(!pushSupported())return `<div class="note">${pwaIOS()&&!pwaStandalone()?'Para recibir avisos, instala la app: toca Compartir → Añadir a pantalla de inicio y ábrela desde ahí.':'Este navegador no permite avisos.'}</div>`;
+  if(Notification.permission==='denied')return '<div class="note">Los avisos están bloqueados. Actívalos en los ajustes de tu celular para esta app.</div>';
+  return `<div class="pfrow"><span><b>🔔 Avisos de tu coach</b><small>${PUSH.on?'Activados: mensajes y cambios en tu plan':'Recibe tus mensajes y cambios de plan'}</small></span><button class="btn${PUSH.on?'':' solid'}" data-act="pushtg" style="flex:none;padding:7px 12px">${PUSH.on?'Desactivar':'Activar'}</button></div>`;
+}
+const pushCoachBtn=()=>pushSupported()&&Notification.permission!=='denied'?`<button class="lblbtn" data-act="pushtg">🔔 Avisos: ${PUSH.on?'activados':'activar'}</button>`:'';
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-act="pushtg"]');if(!t)return;t.disabled=true;try{if(PUSH.on)await pushOff();else await pushOn();}catch(x){console.warn(x);toast('No se pudo cambiar los avisos');}try{if(PROFILE&&PROFILE.role==='coach')coachRender();else render();}catch(x){try{render();}catch(y){}}});
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
