@@ -483,6 +483,19 @@ header.top .who small{display:block;color:var(--gray);font-size:12px}
 .rtgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .rtgrid label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.04em}
 .rtgrid .fld{margin-top:3px;font-size:14px;text-transform:none;letter-spacing:0}
+.rtname{flex:1;min-width:0;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.rtname b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtname small{display:block;font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtgrid.g3{grid-template-columns:1fr 1fr 1fr}
+.rtmore{color:var(--gray);font-size:12px;margin:0 0 8px}
+.pkhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pkchips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+.pkchips .chip{white-space:nowrap;flex:0 0 auto}
+.pkchips.pat .chip{font-size:12px;padding:5px 10px}
+.pkcount{font-size:12px;color:var(--gray);margin:10px 0 2px}
+.pkrow{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:11px 0}
+.pkrow b{display:block;font-size:14px}.pkrow small{display:block;font-size:12px;color:var(--gray)}
+.pklv{font-style:normal;font-size:10px;padding:2px 8px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--gray);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -2152,6 +2165,22 @@ const E_EXTRA={
  elev_pierna:{n:'Elevación de piernas',pat:'Core',mus:'Abdomen',eq:'Peso corporal',lvl:2}
 };
 Object.keys(E_EXTRA).forEach(k=>{if(!E[k])E[k]=E_EXTRA[k];});
+/* Biblioteca ERRE (Excel del coach): grupo, subgrupo, tipo, nivel, equipo + patrón de movimiento */
+const LIB_X=[{"id":"l_remo_en_maquina_hammer","n":"Remo en Máquina Hammer","g":"Espalda","s":"Dorsal","t":"Básico","lvl":2,"eq":"Máquina","pat":"Tracción horizontal"},{"id":"l_remo_en_smith","n":"Remo en Smith","g":"Espalda","s":"Dorsal","t":"Básico","lvl":2,"eq":"Smith","pat":"Tracción horizontal"},{"id":"l_remo_en_polea","n":"Remo en Polea","g":"Espalda","s":"Dorsal","t":"Básico","lvl":1,"eq":"Polea","pat":"Tracción horizontal"},{"id":"l_jalon_al_pecho_en_maquina","n":"Jalón al Pecho en Máquina","g":"Espalda","s":"Dorsal","t":"Básico","lvl":1,"eq":"Máquina","pat":"Tracción vertical"},{"id":"l_jalon_al_pecho_en_polea","n":"Jalón al Pecho en Polea","g":"Espalda","s":"Dorsal","t":"Básico","lvl":1,"eq":"Polea","pat":"Tracción vertical"},{"id":"l_dominadas","n":"Dominadas","g":"Espalda","s":"Dorsal","t":"Básico","lvl":3,"eq":"Peso corporal","pat":"Tracción vertical"},{"id":"l_dominadas_asistidas","n":"Dominadas Asistidas","g":"Espalda","s":"Dorsal","t":"Básico","lvl":1,"eq":"Máquina/Banda","pat":"Tracción vertical"},{"id":"l_dominadas_con_banda","n":"Dominadas con Banda","g":"Espalda","s":"Dorsal","t":"Básico","lvl":2,"eq":"Banda","pat":"Tracción vertical"},{"id":"l_press_horizontal_en_maquina","n":"Press Horizontal en máquina","g":"Pecho","s":"Pectoral","t":"Básico","lvl":1,"eq":"Máquina","pat":"Empuje horizontal"},{"id":"l_press_inclinado_en_smith","n":"Press Inclinado en Smith","g":"Pecho","s":"Pectoral superior","t":"Básico","lvl":2,"eq":"Smith","pat":"Empuje horizontal"},{"id":"l_press_plano_con_mancuernas","n":"Press Plano con Mancuernas","g":"Pecho","s":"Pectoral","t":"Básico","lvl":1,"eq":"Mancuernas","pat":"Empuje horizontal"},{"id":"l_pec_fly_en_maquina","n":"Pec Fly en máquina","g":"Pecho","s":"Pectoral","t":"Aislado","lvl":1,"eq":"Máquina","pat":"Aperturas de pecho"},{"id":"l_cruces_en_polea","n":"Cruces en polea","g":"Pecho","s":"Pectoral","t":"Aislado","lvl":1,"eq":"Polea","pat":"Aperturas de pecho"},{"id":"l_flexiones","n":"Flexiones","g":"Pecho","s":"Pectoral","t":"Básico","lvl":1,"eq":"Peso corporal","pat":"Empuje horizontal"},{"id":"l_flexiones_con_peso","n":"Flexiones con peso","g":"Pecho","s":"Pectoral","t":"Básico","lvl":2,"eq":"Peso corporal","pat":"Empuje horizontal"},{"id":"l_hip_thrust_en_maquina","n":"Hip Thrust en Máquina","g":"Glúteo","s":"Glúteo mayor","t":"Básico","lvl":2,"eq":"Máquina","pat":"Bisagra de cadera"},{"id":"l_hip_thrust_en_smith","n":"Hip Thrust en Smith","g":"Glúteo","s":"Glúteo mayor","t":"Básico","lvl":2,"eq":"Smith","pat":"Bisagra de cadera"},{"id":"l_hip_thrust_unilateral","n":"Hip Thrust unilateral","g":"Glúteo","s":"Glúteo mayor","t":"Unilateral","lvl":2,"eq":"Peso corporal","pat":"Bisagra de cadera"},{"id":"l_puente_de_gluteos","n":"Puente de glúteos","g":"Glúteo","s":"Glúteo mayor","t":"Básico","lvl":1,"eq":"Peso corporal","pat":"Bisagra de cadera"},{"id":"l_patada_de_gluteos_en_maquina","n":"Patada de glúteos en máquina","g":"Glúteo","s":"Glúteo mayor","t":"Aislado","lvl":1,"eq":"Máquina","pat":"Glúteo aislado"},{"id":"l_patada_de_gluteos_con_banda","n":"Patada de glúteos con banda","g":"Glúteo","s":"Glúteo mayor","t":"Aislado","lvl":1,"eq":"Banda","pat":"Glúteo aislado"},{"id":"l_abduccion_de_cadera_en_maquina","n":"Abducción de cadera en máquina","g":"Glúteo","s":"Glúteo medio","t":"Aislado","lvl":1,"eq":"Máquina","pat":"Abducción"},{"id":"l_abduccion_en_puente","n":"Abducción en puente","g":"Glúteo","s":"Glúteo medio","t":"Aislado","lvl":1,"eq":"Banda","pat":"Abducción"},{"id":"l_press_militar_en_smith","n":"Press Militar en Smith","g":"Hombro","s":"Deltoide anterior","t":"Básico","lvl":2,"eq":"Smith","pat":"Empuje vertical"},{"id":"l_press_militar_en_maquina","n":"Press Militar en máquina","g":"Hombro","s":"Deltoide anterior","t":"Básico","lvl":1,"eq":"Máquina","pat":"Empuje vertical"},{"id":"l_elevaciones_laterales","n":"Elevaciones laterales","g":"Hombro","s":"Deltoide medio","t":"Aislado","lvl":1,"eq":"Mancuernas","pat":"Elevación lateral"},{"id":"l_elevacion_lateral_en_polea","n":"Elevación lateral en polea","g":"Hombro","s":"Deltoide medio","t":"Aislado","lvl":1,"eq":"Polea","pat":"Elevación lateral"},{"id":"l_vuelos_posterior","n":"Vuelos posterior","g":"Hombro","s":"Deltoide posterior","t":"Aislado","lvl":1,"eq":"Máquina/Polea","pat":"Deltoide posterior"},{"id":"l_curl_de_biceps_maquina","n":"Curl de bíceps máquina","g":"Brazos","s":"Bíceps","t":"Aislado","lvl":1,"eq":"Máquina","pat":"Flexión de codo"},{"id":"l_curl_biceps_barra","n":"Curl bíceps barra","g":"Brazos","s":"Bíceps","t":"Aislado","lvl":1,"eq":"Barra","pat":"Flexión de codo"},{"id":"l_curl_martillo","n":"Curl martillo","g":"Brazos","s":"Bíceps","t":"Aislado","lvl":1,"eq":"Mancuernas","pat":"Flexión de codo"},{"id":"l_fondos_en_maquina","n":"Fondos en máquina","g":"Brazos","s":"Tríceps","t":"Básico","lvl":1,"eq":"Máquina","pat":"Extensión de codo"},{"id":"l_fondos_en_paralelas","n":"Fondos en paralelas","g":"Brazos","s":"Tríceps","t":"Básico","lvl":2,"eq":"Peso corporal","pat":"Extensión de codo"},{"id":"l_abdomen_en_maquina","n":"Abdomen en máquina","g":"Core","s":"Abdomen","t":"Aislado","lvl":1,"eq":"Máquina","pat":"Core"},{"id":"l_crunch_en_polea","n":"Crunch en polea","g":"Core","s":"Abdomen","t":"Aislado","lvl":1,"eq":"Polea","pat":"Core"},{"id":"l_plancha_lateral","n":"Plancha lateral","g":"Core","s":"Oblicuos","t":"Estático","lvl":1,"eq":"Peso corporal","pat":"Core"},{"id":"l_twist_ruso","n":"Twist ruso","g":"Core","s":"Oblicuos","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Core"},{"id":"l_rueda_abdominal","n":"Rueda abdominal","g":"Core","s":"Abdomen","t":"Básico","lvl":3,"eq":"Rueda","pat":"Core"},{"id":"l_elevacion_de_piernas_colgado","n":"Elevación de piernas colgado","g":"Core","s":"Abdomen","t":"Básico","lvl":2,"eq":"Barra","pat":"Core"},{"id":"l_burpee","n":"Burpee","g":"Full Body","s":"Metabólico","t":"Dinámico","lvl":2,"eq":"Peso corporal","pat":"Metabólico"},{"id":"l_burpee_push_up","n":"Burpee + push up","g":"Full Body","s":"Metabólico","t":"Dinámico","lvl":2,"eq":"Peso corporal","pat":"Metabólico"},{"id":"l_skipping_bajo","n":"Skipping bajo","g":"Cardio","s":"Resistencia","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Cardio"},{"id":"l_skipping_alto","n":"Skipping alto","g":"Cardio","s":"Resistencia","t":"Dinámico","lvl":2,"eq":"Peso corporal","pat":"Cardio"},{"id":"l_saltar_cuerda","n":"Saltar cuerda","g":"Cardio","s":"Resistencia","t":"Dinámico","lvl":1,"eq":"Cuerda","pat":"Cardio"},{"id":"l_caminata_de_granjero","n":"Caminata de granjero","g":"Full Body","s":"Core/Brazo","t":"Básico","lvl":2,"eq":"Mancuernas","pat":"Metabólico"},{"id":"l_step_up_en_smith","n":"Step Up en Smith","g":"Pierna","s":"Cuádriceps","t":"Unilateral","lvl":2,"eq":"Smith","pat":"Zancada"},{"id":"l_sentadilla_en_smith","n":"Sentadilla en Smith","g":"Pierna","s":"Cuádriceps","t":"Básico","lvl":2,"eq":"Smith","pat":"Sentadilla"},{"id":"l_sentadilla_en_maquina_hack","n":"Sentadilla en Máquina Hack","g":"Pierna","s":"Cuádriceps","t":"Básico","lvl":2,"eq":"Máquina","pat":"Sentadilla"},{"id":"l_prensa_45","n":"Prensa 45°","g":"Pierna","s":"Cuádriceps","t":"Básico","lvl":1,"eq":"Máquina","pat":"Sentadilla"},{"id":"l_prensa_horizontal","n":"Prensa Horizontal","g":"Pierna","s":"Cuádriceps","t":"Básico","lvl":1,"eq":"Máquina","pat":"Sentadilla"},{"id":"l_zancada_en_smith","n":"Zancada en Smith","g":"Pierna","s":"Glúteo/Cuádriceps","t":"Unilateral","lvl":2,"eq":"Smith","pat":"Zancada"},{"id":"l_zancada_con_salto","n":"Zancada con salto","g":"Pierna","s":"Glúteo/Cuádriceps","t":"Dinámico","lvl":2,"eq":"Peso corporal","pat":"Zancada"},{"id":"l_extension_de_rodilla","n":"Extensión de Rodilla","g":"Pierna","s":"Cuádriceps","t":"Aislado","lvl":1,"eq":"Máquina","pat":"Extensión de rodilla"},{"id":"l_flexion_de_rodilla","n":"Flexión de Rodilla","g":"Pierna","s":"Femoral","t":"Aislado","lvl":1,"eq":"Máquina","pat":"Curl femoral"},{"id":"l_curl_isquios_unilateral","n":"Curl Isquios Unilateral","g":"Pierna","s":"Femoral","t":"Unilateral","lvl":2,"eq":"Máquina","pat":"Curl femoral"},{"id":"l_peso_muerto_en_smith","n":"Peso Muerto en Smith","g":"Pierna","s":"Femoral/Glúteo","t":"Básico","lvl":2,"eq":"Smith","pat":"Bisagra de cadera"},{"id":"l_pantorrillas_en_maquina","n":"Pantorrillas en Máquina","g":"Pierna","s":"Gemelos","t":"Aislado","lvl":1,"eq":"Máquina","pat":"Gemelos"},{"id":"l_pantorrillas_en_prensa","n":"Pantorrillas en Prensa","g":"Pierna","s":"Gemelos","t":"Aislado","lvl":1,"eq":"Máquina","pat":"Sentadilla"},{"id":"l_pantorrillas_en_smith","n":"Pantorrillas en Smith","g":"Pierna","s":"Gemelos","t":"Aislado","lvl":1,"eq":"Smith","pat":"Gemelos"},{"id":"l_elevacion_de_talon_en_step","n":"Elevación de Talón en Step","g":"Pierna","s":"Gemelos","t":"Aislado","lvl":1,"eq":"Peso corporal","pat":"Gemelos"},{"id":"l_movilidad_de_columna_gato_vaca","n":"Movilidad de columna Gato - Vaca","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_w_g_s_movilidad","n":"W G S Movilidad","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_movilidad_de_tobillo_y_cadera_en_caballe","n":"Movilidad de tobillo y cadera en caballero","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_calentamiento_de_cadera_supino","n":"Calentamiento de cadera supino","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_calentamiento_de_rodilla_supino","n":"Calentamiento de rodilla supino","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_movilidad_de_cadera_de_lado","n":"Movilidad de cadera de lado","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_movilidad_de_cadera_y_tobillo_4_apoyos","n":"Movilidad de Cadera y Tobillo 4 apoyos","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_movilidad_de_cadera_y_tobillo_6_apoyos","n":"Movilidad de Cadera y Tobillo 6 apoyos","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_nadadores_calentamiento","n":"Nadadores calentamiento","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_nadadores_a_un_brazo","n":"Nadadores a un brazo","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_press_escapular_en_4_apoyos","n":"Press escapular en 4 apoyos","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_toques_de_hombro","n":"Toques de hombro","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_levantamientos_letra_a","n":"Levantamientos letra A","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_levantamientos_letra_w","n":"Levantamientos letra W","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_levantamientos_letra_y","n":"Levantamientos letra Y","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_plancha_isometrica","n":"Plancha isométrica","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_plancha_isometrica_con_patadas","n":"Plancha isométrica con patadas","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_plancha_isometrica_con_levantamiento_de_","n":"Plancha isométrica con levantamiento de brazos","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_deadbug","n":"Deadbug","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_puente_de_gluteos_isometria","n":"Puente de glúteos isometría","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"},{"id":"l_puente_de_gluteos_individual","n":"Puente de glúteos individual","g":"Calentamiento","s":"Movilidad / activación","t":"Dinámico","lvl":1,"eq":"Peso corporal","pat":"Calentamiento"}];
+const nrm=t=>String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+(()=>{const have={};Object.keys(E).forEach(k=>have[nrm(E[k].n)]=k);
+  LIB_X.forEach(x=>{const k=have[nrm(x.n)];if(k){Object.assign(E[k],{g:x.g,s:x.s,t:x.t});if(x.pat!=='Otros'&&!E[k].pat)E[k].pat=x.pat;return;}
+    E[x.id]={n:x.n,pat:x.pat,mus:x.s,eq:x.eq,lvl:x.lvl,g:x.g,s:x.s,t:x.t};});})();
+function gOf(e){if(e.g)return e.g;const p=e.pat||'',m=e.mus||'';
+  if(/Estiramiento/.test(p))return 'Estiramiento';
+  if(/Movilidad|Activación|Respiración/.test(p))return 'Calentamiento';
+  if(/Pecho/.test(m))return 'Pecho';if(/Espalda|Dorsal|Escápula/.test(m))return 'Espalda';
+  if(/Hombro|Deltoide|Trapecio|Manguito/.test(m))return 'Hombro';if(/Bíceps|Tríceps/.test(m))return 'Brazos';
+  if(/Glúteo/.test(m)&&!/Cuádriceps/.test(m))return 'Glúteo';
+  if(/Cuádriceps|Isquio|Gemelos|Pierna|Cadera/.test(m))return 'Pierna';if(/Abdomen/.test(m))return 'Core';return 'Otros';}
+Object.keys(E).forEach(k=>{if(!E[k].g||E[k].g==='Otros')E[k].g=gOf(E[k]);});
+const R_GRPX=['Espalda','Pecho','Hombro','Brazos','Pierna','Glúteo','Core','Full Body','Cardio','Calentamiento','Estiramiento'];
+const LVN={1:'Principiante',2:'Intermedio',3:'Avanzado'};
 
 /* ---------- plantillas N1 de fábrica (molde aprobado, Plantillas_Base_N1_Molde) ---------- */
 const R_UP={warm:['mov_tor','band_apart'],calm:[['est_dorsal','30 s'],['resp_90','2 min']]};
@@ -2191,14 +2220,10 @@ const RT_SEED=[
 ].map(([name,l])=>({name,days:l.map((k,i)=>RD[k](i+1))}));
 
 /* ---------- estado del editor ---------- */
-const RT={open:false,kind:'client',id:null,cid:null,name:'',days:[],dirty:false,sel:0,picker:null,tpls:[],err:'',busy:false};
+const RT={x:{},pk:null,open:false,kind:'client',id:null,cid:null,name:'',days:[],dirty:false,sel:0,picker:null,tpls:[],err:'',busy:false};
 const RDEF={tempo:'2-0-1-0',rir:'2',rest:75};
 const rtClone=o=>JSON.parse(JSON.stringify(o));
 const rtBlock=(d,k)=>d.blocks.find(b=>b.k===k);
-function rtExOpts(sel){
-  const groups={};Object.keys(E).forEach(k=>{const p=E[k].pat||'Otros';(groups[p]=groups[p]||[]).push(k);});
-  return Object.keys(groups).sort().map(p=>`<optgroup label="${esc(p)}">${groups[p].sort((a,b)=>E[a].n.localeCompare(E[b].n)).map(k=>`<option value="${k}"${k===sel?' selected':''}>${esc(E[k].n)}</option>`).join('')}</optgroup>`).join('');
-}
 /* reglas ERRE: avisos suaves */
 function rtWarn(d){
   const w=[],m=rtBlock(d,'main'),a=rtBlock(d,'acc');if(!m||!a)return w;
@@ -2212,17 +2237,44 @@ function rtWarn(d){
   Object.keys(seen).forEach(p=>{if(seen[p]>1)w.push('Patrón repetido: '+p+'.');});
   return w;
 }
-function rtItemHTML(di,bk,ii,it){
-  const fixed=!!it.fixed,pre=`data-di="${di}" data-bk="${bk}" data-ii="${ii}"`;
-  const ov=it.ov||{};
-  return `<div class="rtit"><div class="rtrow"><select class="fld rtsel" data-rt="ex" ${pre}>${rtExOpts(it.ex)}</select>
-   <span class="rtbtns"><button class="rtb" data-act="rtmove" data-d="-1" ${pre} aria-label="Subir">↑</button><button class="rtb" data-act="rtmove" data-d="1" ${pre} aria-label="Bajar">↓</button><button class="rtb" data-act="rtdel" ${pre} aria-label="Quitar">✕</button></span></div>
-   ${fixed?`<div class="rtgrid"><label>Series<input class="fld" data-rt="fsets" ${pre} inputmode="numeric" value="${esc(it.fixed.sets)}"></label><label>Repeticiones / tiempo<input class="fld" data-rt="freps" ${pre} value="${esc(it.fixed.reps)}"></label></div>`:
-   `<div class="rtgrid"><label>Series<input class="fld" data-rt="ovs" ${pre} inputmode="numeric" placeholder="auto" value="${esc(ov.sets||'')}"></label><label>Repeticiones<input class="fld" data-rt="ovr" ${pre} placeholder="auto" value="${esc(ov.reps||'')}"></label>
-   <label>Carga ref. (kg)<input class="fld" data-rt="ref" ${pre} inputmode="decimal" value="${esc(it.ref||'')}"></label><label>Tempo<input class="fld" data-rt="tempo" ${pre} value="${esc(it.tempo||'')}"></label>
-   <label>RIR<input class="fld" data-rt="rir" ${pre} value="${esc(it.rir||'')}"></label><label>Descanso (s)<input class="fld" data-rt="rest" ${pre} inputmode="numeric" value="${esc(it.rest||'')}"></label></div>`}
-   <input class="fld" data-rt="note" ${pre} placeholder="Nota para el cliente (opcional)" value="${esc(it.note||'')}"></div>`;
+function rtSummary(it){
+  if(it.fixed)return `${esc(it.fixed.sets)} × ${esc(it.fixed.reps)}`;
+  const ov=it.ov||{};const pr=(typeof presc==='function')?presc(it):{};
+  return `${ov.sets||'auto'} × ${esc(ov.reps||'auto')}${it.ref?' · '+esc(it.ref)+' kg':''}`;
 }
+function rtItemHTML(di,bk,ii,it){
+  const fixed=!!it.fixed,pre=`data-di="${di}" data-bk="${bk}" data-ii="${ii}"`,key=di+'|'+bk+'|'+ii,ex=E[it.ex]||{n:'Ejercicio',pat:'',eq:''};
+  const ov=it.ov||{},more=!!RT.x[key];
+  return `<div class="rtit"><div class="rtrow"><button class="rtname" data-act="rtpick" ${pre}><b>${esc(ex.n)}</b><small>${esc([ex.g,ex.pat,ex.eq].filter(Boolean).join(' · '))}</small></button>
+   <span class="rtbtns"><button class="rtb" data-act="rtmove" data-d="-1" ${pre} aria-label="Subir">↑</button><button class="rtb" data-act="rtmove" data-d="1" ${pre} aria-label="Bajar">↓</button><button class="rtb" data-act="rtdel" ${pre} aria-label="Quitar">✕</button></span></div>
+   ${fixed?`<div class="rtgrid"><label>Series<input class="fld" data-rt="fsets" ${pre} inputmode="numeric" value="${esc(it.fixed.sets)}"></label><label>Reps / tiempo<input class="fld" data-rt="freps" ${pre} value="${esc(it.fixed.reps)}"></label></div>`:
+   `<div class="rtgrid g3"><label>Series<input class="fld" data-rt="ovs" ${pre} inputmode="numeric" placeholder="auto" value="${esc(ov.sets||'')}"></label><label>Reps<input class="fld" data-rt="ovr" ${pre} placeholder="auto" value="${esc(ov.reps||'')}"></label>
+   <label>Carga kg<input class="fld" data-rt="ref" ${pre} inputmode="decimal" value="${esc(it.ref||'')}"></label></div>`}
+   <button class="lblbtn rtmore" data-act="rtmore" ${pre}>${more?'Menos ▴':'Tempo, descanso y nota ▾'}</button>
+   ${more?`<div class="rtgrid g3">${fixed?'':`<label>Tempo<input class="fld" data-rt="tempo" ${pre} value="${esc(it.tempo||'')}"></label><label>RIR<input class="fld" data-rt="rir" ${pre} value="${esc(it.rir||'')}"></label><label>Descanso s<input class="fld" data-rt="rest" ${pre} inputmode="numeric" value="${esc(it.rest||'')}"></label>`}</div>
+   <input class="fld" data-rt="note" ${pre} placeholder="Nota para el cliente (opcional)" value="${esc(it.note||'')}">`:''}</div>`;
+}
+/* ---------- selector de ejercicios (visual: grupo → patrón → buscar) ---------- */
+function pkList(){
+  const P=RT.pk,q=nrm(P.q);
+  let ids=Object.keys(E).filter(k=>(P.g==='Todos'||E[k].g===P.g)&&(!P.pat||E[k].pat===P.pat)&&(!q||nrm(E[k].n+' '+(E[k].pat||'')+' '+(E[k].mus||'')+' '+(E[k].eq||'')).includes(q)));
+  ids.sort((a,b)=>(E[a].lvl||1)-(E[b].lvl||1)||E[a].n.localeCompare(E[b].n));
+  return `<div class="pkcount">${ids.length} ejercicios</div>`+ids.slice(0,80).map(k=>`<button class="pkrow" data-act="rtpickex" data-id="${k}"><span><b>${esc(E[k].n)}</b><small>${esc([E[k].s||E[k].mus,E[k].eq].filter(Boolean).join(' · '))}</small></span><i class="pklv l${E[k].lvl||1}">${LVN[E[k].lvl||1]}</i></button>`).join('')+(ids.length>80?'<div class="note">Afina con un filtro o la búsqueda.</div>':'');
+}
+function pkRender(){
+  const P=RT.pk,pats={};Object.keys(E).forEach(k=>{if(P.g==='Todos'||E[k].g===P.g){const p=E[k].pat;if(p)pats[p]=1;}});
+  const html=`<div class="pkhead"><b>${P.mode==='add'?'Añadir ejercicio':'Cambiar ejercicio'}</b><button class="rtb" data-act="rtpkx" aria-label="Cerrar">✕</button></div>
+   <input class="fld" id="pkQ" placeholder="Buscar ejercicio…" value="${esc(P.q)}" autocomplete="off">
+   <div class="pkchips">${['Todos'].concat(R_GRPX).map(g=>`<button class="chip${P.g===g?' on':''}" data-act="rtpkg" data-v="${g}">${g}</button>`).join('')}</div>
+   <div class="pkchips pat">${Object.keys(pats).sort().map(p=>`<button class="chip sm${P.pat===p?' on':''}" data-act="rtpkp" data-v="${esc(p)}">${esc(p)}</button>`).join('')}</div>
+   <div id="pkList">${pkList()}</div>`;
+  sheet(html);const s=document.getElementById('sheet');s.scrollTop=0;
+}
+function pkOpen(mode,di,bk,ii){
+  const g=bk==='warm'?'Calentamiento':bk==='calm'?'Estiramiento':'Todos';
+  RT.pk={mode,di,bk,ii,g,pat:'',q:''};pkRender();
+}
+document.addEventListener('input',e=>{if(e.target.id==='pkQ'&&RT.pk){RT.pk.q=e.target.value;document.getElementById('pkList').innerHTML=pkList();}},true);
 const RT_BT={warm:'Calentamiento',main:'Rutina central (básicos)',acc:'Accesorios y core',calm:'Vuelta a la calma'};
 function rtEditorHTML(){
   const days=RT.days,d=days[RT.sel];
@@ -2306,8 +2358,17 @@ document.addEventListener('click',async e=>{
   else if(a==='rtaddday'){RT.days.push(RD.torsoC(RT.days.length+1));RT.days[RT.days.length-1].name='Nuevo día';rtFixIds();RT.sel=RT.days.length-1;RT.dirty=true;rtShow();}
   else if(a==='rtdup'){const c=rtClone(RT.days[RT.sel]);RT.days.splice(RT.sel+1,0,c);rtFixIds();RT.sel++;RT.dirty=true;rtShow();}
   else if(a==='rtdelday'){if(RT.days.length<2){toast('Debe quedar al menos un día');return;}if(!confirm('¿Eliminar este día?'))return;RT.days.splice(RT.sel,1);rtFixIds();RT.sel=Math.max(0,RT.sel-1);RT.dirty=true;rtShow();}
-  else if(a==='rtadd'){const b=rtBlock(RT.days[RT.sel],bk),base=bk==='warm'?'mov_tor':bk==='calm'?'est_dorsal':bk==='main'?'press_pecho_maq':'curl_man';
-    b.items.push(bk==='warm'||bk==='calm'?{ex:base,kind:bk,fixed:{sets:'2',reps:bk==='calm'?'30 s':'10-12'},note:''}:{ex:base,kind:bk==='main'?'basic':'acc',ref:0,tempo:bk==='main'?'3-0-1-0':RDEF.tempo,rir:RDEF.rir,rest:bk==='main'?120:RDEF.rest,note:''});RT.dirty=true;rtShow();}
+  else if(a==='rtadd'){pkOpen('add',RT.sel,bk,-1);}
+  else if(a==='rtpick'){pkOpen('replace',di,bk,ii);}
+  else if(a==='rtmore'){const k=di+'|'+bk+'|'+ii;RT.x[k]=!RT.x[k];rtShow();}
+  else if(a==='rtpkx'){closeSheet();}
+  else if(a==='rtpkg'){RT.pk.g=t.dataset.v;RT.pk.pat='';pkRender();}
+  else if(a==='rtpkp'){RT.pk.pat=RT.pk.pat===t.dataset.v?'':t.dataset.v;pkRender();}
+  else if(a==='rtpickex'){const P=RT.pk,id=t.dataset.id;
+    if(P.mode==='replace'){RT.days[P.di].blocks.find(b=>b.k===P.bk).items[P.ii].ex=id;}
+    else{const b=rtBlock(RT.days[P.di],P.bk),w=P.bk==='warm'||P.bk==='calm';
+      b.items.push(w?{ex:id,kind:P.bk,fixed:{sets:'2',reps:P.bk==='calm'?'30 s':'10-12'},note:''}:{ex:id,kind:P.bk==='main'?'basic':'acc',ref:0,tempo:P.bk==='main'?'3-0-1-0':RDEF.tempo,rir:RDEF.rir,rest:P.bk==='main'?120:RDEF.rest,note:''});}
+    RT.dirty=true;closeSheet();rtShow();}
   else if(a==='rtdel'){const b=rtBlock(RT.days[di],bk);b.items.splice(ii,1);RT.dirty=true;rtShow();}
   else if(a==='rtmove'){const b=rtBlock(RT.days[di],bk),j=ii+(+t.dataset.d);if(j<0||j>=b.items.length)return;const x=b.items.splice(ii,1)[0];b.items.splice(j,0,x);RT.dirty=true;rtShow();}
   else if(a==='rtsave'){
