@@ -1304,7 +1304,7 @@ function exHTML(d,b,i,it,pr,key,L){
     ${open?`<div class="exb">
       ${meta}
       ${showRef?`<div class="ref">Peso de referencia de tu coach: <b>${it.ref} kg</b></div>`:(!isC()&&!it.fixed&&!warm&&!it.extra&&!swapped?invl('Con Complete: peso de referencia de tu coach'):'')}
-      ${swapped?`<div class="note"><b>Original:</b> ${E[it.ex].n}. Registra tu peso real, no hay referencia para este ejercicio.</div>`:(it.note?`<div class="note"><b>${isC()?'Nota del coach':'Tip'}:</b> ${it.note}</div>`:'')}
+      ${swapped?`<div class="note"><b>Original:</b> ${E[it.ex].n}.${warm?'':' Registra tu peso real, no hay referencia para este ejercicio.'}</div>`:(it.note?`<div class="note"><b>${isC()?'Nota del coach':'Tip'}:</b> ${it.note}</div>`:'')}
       ${logging?prevLine(exId):''}
       ${logging?`<div class="sets"><div class="setlabels"><span>#</span><span>Kg</span><span>Reps</span><button class="lblbtn" data-act="info" data-v="rpe">Esfuerzo ⓘ</button><span></span></div>${sets}</div>`:''}
       ${it.extra?`<div class="actions"><button class="btn" data-act="xset" data-d="-1" data-b="${b.k}" data-xi="${it.xi}">− Serie</button><button class="btn" data-act="xset" data-d="1" data-b="${b.k}" data-xi="${it.xi}">+ Serie</button></div>`:''}
