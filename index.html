@@ -602,6 +602,7 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .cpbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}.cpbl{flex:1;font-size:16px;min-width:140px}.cpnew{width:auto!important;flex:none!important;padding:9px 18px!important;background:#E0533F!important;border-color:#E0533F!important;color:#fff!important;margin-left:auto}.cpvw{margin-bottom:10px}
 .cpcl{display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;align-items:start;margin-top:8px}.cpsb{display:flex;flex-direction:column;border-right:1px solid var(--line);padding-right:6px;position:sticky;top:10px}
 .cpsi{text-align:left;background:none;border:0;border-left:3px solid transparent;padding:12px 14px;cursor:pointer;color:inherit;border-radius:0 10px 10px 0}.cpsi b{display:block;font-size:14px}.cpsi small{display:block;color:var(--mut,#777);font-size:12px;margin-top:2px;line-height:1.3}.cpsi:hover{background:var(--card,#fff)}.cpsi.on{border-left-color:#C0392B;background:var(--card,#fff)}.cpsi.on b{color:#C0392B}
+.cpks{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}.cpk{font-size:10px;font-weight:600;border-radius:6px;padding:2px 5px;border:1px solid var(--line);color:var(--mut,#777);white-space:nowrap}.cpk.ok{background:#E8F6EF;border-color:#2E9D6B;color:#2E9D6B}.cpk.part{background:#FBF4DC;border-color:#D4A937;color:#9A7408}.cpk.miss{background:#FBE9E7;border-color:#C0392B;color:#C0392B}.cpk.plan{opacity:.7}@media(max-width:700px){.cpks{display:none}}
 .cpc{cursor:pointer}.cpc:hover{background:var(--line)}.cpc.big{min-height:110px}.cpc.big .cpcn{text-align:left}.cpcn{background:none;border:0;cursor:pointer;color:var(--mut,#777);font-size:11px;text-align:right;padding:0}.cpgrid.cpwk .cpc{min-height:150px}.cpl{margin-bottom:6px}
 .cpp.rest{background:#8A8F98}.cpp.note{background:#3B82C4}.cpp.note span{white-space:normal}
 .cptask{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--card,#fff)}.cptask>span{flex:1}.cptask small{display:block;color:var(--mut,#777)}
@@ -2032,17 +2033,18 @@ function realDB(){
     async remove(paths){const r=await sb.storage.from('photos').remove(paths);if(r.error)throw r.error;},
     async signed(paths){if(!paths.length)return [];return ok(await sb.storage.from('photos').createSignedUrls(paths,3600));},
     async clientDetail(cid){
-      const [profile,weights,steps,fb,chat,calls]=await Promise.all([
+      const [profile,weights,steps,fb,chat,calls,photos]=await Promise.all([
         sb.from('profiles').select('*').eq('id',cid).single().then(ok),
         sb.from('weights').select('log_date,kg').eq('client_id',cid).order('log_date').then(ok),
         sb.from('steps').select('log_date,steps').eq('client_id',cid).order('log_date').then(ok),
         sb.from('session_feedback').select('log_date,grp,intensity,feel,note').eq('client_id',cid).order('log_date',{ascending:false}).limit(20).then(ok),
         sb.from('chat_messages').select('id,sender_id,kind,body,created_at').eq('client_id',cid).order('created_at').then(ok),
-        sb.from('calls').select('starts_at').eq('client_id',cid).gte('starts_at',new Date(Date.now()-36e5).toISOString()).order('starts_at').limit(1).then(ok)]);
+        sb.from('calls').select('starts_at').eq('client_id',cid).gte('starts_at',new Date(Date.now()-36e5).toISOString()).order('starts_at').limit(1).then(ok),
+        sb.from('progress_photos').select('month,angle,taken_at').eq('client_id',cid).then(ok)]);
       let extra=[];try{extra=ok(await sb.from('client_data').select('key,value').eq('client_id',cid).in('key',['wnotes','sleep','excom','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','prefs','ctasks']));}catch(e){}
       const xv=k=>((extra.find(r=>r.key===k)||{}).value)||{};
       const data={};extra.forEach(r=>data[r.key]=r.value);
-      return {profile,weights,steps,fb,chat,data,call:calls[0]||null,wnotes:xv('wnotes'),sleep:xv('sleep'),excom:xv('excom')};
+      return {profile,weights,steps,fb,chat,data,photos,call:calls[0]||null,wnotes:xv('wnotes'),sleep:xv('sleep'),excom:xv('excom')};
     },
     async updateClient(cid,f){ok(await sb.from('profiles').update(f).eq('id',cid));},
     async sendCoach(cid,uid,body){return ok(await sb.from('chat_messages').insert({client_id:cid,sender_id:uid,kind:'msg',body}).select('id,created_at').single());},
@@ -2369,7 +2371,7 @@ function cpPlanBody(){
       const pills=(inf.d?`<button class="cpp ${st}" data-act="cpday" data-v="${dt}" title="${esc(inf.d.name||'')}"><i>${st==='ok'?'✓':st==='part'?pct+'%':st==='miss'?'!':'•'}</i><span>${inf.d.x?'':'Día '+inf.n+'<em> · '}${esc(inf.d.x?(inf.d.label||inf.d.name||'Workout'):(inf.d.name||''))}${inf.d.x?'':'</em>'}</span></button>`:'')
         +L.filter(t=>t.type==='rest').map(t=>`<button class="cpp rest" data-act="cpday" data-v="${dt}"><i>☾</i><span>Descanso</span></button>`).join('')
         +L.filter(t=>t.type==='note').map(t=>`<button class="cpp note" data-act="cpday" data-v="${dt}"><i>✎</i><span>${esc(t.text||'Nota')}</span></button>`).join('');
-      return `<div class="cpc${inM?'':' out'}${dt===tdy?' tdy':''}${big?' big':''}" data-act="cptnew" data-v="${dt}"><button class="cpcn" data-act="cptnew" data-v="${dt}">${big?fdate(dt)+' ':''}${+dt.slice(8)}</button>${pills}${w!=null?`<span class="cpm">⚖ ${w.toFixed(1)} kg</span>`:''}${stp?`<span class="cpm">👣 ${stp.toLocaleString('es-CO')}</span>`:''}</div>`;
+      return `<div class="cpc${inM?'':' out'}${dt===tdy?' tdy':''}${big?' big':''}" data-act="cptnew" data-v="${dt}"><button class="cpcn" data-act="cptnew" data-v="${dt}">${big?fdate(dt)+' ':''}${+dt.slice(8)}</button>${pills}${cpDefs(dt,big||vw==='sem')}</div>`;
     };
     let main='';
     if(vw==='mes'){main=`<div class="cpdow">${['L','M','X','J','V','S','D'].map(x=>`<span>${x}</span>`).join('')}</div><div class="cpgrid">${ds.map(x=>cell(x)).join('')}</div>`;}
@@ -2385,6 +2387,19 @@ function cpPlanBody(){
       <div class="cpleg"><span><i class="cpp ok">✓</i>Cumplido</span><span><i class="cpp part">%</i>Parcial</span><span><i class="cpp miss">!</i>Sin completar</span><span><i class="cpp plan">•</i>Programado</span><span><i class="cpp rest">☾</i>Descanso</span><span><i class="cpp note">✎</i>Nota</span></div>
       <div class="note">Toca un día para ver lo que hizo y para asignarle tareas: un workout, un descanso o una nota.</div></section>`;
   });
+}
+function cpDefs(dt,lab){
+  const d=CP.d,p=d.profile,tdy=today();if(dt>tdy)return '';
+  const wd=(d.weights||[]).map(r=>r.log_date).sort(),cr=p.created_at?bogota(p.created_at).date:null,start=[wd[0],cr].filter(Boolean).sort()[0]||dt;if(dt<start)return '';
+  const st=(ok,part)=>ok?'ok':part?'part':dt<tdy?'miss':'plan',out=[];
+  const add=(ic,n,s2,tip)=>out.push(`<span class="cpk ${s2}" title="${esc(n+(tip?' · '+tip:''))}">${ic}${lab?' '+n:''}</span>`);
+  const w=S.weights[dt];add('⚖','Peso',st(w!=null),w!=null?w.toFixed(1)+' kg':'sin registrar');
+  const sl=(d.sleep||{})[dt];if(Object.keys(d.sleep||{}).length)add('☾','Sueño',st(!!(sl&&(sl.h!=null||sl.q))),sl&&sl.h!=null?fmtHM(sl.h):'sin registrar');
+  const stp=S.steps[dt],g=p.step_goal||8000;add('👣','Pasos',st(stp>=g,stp>0),stp?stp.toLocaleString('es-CO')+' de '+g.toLocaleString('es-CO'):'sin registrar');
+  if((d.photos||[]).some(x=>x.taken_at===dt))add('📷','Foto','ok','foto de progreso');
+  const MN={recovery:['🫁','Respiración'],habitos:['✔','Hábitos'],alim:['🍽','Alimentación']};
+  (p.modules||[]).forEach(k=>{if(!MN[k]||!TASKS[k])return;const c=withDate(dt,()=>tcount(k));add(MN[k][0],MN[k][1],st(c.total>0&&c.done>=c.total,c.done>0),c.done+' de '+c.total);});
+  return `<div class="cpks">${out.join('')}</div>`;
 }
 const cxListOf=d=>((((d&&d.data)||{}).ctasks||{}).tasks)||[];
 const cpHas=dt=>{const i=cpDayInfo(dt);return !!i.d||cxList().some(t=>t.date===dt);};
