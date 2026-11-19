@@ -576,7 +576,7 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .pgs{border:1px solid var(--line);border-radius:12px;background:var(--card);margin:8px 0}.pgh{width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px;background:none;border:0;text-align:left}.pgh b{display:block;font-size:15px}.pgh small{color:var(--gray);font-size:12px}.pgh i{font-style:normal;color:var(--gray)}.pgb{padding:0 14px 14px}
 .lvr{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}.lvr:last-of-type{border-bottom:0}.lvn{width:32px;height:32px;border-radius:50%;background:var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 32px}.lvr.done .lvn{background:var(--ink);color:#fff}.lvr.cur .lvn{background:var(--red,#C0392B);color:#fff}.lvr.lock{opacity:.6}.lvr b{display:block}.lvr small{color:var(--gray);font-size:12px}
 .hitoc{background:var(--red-tint,#fbeceb);border:1px solid var(--red,#C0392B);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14px;font-weight:600}
-.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
+.prerow.coach{background:var(--red-tint);margin:0 -8px;padding:10px 8px;border-radius:12px;border-bottom:0}.coachtag{margin-left:auto;font-style:normal;font-size:11px;font-weight:700;color:var(--red-strong);background:#fff;border:1px solid var(--red-strong);border-radius:99px;padding:3px 9px;white-space:nowrap}.mic{display:inline-flex;align-items:center;gap:5px}.lvn .ico{display:block}.lvr.lock .lvn{color:var(--gray)}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
 </style>
 </head>
 <body>
@@ -1134,7 +1134,7 @@ function homeView0(){
    <div class="sub2">${full===act.length?(isT?'Día completo. Buen trabajo.':'Día completo.'):`${isT?'Llevas':'Completaste'} ${full} de ${act.length} ${act.length===1?'tarea':'tareas'}${isT?' hoy':''}.`}</div>
    <h2 class="h2">${isT?'Tareas de hoy':'Tareas del '+fmtL(S.sel).split(',')[0].toLowerCase()+' '+pd(S.sel).getDate()}</h2>
    ${rows.filter(r=>r.p!=='peso'&&r.p!=='pasos').map(r=>{const ok=r.total&&r.done>=r.total;return `<button class="tcard" data-act="${r.p==='peso'?'wopen':r.p==='pasos'?'sopen':'tab'}" data-v="${r.p}" style="--c:${PIL[r.p].c}"><span class="bar"></span><span class="tb"><small style="color:${PIL[r.p].c}">${PIL[r.p].n}</small><b>${r.t}</b><em>${r.s}</em></span><span class="st${ok?' ok':''}" style="${ok?`background:${PIL[r.p].c};border-color:${PIL[r.p].c}`:''}">${ok?'✓':r.rest?'–':'›'}</span></button>`;}).join('')}
-   <div class="mini2">${['peso','pasos'].map(p=>{const r=rows.find(x=>x.p===p),ok=r.done>=r.total,pend=!ok&&S.sel===today();const pct=p==='pasos'?Math.min(100,Math.round((sv||0)/S.stepGoal*100)):0;return `<button class="mini${ok?' ok':''}${pend&&p==='peso'?' pend':''}" data-act="${p==='peso'?'wopen':'sopen'}"><small>${PIL[p].n}</small><b>${p==='peso'?(wv!=null?wv.toFixed(1)+' kg':'Pésate'):(sv?sv.toLocaleString('es-CO'):'Registrar')}</b><em>${ok?'✓ Listo':(p==='peso'?(stk>=2?'Racha '+stk+' d':'Toca y desliza · 10 s'):'Meta '+S.stepGoal.toLocaleString('es-CO'))}</em>${p==='pasos'?`<div class="mbar"><i style="width:${pct}%"></i></div>`:`<div class="mspk">${miniSpark()}</div>`}</button>`;}).join('')}</div>`;
+   <div class="mini2">${['peso','pasos'].map(p=>{const r=rows.find(x=>x.p===p),ok=r.done>=r.total,pend=!ok&&S.sel===today();const pct=p==='pasos'?Math.min(100,Math.round((sv||0)/S.stepGoal*100)):0;return `<button class="mini${ok?' ok':''}${pend&&p==='peso'?' pend':''}" data-act="${p==='peso'?'wopen':'sopen'}"><small class="mic">${ICON(p,14)}${PIL[p].n}</small><b>${p==='peso'?(wv!=null?wv.toFixed(1)+' kg':'Pésate'):(sv?sv.toLocaleString('es-CO'):'Registrar')}</b><em>${ok?'✓ Listo':(p==='peso'?(stk>=2?'Racha '+stk+' d':'Toca y desliza · 10 s'):'Meta '+S.stepGoal.toLocaleString('es-CO'))}</em>${p==='pasos'?`<div class="mbar"><i style="width:${pct}%"></i></div>`:`<div class="mspk">${miniSpark()}</div>`}</button>`;}).join('')}</div>`;
 }
 function itemHTML(p,x,col,t,check){
   const k=p+'.'+x.id, on=t[k], hasV=p!=='alim', open=S.exp[k+'.o'], oV=hasV&&S.exp[k+'.v'], sub=(x.id==='sueno'&&!isC())?'7 a 9 horas, según cómo te sientas':(x.s||x.tag||'');
@@ -1401,7 +1401,7 @@ document.addEventListener('click',e=>{
   else if(a==='phdel'){const k=t.dataset.k;if(phConf!==k){phConf=k;showPhotos();return;}
     const r=PH[phM];if(r){delete r[k];if(!r.front&&!r.side&&!r.back)delete PH[phM];}store.set('erre_photos',PH);phConf=null;
     if(PH[phM])showPhotos();else{phM=null;closeSheet();}render();toast('Foto eliminada');}
-  else if(a==='lvinfo'){sheet(`<h3>Niveles de disciplina</h3><div class="term"><p>Cada día suma hasta 20 puntos según lo que cumples (entrenamiento, respiración, hábitos, alimentación, peso y pasos), y entrenar de verdad suma 10 más.</p></div><div class="term"><p>Un día cuenta para tu racha si completas al menos la mitad de tus tareas.</p></div><div class="zt">${LEVELS.map((l,i)=>`<div class="zr"><span class="zb" style="background:#1C1B19">${i+1}</span><div><b>${l[1]}</b><small>desde ${l[0]} puntos</small></div></div>`).join('')}</div><button class="btn" data-act="close" style="width:100%">Cerrar</button>`);}
+  else if(a==='lvinfo'){sheet(`<h3>Niveles de disciplina</h3><div class="term"><p>Cada día suma hasta 20 puntos según lo que cumples (entrenamiento, respiración, hábitos, alimentación, peso y pasos), y entrenar de verdad suma 10 más.</p></div><div class="term"><p>Un día cuenta para tu racha si completas al menos la mitad de tus tareas. Tus días de descanso no rompen la racha.</p></div><div class="zt">${LEVELS.map((l,i)=>`<div class="zr"><span class="zb" style="background:#1C1B19">${i+1}</span><div><b>${l[1]}</b><small>desde ${l[0]} puntos</small></div></div>`).join('')}</div><button class="btn" data-act="close" style="width:100%">Cerrar</button>`);}
   else if(a==='wopen'){const l=lastWeight(S.sel);tw=S.weights[S.sel]??l??(parseFloat(S.user&&S.user.data&&S.user.data.weight)||70);showWeight();}
   else if(a==='wstep'){tw=Math.round((tw+(+t.dataset.d))*10)/10;wRefresh();wSetScroll(tw,true);}
   else if(a==='wlast'){tw=lastWeight(S.sel);wRefresh();wSetScroll(tw,true);}
@@ -1549,7 +1549,7 @@ function progresoView(){
   if(seg==='resumen'){
     const g=gam(), ms=milestones(g), nxt=ms.filter(m=>m.v<m.n).sort((a,b)=>b.v/b.n-a.v/a.n)[0];
     const base=LEVELS[g.li][0], pct=g.nx?Math.round((g.xp-base)/(g.nx[0]-base)*100):100;
-    h+=`<div class="prof"><div class="lvbadge">${g.li+1}</div><div><small>Nivel de disciplina</small><b>${g.name}</b><em>${g.xp} puntos${g.nx?` · faltan ${g.nx[0]-g.xp} para ${g.nx[1]}`:' · nivel máximo'}</em></div></div>
+    h+=`<div class="prof"><div class="lvbadge">${ICON("l"+g.li,26)}</div><div><small>Nivel de disciplina</small><b>${g.name}</b><em>${g.xp} puntos${g.nx?` · faltan ${g.nx[0]-g.xp} para ${g.nx[1]}`:' · nivel máximo'}</em></div></div>
      <div class="progress" style="margin:8px 0 4px"><i style="width:${pct}%"></i></div>
      <button class="lblbtn" data-act="lvinfo" style="color:var(--gray);margin-bottom:6px">¿Cómo se ganan puntos? ›</button>
      ${progBody(g,ms,nxt)}`;
@@ -1621,7 +1621,7 @@ function gam(){
     const pr=dayProgress(d), tr=trained(d);
     if(tr)nT++;
     xp+=Math.round(pr*20)+(tr?10:0);
-    if(pr>=0.5){cur++;okDays++;best=Math.max(best,cur);}else if(d!==t){cur=0;}
+    if(pr>=0.5){cur++;okDays++;best=Math.max(best,cur);}else if(d!==t&&ctxFor(d).d){cur=0;}
     if((S.steps[d]||0)>=S.stepGoal)stepsOk++;
   }
   let li=0;LEVELS.forEach((l,i)=>{if(xp>=l[0])li=i;});
@@ -1919,6 +1919,18 @@ function tick(){const m=Math.floor(tLeft/60),s=tLeft%60;$('#tt').textContent=m+'
 function stopTimer(){clearInterval(tInt);tInt=null;$('#timer').classList.remove('on');}
 $('#skip').addEventListener('click',stopTimer);
 
+const ICO={
+peso:'<rect x="3.5" y="4" width="17" height="16" rx="4"/><path d="M8.5 10a4.5 4 0 0 1 7 0"/><path d="M12 10l1.7-2"/>',
+pasos:'<path d="M4 17.5c0-3 1.2-5 3.2-6.2L9.5 5l3.3 1.6-1.4 3.6 6.2 2.6c1.5.6 2.4 1.7 2.4 3.4V19H4z"/>',
+fuerza:'<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>',
+llama:'<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.2 1 1.8 1.7 2C10.5 8 11 5.5 12 3z"/>',
+l0:'<path d="M12 21v-8"/><path d="M12 13c0-4-3-6-7-6 0 4 2 6 7 6z"/><path d="M12 15c0-3 2-5 6-5 0 3-2 5-6 5z"/>',
+l1:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M8 3v4M16 3v4M9 15l2 2 4-4"/>',
+l2:'<path d="M17 4l3 3-3 3"/><path d="M4 11V9a2 2 0 0 1 2-2h16"/><path d="M7 20l-3-3 3-3"/><path d="M20 13v2a2 2 0 0 1-2 2H2"/>',
+l3:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+l4:'<path d="M2.5 19l6.5-12 4 7 3-4.5 5.5 9.5z"/>',
+l5:'<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>'};
+const ICON=(n,s)=>`<svg class="ico" width="${s||18}" height="${s||18}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]||''}</svg>`;
 /* ================= ERRE · conexión real (Supabase) ================= */
 const CFG=window.ERRE_CFG||{};
 function realDB(){
@@ -2411,7 +2423,8 @@ function preList(k){
         const meta=bk==='warm'?((it.fixed&&it.fixed.reps)||''):(p.sets?`${p.sets} series · ${p.reps||''} reps`:'');
         return `<div class="prerow">${typeof thumb==='function'?thumb(id):''}<span><b>${esc(e.n||id)}</b><small>${esc(meta)}</small></span></div>`;}).join('');});
   }else{
-    h=Object.values(CMODS).map(x=>`<div class="prerow"><span><b>${esc(x.n)}</b></span></div>`).join('');
+    const dflt=d.cardioDefault;
+    h=Object.entries(CMODS).sort((a,b)=>(b[0]===dflt)-(a[0]===dflt)).map(([id,x])=>`<div class="prerow${id===dflt?' coach':''}"><span><b>${esc(x.n)}</b>${id===dflt?'<small>Tu coach lo eligió para hoy</small>':''}</span>${id===dflt?'<em class="coachtag">Elegida por el coach hoy</em>':''}</div>`).join('');
   }
   sheet(`<h3>${k==='g_fuerza'?'Ejercicios de hoy':'Opciones de cardio'}</h3><div class="presheet">${h}</div>
    <button class="btn solid" data-act="prestart" data-b="${k}" style="width:100%;padding:14px;margin-top:12px">${k==='g_fuerza'?'Comenzar entrenamiento':'Comenzar cardio'}</button>
@@ -2432,7 +2445,7 @@ function pgSec(key,title,badge,inner,def){
 function progBody(g,ms,nxt){
   const top=LEVELS[LEVELS.length-1],pctTotal=Math.min(100,Math.round(g.xp/top[0]*100));
   const lv=`<div class="note" style="margin:0 0 10px">Meta final: <b>${top[1]}</b> · ${top[0].toLocaleString('es-CO')} puntos. Llevas ${g.xp.toLocaleString('es-CO')} (${pctTotal}%).</div><div class="progress" style="margin:0 0 12px"><i style="width:${pctTotal}%"></i></div>
-   <div class="lvl">${LEVELS.map((l,i)=>{const st=i<g.li?'done':i===g.li?'cur':'lock';return `<div class="lvr ${st}"><span class="lvn">${st==='done'?'✓':st==='cur'?i+1:'🔒'}</span><span><b>${l[1]}</b><small>${i===0?'Desde el inicio':l[0].toLocaleString('es-CO')+' puntos'}${st==='cur'?' · estás aquí':''}${st==='lock'?' · te faltan '+(l[0]-g.xp).toLocaleString('es-CO'):''}</small></span></div>`;}).join('')}</div>
+   <div class="lvl">${LEVELS.map((l,i)=>{const st=i<g.li?'done':i===g.li?'cur':'lock';return `<div class="lvr ${st}"><span class="lvn">${ICON('l'+i,18)}</span><span><b>${l[1]}</b><small>${i===0?'Desde el inicio':l[0].toLocaleString('es-CO')+' puntos'}${st==='cur'?' · estás aquí':''}${st==='lock'?' · te faltan '+(l[0]-g.xp).toLocaleString('es-CO'):''}</small></span></div>`;}).join('')}</div>
    <button class="lblbtn" data-act="lvinfo" style="color:var(--gray);margin-top:8px">¿Cómo se ganan puntos? ›</button>`;
   const stats=`<div class="stats"><div><small>Racha</small><b>${g.streak} d</b></div><div><small>Mejor racha</small><b>${g.best} d</b></div><div><small>Entrenamientos</small><b>${g.nT}</b></div></div>
    <div class="stats"><div><small>Esta semana</small><b>${g.wt}/${g.wp}</b></div><div><small>Días cumplidos</small><b>${g.okDays}</b></div><div><small>Días con meta de pasos</small><b>${g.stepsOk}</b></div></div>`;
@@ -2569,7 +2582,7 @@ function rtItemHTML(di,bk,ii,it,num){
 /* ---------- selector de ejercicios (visual: grupo → patrón → buscar) ---------- */
 function pkList(P0,act){
   const P=P0||RT.pk,q=nrm(P.q);act=act||'rtpickex';
-  let ids=Object.keys(E).filter(k=>(RT.all||E[k].yt||k.slice(0,2)==='x_')&&(P.g==='Todos'||E[k].g===P.g)&&(!P.pat||E[k].pat===P.pat)&&(!q||nrm(E[k].n+' '+(E[k].pat||'')+' '+(E[k].mus||'')+' '+(E[k].eq||'')).includes(q)));
+  let ids=Object.keys(E).filter(k=>!/\(ANTIGUO\)/i.test(E[k].n||'')&&(RT.all||E[k].yt||k.slice(0,2)==='x_')&&(P.g==='Todos'||E[k].g===P.g)&&(!P.pat||E[k].pat===P.pat)&&(!q||nrm(E[k].n+' '+(E[k].pat||'')+' '+(E[k].mus||'')+' '+(E[k].eq||'')).includes(q)));
   ids.sort((a,b)=>(E[a].lvl||1)-(E[b].lvl||1)||E[a].n.localeCompare(E[b].n));
   return `<div class="pkcount">${ids.length} ejercicios</div>`+ids.slice(0,80).map(k=>`<button class="pkrow" data-act="${act}" data-id="${k}">${thumb(k)}<span class="pkt"><b>${esc(E[k].n)}${E[k].yt?' <em class="pkyt">▶</em>':''}</b><small>${esc([E[k].s||E[k].mus,E[k].eq].filter(Boolean).join(' · '))}</small></span><span class="pkedit" data-act="rtexedit" data-id="${k}" title="Editar tags">✎</span><i class="pklv l${E[k].lvl||1}">${LVN[E[k].lvl||1]}</i></button>`).join('')+(ids.length>80?'<div class="note">Afina con un filtro o la búsqueda.</div>':'');
 }
