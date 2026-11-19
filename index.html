@@ -2117,6 +2117,7 @@ function realDB(){
     async moveTemplate(id,folder_id){ok(await sb.from('routines').update({folder_id:folder_id||null}).eq('id',id));},
     async moveFolder(id,parent_id){ok(await sb.from('routine_folders').update({parent_id:parent_id||null}).eq('id',id));},
     async clientsMeta(){const r=await sb.from('routines').select('client_id,name,days,updated_at').eq('is_template',false);const f=await sb.from('session_feedback').select('client_id,log_date').order('log_date',{ascending:false}).limit(800);const h=await sb.from('chat_messages').select('client_id,body,created_at').eq('kind','hito').order('created_at',{ascending:false}).limit(200);const m={rt:{},last:{},hito:{}};(h.data||[]).forEach(x=>{if(!m.hito[x.client_id])m.hito[x.client_id]={at:x.created_at,body:x.body};});(r.data||[]).forEach(x=>{if(x.client_id)m.rt[x.client_id]={name:x.name,n:(x.days||[]).length,at:x.updated_at};});(f.data||[]).forEach(x=>{if(!m.last[x.client_id])m.last[x.client_id]=x.log_date;});return m;},
+    async chatInbox(){return await sb.from('chat_messages').select('client_id,sender_id,body,kind,created_at').order('created_at',{ascending:false}).limit(400).then(ok).catch(()=>[]);},
     async logAct(cid,kind,text){try{await sb.from('coach_activity').insert({client_id:cid||null,kind,text});}catch(e){}},
     async coachAct(){return await sb.from('coach_activity').select('client_id,kind,text,created_at').order('created_at',{ascending:false}).limit(25).then(ok).catch(()=>[]);},
     async homeData(){
@@ -2351,7 +2352,7 @@ function cardioWrap(h,d){
 const cpW=()=>window.innerWidth>=1000;
 function cpWideCls(el){el.classList.toggle('cpwide',cpW());el.style.maxWidth=(CP.wide&&CP.view==='client'&&cpW())?'none':'';}
 function cpShell(inner){
-  const nav=[['inicio','Inicio'],['clientes','Clientes'],['editor','Programas y workouts']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
+  const nav=[['inicio','Inicio'],['clientes','Clientes'],['chat','Chat'],['editor','Programas y workouts']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
   return `<div class="cpshell${CP.wide&&CP.view==='client'?' cpfull':''}"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small>${pushCoachBtn()}<button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
 }
 const dAgo=s=>{if(!s)return '—';const n=Math.floor((Date.now()-new Date(s+'T12:00:00'))/864e5);return n<=0?'Hoy':n===1?'Ayer':'hace '+n+' d';};
@@ -2394,6 +2395,16 @@ function cpHomePage(){
    <section class="sec"><div class="sec-h"><b>Mi actividad como coach</b><em>${act.length}</em></div>${ahist}</section>
    <section class="sec"><div class="sec-h"><b>Necesitan tu atención</b><em>${al.length}</em></div>${ah}${nh?`<button class="lblbtn" data-act="cprestore" style="margin-top:6px">Mostrar ${nh} atendida${nh>1?'s':''}</button>`:''}</section></div>`;
 }
+async function cpInboxLoad(){try{CP.inbox=await DB.chatInbox();}catch(e){CP.inbox=[];}if(CP.view==='list'&&CP.sec==='chat')coachRender();}
+function cpChatPage(){
+  const last={};(CP.inbox||[]).forEach(m=>{if(m.client_id&&!last[m.client_id])last[m.client_id]=m;});
+  const rd=id=>{try{return +localStorage.getItem('cpread_'+id)||0;}catch(e){return 0;}};
+  const L=(CP.clients||[]).map(c=>({c,m:last[c.id]})).sort((a,b)=>(b.m?new Date(b.m.created_at):0)-(a.m?new Date(a.m.created_at):0));
+  const row=({c,m})=>{const un=m&&m.sender_id===c.id&&m.kind!=='hito'&&new Date(m.created_at).getTime()>rd(c.id);const b=m?bogota(m.created_at):null;
+    const txt=m?(m.sender_id===c.id?'':'Tú: ')+String(m.body||'').replace(/\s+/g,' ').slice(0,70):'Sin mensajes aún';
+    return `<button class="cpfi" data-act="cpchat" data-id="${c.id}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')}${un?' <small style="display:inline;color:var(--red-strong)">● nuevo</small>':''}</b><small style="${un?'font-weight:700;color:var(--ink)':''}">${esc(txt)}</small></span><small style="flex:none">${b?b.date.slice(5)+' '+b.time:''}</small></button>`;};
+  return `<div class="cphead"><h2 class="h2">Chat</h2></div>${CP.inbox?'':'<div class="note">Cargando…</div>'}<div class="cpfeed">${L.length?L.map(row).join(''):'<div class="note">Aún no tienes clientes.</div>'}</div>`;
+}
 function cpClientsPage(){
   const q=nrm(CP.q),m=CP.meta,all=CP.clients;
   const cl=all.filter(c=>(CP.pf==='todos'||c.plan===CP.pf)&&(!q||nrm((c.full_name||'')+' '+(c.level||'')).includes(q)));
@@ -2414,7 +2425,7 @@ function coachRender(keepInput){
   if(keepInput&&typeof RT!=='undefined'&&RT.open)return;
   const el=document.getElementById('app'),keep=keepInput&&document.getElementById('cpIn')?document.getElementById('cpIn').value:'';
   if(CP.view==='list'){
-    const body=CP.sec==='editor'?rtTplList():CP.sec==='inicio'?cpHomePage():cpClientsPage();
+    const body=CP.sec==='editor'?rtTplList():CP.sec==='inicio'?cpHomePage():CP.sec==='chat'?cpChatPage():cpClientsPage();
     el.innerHTML=cpShell(body);cpWideCls(el);const qi=document.getElementById('cpQ');if(qi&&CP.sec==='clientes'&&keepInput){qi.focus();qi.setSelectionRange(qi.value.length,qi.value.length);}return;
   }
   const d=CP.d,SB=[['plan','Planificación','Organiza entrenamientos, tareas y objetivos'],['rutina','Programa','Asigna y edita su programa'],['resumen','Información','Perfil, plan, módulos y fidelidad'],['alim','Nutrición','Planes y seguimiento nutricional'],['arch','Archivos','Documentos compartidos'],['evol','Evolución','Peso, pasos, sueño y sesiones'],['chat','Chat','Habla directo con tu cliente'],['llamada','Llamada 1:1','Agenda y avisa a tu cliente']],tabs=SB.map(x=>x[0]),TL=Object.fromEntries(SB.map(x=>[x[0],x[1]]));
@@ -2788,7 +2799,8 @@ document.addEventListener('click',async e=>{
     if(!v)CP.cd=today();else if(vw==='sem')CP.cd=addD(cd,7*v);else if(vw==='dia')CP.cd=addD(cd,v);else{const [y,m]=cd.split('-').map(Number),n=new Date(y,m-1+v,1,12);CP.cd=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-01';}
     coachRender();return;}
   if(a==='cpopen'){CP.err='';coachOpen(t.dataset.id);}
-  else if(a==='cpnav'){CP.sec=t.dataset.v;clearInterval(CP.poll);if(CP.view!=='list'){CP.view='list';}coachRender();}
+  else if(a==='cpchat'){CP.err='';try{localStorage.setItem('cpread_'+t.dataset.id,String(Date.now()));}catch(x){}coachOpen(t.dataset.id,'chat');}
+  else if(a==='cpnav'){CP.sec=t.dataset.v;if(CP.sec==='chat')cpInboxLoad();clearInterval(CP.poll);if(CP.view!=='list'){CP.view='list';}coachRender();}
   else if(a==='cppf'){CP.pf=t.dataset.v;coachRender();}
   else if(a==='cpback'){clearInterval(CP.poll);CP.err='';CP.sec='clientes';coachHome();}
   else if(a==='cptab'){CP.tab=t.dataset.v;coachRender();}
@@ -3555,9 +3567,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1835';
+const APP_VER='19nov-1838';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1835')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1838')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
