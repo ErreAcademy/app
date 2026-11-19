@@ -599,6 +599,14 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .cpsrs{margin:8px 0 0 0}.cpsr{display:flex;align-items:center;gap:12px;font-size:13px;padding:3px 0;color:var(--mut,#777)}.cpsr.d{color:inherit}.cpsr b{width:26px}.cpsr span{min-width:70px}.cpsr em{font-style:normal;font-size:11px;background:var(--line);border-radius:6px;padding:1px 6px}.cpsr i{margin-left:auto;font-style:normal;color:#2E9D6B;font-weight:700}
 .cpth{flex:none;width:56px;height:56px;border-radius:8px;overflow:hidden;display:block}.cpth>*{width:100%!important;height:100%!important;margin:0!important}.cpdn>span.cpth{flex:none}
 .cpcm{background:#FFF4F2;border:1px solid #F0C4BD;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}.cpcm b{display:block;font-size:12px;color:#C0392B;margin-bottom:2px}
+.cpbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}.cpbl{flex:1;font-size:16px;min-width:140px}.cpnew{width:auto!important;flex:none!important;padding:9px 18px!important;background:#E0533F!important;border-color:#E0533F!important;color:#fff!important;margin-left:auto}.cpvw{margin-bottom:10px}
+.cpcl{display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;align-items:start;margin-top:8px}.cpsb{display:flex;flex-direction:column;border-right:1px solid var(--line);padding-right:6px;position:sticky;top:10px}
+.cpsi{text-align:left;background:none;border:0;border-left:3px solid transparent;padding:12px 14px;cursor:pointer;color:inherit;border-radius:0 10px 10px 0}.cpsi b{display:block;font-size:14px}.cpsi small{display:block;color:var(--mut,#777);font-size:12px;margin-top:2px;line-height:1.3}.cpsi:hover{background:var(--card,#fff)}.cpsi.on{border-left-color:#C0392B;background:var(--card,#fff)}.cpsi.on b{color:#C0392B}
+.cpc.big{min-height:110px}.cpc.big .cpcn{text-align:left}.cpcn{background:none;border:0;cursor:pointer;color:var(--mut,#777);font-size:11px;text-align:right;padding:0}.cpgrid.cpwk .cpc{min-height:150px}.cpl{margin-bottom:6px}
+.cpp.rest{background:#8A8F98}.cpp.note{background:#3B82C4}.cpp.note span{white-space:normal}
+.cptask{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--card,#fff)}.cptask>span{flex:1}.cptask small{display:block;color:var(--mut,#777)}
+.cptt{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card,#fff)}.cpth2{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:12px;cursor:pointer;text-align:left;color:inherit}.cpth2 b{flex:1;font-size:14px}.cpth2 span{color:var(--mut,#777);font-size:12px}.cpdot{width:10px;height:10px;border-radius:50%;flex:none}.cptb{padding:0 12px 12px}.cptt.soon{opacity:.55}.cptt.soon .cpth2{cursor:default}
+.cxnote{background:#EAF3FB;border:1px solid #BBD6EE;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14px}.cxnote b{display:block;font-size:12px;color:#3B82C4;margin-bottom:2px}
 .pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
 </style>
 </head>
@@ -917,7 +925,7 @@ function ctxFor(date){
   const P=PERIOD[S.program], raw=Math.floor(diffD(monOf(date),S.start)/7)+1;
   let wk=1,mes=1; if(raw>=1){wk=((raw-1)%P.weeks)+1;mes=Math.floor((raw-1)/P.weeks)+1;}
   const sched=(S.user&&S.user.sched)||[0,2,4], pos=sched.indexOf(wdOf(date));
-  return {raw,wk,mes,pos,d:(raw>=1&&pos>=0)?DAYS[pos%DAYS.length]:null};
+  const BD=DAYS.filter(q=>!q.x);let dd=(raw>=1&&pos>=0&&BD.length)?BD[pos%BD.length]:null,p2=pos;const ov=(typeof cxOv==='function')?cxOv(date):null;if(ov){if(ov.type==='rest')dd=null;else if(ov.type==='workout'){const xd=DAYS.find(q=>q.id==='x'+ov.id);if(xd){dd=xd;if(p2<0)p2=0;}}}return {raw,wk,mes,pos:p2,d:dd};
 }
 function apply(date){S.sel=date;const c=ctxFor(date);S.week=c.wk;S.day=c.d?DAYS.indexOf(c.d):-1;S.pos=c.pos;S.raw=c.raw;S.mes=c.mes;return c;}
 function withDate(date,fn){const o={sel:S.sel,week:S.week,day:S.day,pos:S.pos,raw:S.raw,mes:S.mes};apply(date);try{return fn();}finally{Object.assign(S,o);}}
@@ -941,7 +949,8 @@ function calendar(){
    <div class="caldays">${days.map((dt,i)=>{const pr=dayProgress(dt),c=ctxFor(dt);
      return `<button class="cd${dt===sel?' sel':''}${dt===tdy?' tdy':''}" data-act="seld" data-v="${dt}"><span class="dl">${DN[i]}</span><span class="ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R}" fill="none" stroke="var(--line)" stroke-width="3"/>${pr>0.01?`<circle cx="22" cy="22" r="${R}" fill="none" stroke="#C0392B" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(C*pr).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/>`:''}</svg><b>${pd(dt).getDate()}</b>${c.d?'<i class="bdg"><svg viewBox="430 585 420 225"><polygon fill="#C0392B" points="445,598 641,598 838,795 637,795"/></svg></i>':''}</span></button>`;}).join('')}</div></div>`;
 }
-function mesoLine(){
+function mesoLine(){return (typeof cxNotes==="function"?cxNotes():"")+mesoLine0();}
+function mesoLine0(){
   const P=PERIOD[S.program], wk=S.week;
   const pre=S.mes>1?`${S.program==='complete'?'Mesociclo':'Bloque'} ${S.mes} · `:'';
   return `<div class="meso"><span class="title">${pre}Semana ${wk} de ${P.weeks}${wk===P.weeks?' · Deload':''}</span><span class="pill">${P.prog?P.prog[wk-1]:'Progresión automática'}</span></div>`;
@@ -2030,7 +2039,7 @@ function realDB(){
         sb.from('session_feedback').select('log_date,grp,intensity,feel,note').eq('client_id',cid).order('log_date',{ascending:false}).limit(20).then(ok),
         sb.from('chat_messages').select('id,sender_id,kind,body,created_at').eq('client_id',cid).order('created_at').then(ok),
         sb.from('calls').select('starts_at').eq('client_id',cid).gte('starts_at',new Date(Date.now()-36e5).toISOString()).order('starts_at').limit(1).then(ok)]);
-      let extra=[];try{extra=ok(await sb.from('client_data').select('key,value').eq('client_id',cid).in('key',['wnotes','sleep','excom','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','prefs']));}catch(e){}
+      let extra=[];try{extra=ok(await sb.from('client_data').select('key,value').eq('client_id',cid).in('key',['wnotes','sleep','excom','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','prefs','ctasks']));}catch(e){}
       const xv=k=>((extra.find(r=>r.key===k)||{}).value)||{};
       const data={};extra.forEach(r=>data[r.key]=r.value);
       return {profile,weights,steps,fb,chat,data,call:calls[0]||null,wnotes:xv('wnotes'),sleep:xv('sleep'),excom:xv('excom')};
@@ -2047,7 +2056,7 @@ function realDB(){
 }
 const DB=window.DB_MOCK||realDB();
 let ME=null,PROFILE=null,LG={step:'email',email:'',err:'',busy:false},CHATT=null;
-const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom'];
+const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom','ctasks'];
 const LAST={weights:{},steps:{},slices:{},prefs:'',fb:{},profile:'',chatKey:{},photos:{},upl:{}};
 let needs=false,syncing=false,pend=false,tmr=null;
 const R_GRP={g_fuerza:'fuerza',g_cardio:'cardio',g_calm:'calma'};
@@ -2146,6 +2155,7 @@ async function applyRemote(d){
   S.steps={};d.steps.forEach(r=>S.steps[r.log_date]=r.steps);LAST.steps=Object.assign({},S.steps);
   d.blobs.forEach(b=>{if(SLICES.includes(b.key)){S[b.key]=b.value;LAST.slices[b.key]=JSON.stringify(b.value);}
     else if(b.key==='prefs'){Object.assign(S,b.value);LAST.prefs=JSON.stringify({rem:S.rem,stepGoal:S.stepGoal,chatRead:S.chatRead,start:S.start});}});
+  cxSync();
   mergeChat(d.chat);
   if(d.call){const c=bogota(d.call.starts_at);S.call={date:c.date,time:c.time};}else S.call=null;
   Object.keys(PH).forEach(k=>delete PH[k]);LAST.photos={};LAST.upl={};
@@ -2229,7 +2239,7 @@ function cpClientsPage(){
 }
 async function coachHome(){CP.view='list';coachRender();try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
-  CP.view='client';CP.cid=id;CP.tab=tab||'plan';CP.cal=null;CP.d=null;CP.routine=null;coachRender();
+  CP.view='client';CP.cid=id;CP.tab=tab||'plan';CP.cd=null;CP.d=null;CP.routine=null;coachRender();
   try{await rtLoadTpls();CP.routine=await DB.routine(id);}catch(e){console.warn(e);}
   try{CP.d=await DB.clientDetail(id);}catch(e){console.warn(e);CP.err='No pudimos cargar al cliente.';}
   coachRender();clearInterval(CP.poll);CP.poll=setInterval(async()=>{if(CP.view==='client'&&(CP.tab==='chat'||CP.tab==='plan')&&document.visibilityState==='visible'){try{CP.d=await DB.clientDetail(CP.cid);coachRender(true);}catch(e){}}},20000);
@@ -2240,16 +2250,16 @@ function coachRender(keepInput){
     const body=CP.sec==='editor'?rtTplList():cpClientsPage();
     el.innerHTML=cpShell(body);el.classList.toggle('cpwide',cpW());const qi=document.getElementById('cpQ');if(qi&&CP.sec==='clientes'&&keepInput){qi.focus();qi.setSelectionRange(qi.value.length,qi.value.length);}return;
   }
-  const d=CP.d,tabs=['plan','rutina','resumen','chat','llamada'],TL={plan:'Calendario',rutina:'Rutina',resumen:'Información',chat:'Chat',llamada:'Llamada 1:1'};
+  const d=CP.d,SB=[['plan','Planificación','Organiza entrenamientos, tareas y objetivos'],['rutina','Rutina','Asigna y edita su programa'],['resumen','Información','Perfil, plan, módulos y fidelidad'],['alim','Nutrición','Planes y seguimiento nutricional'],['arch','Archivos','Documentos compartidos'],['evol','Evolución','Peso, pasos, sueño y sesiones'],['chat','Chat','Habla directo con tu cliente'],['llamada','Llamada 1:1','Agenda y avisa a tu cliente']],tabs=SB.map(x=>x[0]),TL=Object.fromEntries(SB.map(x=>[x[0],x[1]]));
   const nm=d?esc(d.profile.full_name||'Cliente'):'Cargando…';
   let body='<p class="lead">Cargando…</p>';
   if(d){
     const p=d.profile;
-    if(CP.tab==='resumen'){
+    if(CP.tab==='resumen'||CP.tab==='evol'){
       const W=d.weights.map(r=>+r.kg),last=W[W.length-1],w7=W.slice(-8),delta=W.length>1?last-W[Math.max(0,W.length-8)]:null;
       const S7=d.steps.slice(-7).map(r=>r.steps),avg=S7.length?Math.round(S7.reduce((a,b)=>a+b,0)/S7.length):null;
       const edad=p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null;
-      body=`<section class="sec"><div class="sec-h"><b>Plan</b><em>${PNAME[p.plan]}</em></div>
+      const all=`<section class="sec"><div class="sec-h"><b>Plan</b><em>${PNAME[p.plan]}</em></div>
         <div class="chips">${['basic','complete','elite'].map(k=>`<button class="chip${p.plan===k?' on':''}" data-act="cpplan" data-v="${k}">${PNAME[k]}</button>`).join('')}</div>
         <div class="note">Cambiar el plan cambia lo que ve el cliente en su app.</div></section>
        <section class="sec"><div class="sec-h"><b>Pruebas</b></div><div class="note" style="margin-bottom:8px">Borra los registros de este cliente (peso, pasos, entrenamientos, feedback, hitos y niveles) para volver a probar desde cero. No borra su perfil, rutina, fotos ni chat.</div><button class="btn" data-act="cpreset" style="width:100%">Reiniciar registros y hitos</button></section>
@@ -2265,12 +2275,15 @@ function coachRender(keepInput){
         <div class="pfrow"><span><b>Días</b><small>${(p.train_days||[]).map(i=>DAYL[i]).join(' · ')||'—'}</small></span><span><b>Edad</b><small>${edad!=null?edad+' años':'—'}</small></span></div>
         <div class="pfrow"><span><b>Estatura / peso inicial</b><small>${p.height_cm||'—'} cm · ${p.start_weight_kg||'—'} kg</small></span></div>
         <div class="pfrow"><span><b>Molestias o lesiones</b><small>${esc(p.injuries||'Ninguna')}</small></span></div></section>
-       <section class="sec"><div class="sec-h"><b>Peso</b><em>${last!=null?last.toFixed(1)+' kg':'Sin registros'}</em></div>${sparkOf(w7)}${delta!=null?`<div class="note">${delta>0?'+':delta<0?'−':''}${Math.abs(delta).toFixed(1)} kg en sus últimos registros</div>`:''}</section>
+<!--M1--><section class="sec"><div class="sec-h"><b>Peso</b><em>${last!=null?last.toFixed(1)+' kg':'Sin registros'}</em></div>${sparkOf(w7)}${delta!=null?`<div class="note">${delta>0?'+':delta<0?'−':''}${Math.abs(delta).toFixed(1)} kg en sus últimos registros</div>`:''}</section>
        ${(()=>{const wn=d.wnotes||{},ks=Object.keys(wn).sort().reverse().slice(0,10);return ks.length?`<section class="sec"><div class="sec-h"><b>Notas de pesaje</b><em>${ks.length}</em></div>${ks.map(k=>{const n=wn[k]||{};return `<div class="pfrow"><span><b>${fdate(k)}${n.w?' · '+(+n.w).toFixed(1)+' kg':''}</b><small>${(n.tags||[]).map(esc).join(' · ')}${n.note?'<br>“'+esc(n.note)+'”':''}</small></span></div>`;}).join('')}</section>`:'';})()}
        ${(()=>{const sl=d.sleep||{},ks=Object.keys(sl).sort().reverse().slice(0,10);if(!ks.length)return '';const hs=ks.map(k=>sl[k].h).filter(h=>h!=null),av=hs.length?hs.reduce((a,b)=>a+b,0)/hs.length:null;return `<section class="sec"><div class="sec-h"><b>Sueño</b><em>${av!=null?fmtHM(av)+' prom.':'—'}</em></div>${ks.map(k=>{const n=sl[k]||{};return `<div class="pfrow"><span><b>${n.h!=null||n.q?'<i class="sdot" style="background:'+(n.q?SLC[n.q]:slHC(n.h))+'"></i>':''}${fdate(k)}${n.h!=null?' · '+fmtHM(n.h):''}</b><small>${[n.q?'Calidad '+n.q:'',n.e?'Energía '+n.e:'',...(n.tags||[])].filter(Boolean).map(esc).join(' · ')}${n.note?'<br>“'+esc(n.note)+'”':''}</small></span></div>`;}).join('')}</section>`;})()}
-       ${(()=>{const ec=d.excom||{},rows=[];Object.keys(ec).forEach(id=>(ec[id]||[]).forEach(c=>rows.push({id,d:c.d,t:c.t})));rows.sort((a,b)=>a.d<b.d?1:-1);return rows.length?`<section class="sec"><div class="sec-h"><b>Comentarios en ejercicios</b><em>${rows.length}</em></div>${rows.slice(0,12).map(c=>`<div class="pfrow"><span><b>${esc((E[c.id]||{}).n||c.id)} · ${fdate(c.d)}</b><small>“${esc(c.t)}”</small></span></div>`).join('')}</section>`:'';})()}
-       <section class="sec"><div class="sec-h"><b>Pasos</b><em>${avg!=null?avg.toLocaleString('es-CO'):'—'}</em></div><div class="note">Promedio de los últimos ${S7.length||0} días registrados. Meta: ${(p.step_goal||0).toLocaleString('es-CO')}.</div></section>
+<!--M2-->${(()=>{const ec=d.excom||{},rows=[];Object.keys(ec).forEach(id=>(ec[id]||[]).forEach(c=>rows.push({id,d:c.d,t:c.t})));rows.sort((a,b)=>a.d<b.d?1:-1);return rows.length?`<section class="sec"><div class="sec-h"><b>Comentarios en ejercicios</b><em>${rows.length}</em></div>${rows.slice(0,12).map(c=>`<div class="pfrow"><span><b>${esc((E[c.id]||{}).n||c.id)} · ${fdate(c.d)}</b><small>“${esc(c.t)}”</small></span></div>`).join('')}</section>`:'';})()}
+<!--M3--><section class="sec"><div class="sec-h"><b>Pasos</b><em>${avg!=null?avg.toLocaleString('es-CO'):'—'}</em></div><div class="note">Promedio de los últimos ${S7.length||0} días registrados. Meta: ${(p.step_goal||0).toLocaleString('es-CO')}.</div></section>
        <section class="sec"><div class="sec-h"><b>Sesiones recientes</b></div>${d.fb.length?d.fb.map(f=>`<div class="pfrow"><span><b>${GRN[f.grp]||f.grp} · ${fdate(f.log_date)}</b><small>${f.intensity?INT(f.intensity)+' ('+f.intensity+'/10)':'Sin intensidad'}${f.feel?' · '+(R_FEELR[f.feel]||f.feel):''}${f.feel==='molestia'?' ⚠':''}${f.note?'<br>“'+esc(f.note)+'”':''}</small></span>${f.intensity?`<span class="rb" style="background:${RC[f.intensity-1]}">${f.intensity}</span>`:''}</div>`).join(''):'<div class="pfrow"><small>Aún no hay sesiones registradas.</small></div>'}</section>`;
+      const P1=all.split('<!--M1-->'),P2=P1[1].split('<!--M2-->'),P3=P2[1].split('<!--M3-->');
+      body=CP.tab==='evol'?P2[0]+P3[1]:P1[0]+P3[0];
+    }else if(CP.tab==='alim'||CP.tab==='arch'){body='<div class="note">Próximamente. Esta sección llega en una próxima versión.</div>';
     }else if(CP.tab==='plan'){body=cpPlanBody();
     }else if(CP.tab==='rutina'){body=rtClientTab();
     }else if(CP.tab==='chat'){
@@ -2289,10 +2302,38 @@ function coachRender(keepInput){
   const pp=d?d.profile:{},ini=(pp.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
   el.innerHTML=cpShell(`<div class="cpcrumb"><button class="lblbtn" data-act="cpback">Clientes</button> / <b>${nm}</b></div>
     <div class="cphead"><span class="cpav">${esc(ini)}</span><div><h2 class="h2" style="margin:0">${nm}</h2><small>${d?(PNAME[pp.plan]||'')+' · '+(GN[pp.goal]||pp.goal||'Sin objetivo')+' · '+fidSpan(fidMonths(fidSince(pp)))+' con ERRE':''}</small></div></div>
-    <div class="cptabs">${tabs.map(t=>`<button class="cptab${CP.tab===t?' on':''}" data-act="cptab" data-v="${t}">${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}${body}`);el.classList.toggle('cpwide',cpW());
+    ${cpW()?`<div class="cpcl"><nav class="cpsb">${SB.map(([k,n,ds])=>`<button class="cpsi${CP.tab===k?' on':''}" data-act="cptab" data-v="${k}"><b>${n}</b><small>${ds}</small></button>`).join('')}</nav><div class="cpcc">${CP.err?`<div class="note">${CP.err}</div>`:''}${body}</div></div>`:`<div class="cptabs">${tabs.map(t=>`<button class="cptab${CP.tab===t?' on':''}" data-act="cptab" data-v="${t}">${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}${body}`}`);el.classList.toggle('cpwide',cpW());
+}
+/* tareas asignadas por el coach (cliente + coach) */
+const cxList=()=>((S.ctasks&&S.ctasks.tasks)||[]);
+function cxSync(){
+  for(let i=DAYS.length-1;i>=0;i--)if(DAYS[i].x)DAYS.splice(i,1);
+  cxList().forEach(t=>{if(t.type==='workout'&&t.day){const d=JSON.parse(JSON.stringify(t.day));d.id='x'+t.id;d.x=1;d.label=t.title||d.name||'Workout';DAYS.push(d);}});
+}
+function cxOv(date){const L=cxList().filter(t=>t.date===date);return L.find(t=>t.type==='rest')||L.find(t=>t.type==='workout')||null;}
+function cxNotes(){const L=cxList().filter(t=>t.date===S.sel&&t.type==='note');return L.map(t=>`<div class="cxnote"><b>Nota de tu coach</b>${esc(t.text||'')}</div>`).join('');}
+async function cpSaveTasks(list){
+  const value={tasks:list};
+  await DB.upsert('client_data',[{client_id:CP.cid,key:'ctasks',value,updated_at:new Date().toISOString()}],'client_id,key');
+  CP.d.data=CP.d.data||{};CP.d.data.ctasks=value;
+}
+const cpTid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const CPT_SOON=['Cardio','Vídeo','Nutrición','Documento','Registrar evolución','Sesión presencial / online','Programar mensaje','Formulario'];
+function cpTaskModal(){
+  const m=CP.tm;if(!m){const o=document.getElementById('cptm');if(o)o.remove();return;}
+  let o=document.getElementById('cptm');if(!o){o=document.createElement('div');o.id='cptm';o.className='cpdv';document.body.appendChild(o);}
+  const progDays=(CP.routine&&CP.routine.days)||[],wk=(RT.tpls||[]).filter(t=>(t.tkind||'program')==='workout'&&t.days&&t.days.length);
+  const T=(k,n,ic,body)=>`<div class="cptt${m.type===k?' on':''}"><button class="cpth2" data-act="cptype" data-v="${k}"><i class="cpdot" style="background:${ic}"></i><b>${n}</b><span>${m.type===k?'▴':'▾'}</span></button>${m.type===k?`<div class="cptb">${body}</div>`:''}</div>`;
+  o.innerHTML=`<div class="cpdc" style="max-width:560px"><div class="cpdhd"><div><b>Añadir nueva tarea</b><small>${fmtL(m.date)}</small></div><button class="cpdx" data-act="cptclose" aria-label="Cerrar">✕</button></div>
+   <label class="pfl">Fecha</label><input class="fld" type="date" id="cptD" value="${m.date}" style="margin-bottom:10px">
+   ${T('workout','Workout','#F0A020',`<select class="fld" id="cptW"><option value="">Elige el entrenamiento…</option>${progDays.length?`<optgroup label="Días del programa del cliente">${progDays.map((d,i)=>`<option value="p:${i}">${esc(d.label||('Día '+(i+1)))} · ${esc(d.name||'')}</option>`).join('')}</optgroup>`:''}${wk.length?`<optgroup label="Workouts guardados">${wk.map(t=>`<option value="w:${t.id}">${esc(t.name)}</option>`).join('')}</optgroup>`:''}</select><div class="note">Reemplaza el entrenamiento que le tocaba ese día. Si no le tocaba ninguno, se suma como un día extra.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Asignar workout</button>`)}
+   ${T('rest','Descanso','#8A8F98',`<div class="note">El cliente verá ese día como descanso y no tendrá entrenamiento.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Marcar descanso</button>`)}
+   ${T('note','Nota para el cliente','#3B82C4',`<textarea class="fld" id="cptN" rows="3" placeholder="Ej. Hoy prioriza técnica, baja el peso un 10 %."></textarea><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Guardar nota</button>`)}
+   <div class="cptt"><button class="cpth2" data-act="cptprog"><i class="cpdot" style="background:#777"></i><b>Asignar programa</b><span>›</span></button></div>
+   ${CPT_SOON.map(n=>`<div class="cptt soon"><div class="cpth2"><i class="cpdot" style="background:#ccc"></i><b>${n}</b><span>Próximamente</span></div></div>`).join('')}</div>`;
 }
 /* ---------- panel coach: calendario de planificación + detalle del entrenamiento ---------- */
-const CPK=['logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','program','start','weights','steps','wm','goal','sel','week','day','pos','raw','mes'];
+const CPK=['ctasks','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','program','start','weights','steps','wm','goal','sel','week','day','pos','raw','mes'];
 function cpWith(fn){
   const d=CP.d,dt=(d&&d.data)||{},p=d.profile,days=(CP.routine&&CP.routine.days)||[],o={},od=DAYS.slice(),pf=dt.prefs||{};
   CPK.forEach(k=>o[k]=S[k]);
@@ -2300,11 +2341,11 @@ function cpWith(fn){
   S.program=planOf(p);S.start=pf.start||S.start;S.wm='ex';S.goal=['bajar','complete','aumentar'].includes(p.goal)?p.goal:'complete';
   const u=dt.user||{};S.user=Object.assign({},u,{sched:(u.sched&&u.sched.length)?u.sched:((p.train_days&&p.train_days.length)?p.train_days:[0,2,4])});
   S.weights={};(d.weights||[]).forEach(r=>S.weights[r.log_date]=+r.kg);S.steps={};(d.steps||[]).forEach(r=>S.steps[r.log_date]=r.steps);
-  DAYS.length=0;days.forEach(x=>DAYS.push(x));
+  S.ctasks=dt.ctasks||null;DAYS.length=0;days.forEach(x=>DAYS.push(x));cxSync();
   try{return fn();}finally{CPK.forEach(k=>S[k]=o[k]);DAYS.length=0;od.forEach(x=>DAYS.push(x));}
 }
 function cpDayInfo(date){return withDate(date,()=>{
-  const c=ctxFor(date),d=c.d;if(!d)return {d:null};
+  const c=ctxFor(date),d=c.d;if(!d)return {d:null,ov:cxOv(date)};
   let done=0,total=0;const wk=Math.min(S.week,PERIOD[S.program].weeks);
   d.blocks.forEach(b=>{try{const x=blockCount(d,b,wk);done+=x.done;total+=x.total;}catch(e){}});
   const rp=['g_fuerza','g_cardio'].map(g=>S.fb[cKey(d)+'|'+g]).filter(f=>f&&f.rpe).map(f=>f.rpe);
@@ -2313,31 +2354,45 @@ function cpDayInfo(date){return withDate(date,()=>{
 const cpSt=(i,date)=>!i.d?'':(i.total>0&&i.done>=i.total)?'ok':i.done>0?'part':date<today()?'miss':'plan';
 const cpMonL=ym=>{const [y,m]=ym.split('-').map(Number);return cap(new Date(y,m-1,1,12).toLocaleDateString('es-CO',{month:'long',year:'numeric'}));};
 function cpPlanBody(){
-  const d=CP.d;if(!(CP.routine&&CP.routine.days&&CP.routine.days.length))return '<div class="note">Esta persona aún no tiene rutina. Asígnale un programa en la pestaña Rutina y aquí verás su calendario.</div>';
-  const ym=CP.cal=CP.cal||today().slice(0,7),first=ym+'-01',gs=monOf(first),tdy=today();
+  const d=CP.d;if(!(CP.routine&&CP.routine.days&&CP.routine.days.length)&&!cxListOf(d).length)return '<div class="note">Esta persona aún no tiene rutina. Asígnale un programa en Rutina, o agrega tareas con el botón + Tarea.</div><button class="btn solid" data-act="cptnew" data-v="'+today()+'" style="margin-top:10px">+ Tarea</button>';
+  const cd=CP.cd=CP.cd||today(),vw=CP.cv=CP.cv||'mes',ym=cd.slice(0,7),tdy=today();
   return cpWith(()=>{
-    let ok=0,miss=0,plan=0;const cells=[];
-    for(let i=0;i<42;i++){
-      const dt=addD(gs,i);if(i>=35&&dt.slice(0,7)!==ym)break;
-      const inM=dt.slice(0,7)===ym,inf=cpDayInfo(dt),st=cpSt(inf,dt);
-      if(inM&&st){if(st==='ok')ok++;else if(st==='miss'||st==='part'&&dt<tdy)miss++;else plan++;}
+    let ds=[];
+    if(vw==='sem'){const m=monOf(cd);ds=Array.from({length:7},(_,i)=>addD(m,i));}
+    else if(vw==='dia'){ds=[cd];}
+    else{const f=ym+'-01',gs=monOf(f);for(let i=0;i<42;i++){const x=addD(gs,i);if(i>=35&&x.slice(0,7)!==ym)break;ds.push(x);}}
+    let ok=0,miss=0,plan=0;
+    const cell=(dt,big)=>{
+      const inM=vw!=='mes'||dt.slice(0,7)===ym,inf=cpDayInfo(dt),st=cpSt(inf,dt),L=cxList().filter(t=>t.date===dt);
+      if(inM&&(vw!=='lista')&&st){if(st==='ok')ok++;else if(st==='miss'||(st==='part'&&dt<tdy))miss++;else plan++;}
       const w=S.weights[dt],stp=S.steps[dt],pct=inf.total?Math.round(inf.done/inf.total*100):0;
-      cells.push(`<div class="cpc${inM?'':' out'}${dt===tdy?' tdy':''}"><span class="cpcn">${+dt.slice(8)}</span>
-        ${inf.d?`<button class="cpp ${st}" data-act="cpday" data-v="${dt}" title="${esc(inf.d.name||'')}"><i>${st==='ok'?'✓':st==='part'?pct+'%':st==='miss'?'!':'•'}</i><span>Día ${inf.n}<em> · ${esc(inf.d.name||'')}</em></span></button>`:''}
-        ${w!=null?`<span class="cpm">⚖ ${w.toFixed(1)} kg</span>`:''}${stp?`<span class="cpm">👣 ${stp.toLocaleString('es-CO')}</span>`:''}</div>`);
-    }
-    const tot=ok+miss+plan;
-    return `<section class="sec"><div class="cpcalh"><button class="arr" data-act="cpcal" data-v="-1" aria-label="Mes anterior">‹</button><b>${cpMonL(ym)}</b><button class="arr" data-act="cpcal" data-v="1" aria-label="Mes siguiente">›</button><button class="lblbtn" data-act="cpcal" data-v="0">Hoy</button></div>
+      const pills=(inf.d?`<button class="cpp ${st}" data-act="cpday" data-v="${dt}" title="${esc(inf.d.name||'')}"><i>${st==='ok'?'✓':st==='part'?pct+'%':st==='miss'?'!':'•'}</i><span>${inf.d.x?'':'Día '+inf.n+'<em> · '}${esc(inf.d.x?(inf.d.label||inf.d.name||'Workout'):(inf.d.name||''))}${inf.d.x?'':'</em>'}</span></button>`:'')
+        +L.filter(t=>t.type==='rest').map(t=>`<button class="cpp rest" data-act="cpday" data-v="${dt}"><i>☾</i><span>Descanso</span></button>`).join('')
+        +L.filter(t=>t.type==='note').map(t=>`<button class="cpp note" data-act="cpday" data-v="${dt}"><i>✎</i><span>${esc(t.text||'Nota')}</span></button>`).join('');
+      return `<div class="cpc${inM?'':' out'}${dt===tdy?' tdy':''}${big?' big':''}"><button class="cpcn" data-act="cpday" data-v="${dt}">${big?fdate(dt)+' ':''}${+dt.slice(8)}</button>${pills}${w!=null?`<span class="cpm">⚖ ${w.toFixed(1)} kg</span>`:''}${stp?`<span class="cpm">👣 ${stp.toLocaleString('es-CO')}</span>`:''}</div>`;
+    };
+    let main='';
+    if(vw==='mes'){main=`<div class="cpdow">${['L','M','X','J','V','S','D'].map(x=>`<span>${x}</span>`).join('')}</div><div class="cpgrid">${ds.map(x=>cell(x)).join('')}</div>`;}
+    else if(vw==='sem'){main=`<div class="cpdow">${['L','M','X','J','V','S','D'].map(x=>`<span>${x}</span>`).join('')}</div><div class="cpgrid cpwk">${ds.map(x=>cell(x,0)).join('')}</div>`;}
+    else if(vw==='dia'){main=`<div class="cpgrid" style="grid-template-columns:1fr">${cell(cd,1)}</div>`;}
+    else{const rows=ds.filter(x=>x.slice(0,7)===ym).map(x=>({x,h:cell(x,1)})).filter(r=>cpHas(r.x));main=rows.length?rows.map(r=>`<div class="cpl">${r.h}</div>`).join(''):'<div class="note">No hay tareas este mes.</div>';
+      ds.filter(x=>x.slice(0,7)===ym).forEach(x=>{const st=cpSt(cpDayInfo(x),x);if(st==='ok')ok++;else if(st==='miss'||(st==='part'&&x<tdy))miss++;else if(st)plan++;});}
+    const lbl=vw==='mes'||vw==='lista'?cpMonL(ym):vw==='sem'?'Semana del '+fdate(ds[0])+' al '+fdate(ds[6]):fmtL(cd);
+    return `<section class="sec"><div class="cpbar"><button class="arr" data-act="cpcal" data-v="-1" aria-label="Anterior">‹</button><button class="arr" data-act="cpcal" data-v="1" aria-label="Siguiente">›</button><button class="lblbtn" data-act="cpcal" data-v="0">Hoy</button><b class="cpbl">${lbl}</b><button class="btn solid cpnew" data-act="cptnew" data-v="${vw==='dia'?cd:tdy}">+ Tarea</button></div>
+      <div class="chips cpvw">${[['mes','Mes'],['sem','Semana'],['dia','Día'],['lista','Lista']].map(([k,n])=>`<button class="chip${vw===k?' on':''}" data-act="cpview" data-v="${k}">${n}</button>`).join('')}</div>
       <div class="cpkpi"><span><b>${ok}</b><small>Cumplidos</small></span><span><b>${miss}</b><small>Sin completar</small></span><span><b>${plan}</b><small>Por venir</small></span><span><b>${ok+miss?Math.round(ok/(ok+miss)*100):0}%</b><small>Cumplimiento</small></span></div>
-      <div class="cpdow">${['L','M','X','J','V','S','D'].map(x=>`<span>${x}</span>`).join('')}</div><div class="cpgrid">${cells.join('')}</div>
-      <div class="cpleg"><span><i class="cpp ok">✓</i>Cumplido</span><span><i class="cpp part">%</i>Parcial</span><span><i class="cpp miss">!</i>Sin completar</span><span><i class="cpp plan">•</i>Programado</span></div>
-      <div class="note">Toca un día para ver lo que hizo: series, pesos, repeticiones, esfuerzo y comentarios.</div></section>`;
+      ${main}
+      <div class="cpleg"><span><i class="cpp ok">✓</i>Cumplido</span><span><i class="cpp part">%</i>Parcial</span><span><i class="cpp miss">!</i>Sin completar</span><span><i class="cpp plan">•</i>Programado</span><span><i class="cpp rest">☾</i>Descanso</span><span><i class="cpp note">✎</i>Nota</span></div>
+      <div class="note">Toca un día para ver lo que hizo y para asignarle tareas: un workout, un descanso o una nota.</div></section>`;
   });
 }
+const cxListOf=d=>((((d&&d.data)||{}).ctasks||{}).tasks)||[];
+const cpHas=dt=>{const i=cpDayInfo(dt);return !!i.d||cxList().some(t=>t.date===dt);};
 function cpDayHTML(date){
   const d=CP.d;
   return cpWith(()=>withDate(date,()=>{
-    const inf=cpDayInfo(date);if(!inf.d)return '<p class="lead">Ese día no tiene entrenamiento programado.</p>';
+    const inf=cpDayInfo(date),TL=cxList().filter(t=>t.date===date),tlh=`<div class="cpdhd"><div><b>${fmtL(date)}</b><small>${inf.d?'Entrenamiento y tareas':'Tareas del día'}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div><button class="btn solid" data-act="cptnew" data-v="${date}" style="width:100%;margin-bottom:10px">+ Tarea</button>${TL.map(t=>`<div class="cptask"><span><b>${t.type==='workout'?'Workout · '+esc(t.title||''):t.type==='rest'?'Descanso':'Nota'}</b>${t.type==='note'?'<small>'+esc(t.text||'')+'</small>':''}</span><button class="cpdx" data-act="cptdel" data-id="${t.id}" aria-label="Quitar">✕</button></div>`).join('')}`;
+    if(!inf.d)return tlh+(TL.length?'':'<p class="lead">Ese día no tiene entrenamiento programado ni tareas.</p>');
     const dy=inf.d,st=cpSt(inf,date),pct=inf.total?Math.round(inf.done/inf.total*100):0,ec=(d.data&&d.data.excom)||d.excom||{};
     let sets=0,vol=0,fe=null;
     const fbs=['g_fuerza','g_cardio','g_calm'].map(g=>({g,f:S.fb[cKey(dy)+'|'+g]})).filter(x=>x.f);
@@ -2355,7 +2410,7 @@ function cpDayHTML(date){
       return items?`<div class="cpdb">${SUBT[b.k]||b.t||b.k}</div>${items}`:'';
     }).join('');
     const feel=fbs.map(x=>x.f.feel).filter(Boolean)[0],notes=fbs.filter(x=>x.f.note);
-    return `<div class="cpdhd"><div><b>Día ${inf.n} · ${esc(dy.name||'')}</b><small>${fmtL(date)}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div>
+    return tlh+`<div class="cpdb" style="background:#C0392B">${dy.x?esc(dy.label||dy.name||'Workout'):'Día '+inf.n+' · '+esc(dy.name||'')}</div>
       <div class="cpdk"><span><b>${pct}%</b><small>Cumplimiento</small></span><span><b>${sets}</b><small>Series</small></span><span><b>${Math.round(vol).toLocaleString('es-CO')}</b><small>Volumen kg</small></span><span><b>${inf.rpe!=null?inf.rpe+'/10':'—'}</b><small>${inf.rpe!=null?INT(inf.rpe):'Esfuerzo'}</small></span></div>
       ${feel?`<div class="cpfeel">Sensación: <b>${esc(feel)}</b>${feel==='Con molestia'?' ⚠':''}</div>`:''}${notes.map(x=>`<div class="cpcm"><b>📝 Nota al terminar</b>${esc(x.f.note)}</div>`).join('')}
       ${blocks}`;
@@ -2369,8 +2424,25 @@ document.addEventListener('click',e=>{if(e.target.id==='cpdv')cpDayClose();});
 document.addEventListener('click',async e=>{
   const t=e.target.closest('[data-act]');if(!t||!PROFILE||PROFILE.role!=='coach')return;const a=t.dataset.act;
   if(a==='cpday'){cpDayOpen(t.dataset.v);return;}
+  if(a==='cpview'){CP.cv=t.dataset.v;coachRender();return;}
+  if(a==='cptnew'){CP.tm={date:t.dataset.v||today(),type:'workout'};cpTaskModal();return;}
+  if(a==='cptclose'){CP.tm=null;cpTaskModal();return;}
+  if(a==='cptype'){const dv=document.getElementById('cptD');if(dv&&CP.tm)CP.tm.date=dv.value||CP.tm.date;CP.tm.type=CP.tm.type===t.dataset.v?'':t.dataset.v;cpTaskModal();return;}
+  if(a==='cptprog'){CP.tm=null;cpTaskModal();cpDayClose();CP.tab='rutina';coachRender();return;}
+  if(a==='cptdel'){const id=t.dataset.id,date=(cxListOf(CP.d).find(x=>x.id===id)||{}).date;try{await cpSaveTasks(cxListOf(CP.d).filter(x=>x.id!==id));coachRender();if(date)cpDayOpen(date);toast('Tarea quitada ✓');}catch(x){toast('No se pudo quitar la tarea');}return;}
+  if(a==='cptsave'){
+    const m=CP.tm,type=m.type,date=(document.getElementById('cptD')||{}).value||m.date;let task={id:cpTid(),date,type,by:'coach',at:Date.now()};
+    if(type==='workout'){const v=(document.getElementById('cptW')||{}).value;if(!v){toast('Elige el entrenamiento');return;}
+      let day=null;if(v[0]==='p')day=(CP.routine.days||[])[+v.slice(2)];else{const tp=(RT.tpls||[]).find(x=>x.id===v.slice(2));day=tp&&tp.days[0];}
+      if(!day){toast('No se encontró ese entrenamiento');return;}
+      task.day=JSON.parse(JSON.stringify(day));task.title=day.name||day.label||'Workout';}
+    else if(type==='note'){const tx=((document.getElementById('cptN')||{}).value||'').trim();if(!tx){toast('Escribe la nota');return;}task.text=tx;}
+    else if(type!=='rest')return;
+    try{const keep=cxListOf(CP.d).filter(x=>!(x.date===date&&(type==='rest'||type==='workout')&&(x.type==='rest'||x.type==='workout')));await cpSaveTasks(keep.concat(task));CP.tm=null;cpTaskModal();coachRender();cpDayOpen(date);toast('Tarea asignada ✓ El cliente la verá al abrir su app');}catch(x){console.warn(x);toast('No se pudo guardar la tarea');}return;}
   if(a==='cpdclose'){cpDayClose();return;}
-  if(a==='cpcal'){const v=+t.dataset.v,ym=CP.cal||today().slice(0,7);if(!v)CP.cal=today().slice(0,7);else{const [y,m]=ym.split('-').map(Number),n=new Date(y,m-1+v,1,12);CP.cal=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}coachRender();return;}
+  if(a==='cpcal'){const v=+t.dataset.v,vw=CP.cv||'mes',cd=CP.cd||today();
+    if(!v)CP.cd=today();else if(vw==='sem')CP.cd=addD(cd,7*v);else if(vw==='dia')CP.cd=addD(cd,v);else{const [y,m]=cd.split('-').map(Number),n=new Date(y,m-1+v,1,12);CP.cd=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-01';}
+    coachRender();return;}
   if(a==='cpopen'){CP.err='';coachOpen(t.dataset.id);}
   else if(a==='cpnav'){CP.sec=t.dataset.v;clearInterval(CP.poll);if(CP.view!=='list'){CP.view='list';}coachRender();}
   else if(a==='cppf'){CP.pf=t.dataset.v;coachRender();}
@@ -3460,7 +3532,7 @@ document.addEventListener('click',async e=>{
 /* ---------- cliente: cargar su rutina real ---------- */
 async function loadClientRoutine(uid){
   try{const cx=await DB.customEx();(cx||[]).forEach(r=>{E[r.id]=r.data;});}catch(e){console.warn('cx',e);}
-  try{const r=await DB.routine(uid);if(r&&r.days&&r.days.length){DAYS.length=0;r.days.forEach(d=>DAYS.push(d));}}catch(e){console.warn('routine',e);}
+  try{const r=await DB.routine(uid);if(r&&r.days&&r.days.length){DAYS.length=0;r.days.forEach(d=>DAYS.push(d));}cxSync();}catch(e){console.warn('routine',e);}
 }
 
 boot();
