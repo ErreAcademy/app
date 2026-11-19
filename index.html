@@ -1032,8 +1032,8 @@ function plansView(){
    <h2 class="h2" style="margin-top:4px">Planes ERRE</h2><div class="sub2" style="margin-bottom:8px">El mismo Método Complete en todos. Cambia el nivel de acompañamiento.</div>
    <table class="cmpt"><thead><tr><th></th>
     <th class="${C('basic').trim()}"><b>Basic</b><small>$29 USD<br>al mes</small>${cur==='basic'?'<span class="curtag">Tu plan</span>':''}</th>
-    <th class="${C('complete').trim()}"><b>Complete</b><small>$500 USD<br>coaching 1:1</small>${cur==='complete'?'<span class="curtag">Tu plan</span>':''}</th>
-    <th class="${C('elite').trim()} eg"><b>Elite</b><small>$1.000 USD<br>premium</small>${cur==='elite'?'<span class="curtag">Tu plan</span>':''}</th></tr></thead><tbody>${body}</tbody></table>
+    <th class="${C('complete').trim()}"><b>Complete</b><small>$500 USD<br>por trimestre</small>${cur==='complete'?'<span class="curtag">Tu plan</span>':''}</th>
+    <th class="${C('elite').trim()} eg"><b>Elite</b><small>$1.000 USD<br>por trimestre</small>${cur==='elite'?'<span class="curtag">Tu plan</span>':''}</th></tr></thead><tbody>${body}</tbody></table>
    <div class="note">Elite es Complete con más acompañamiento directo de tu coach.</div>
    <a class="btn solid" href="https://wa.me/${COACH_WA}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;padding:14px;margin:12px 0 8px">Quiero cambiar mi plan</a>
    <div class="sub2" style="text-align:center">Se abre un chat de WhatsApp directo con tu coach.</div>`;
@@ -2207,8 +2207,8 @@ function resetLocal(){
 function authHead(){return `<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Complete</h1><small>Método Complete</small></div></header>`;}
 const PLAN_INFO={
  basic:{n:'Basic',ic:'🌱',c:'#5A554E',p:'$29 USD al mes',t:'Entrena solo, con un programa claro por niveles',b:['Método Complete: movilidad, fuerza, resistencia y dominio','Programa por nivel (principiante, intermedio, avanzado)','Mesociclos de 5 semanas, hasta 5 días de fuerza','Videos de cada ejercicio dentro de la app','Reporte semanal para ti']},
- complete:{n:'Complete',ic:'🏋',c:'#C0392B',p:'$500 USD · coaching 1:1',t:'Tu coach arma y ajusta tu programa a tu medida',b:['Todo lo de Basic, pero a tu medida (ejercicios, series y cargas)','Mesociclos de 6 semanas, sin límite de días','Chat directo con tu coach','Peso de referencia por ejercicio y ajustes según cómo te sientas','Tu coach comenta tus fotos y recibe tu reporte semanal','Llamada 1:1 cada ~45 días']},
- elite:{n:'Elite',ic:'👑',c:'#C9A24B',p:'$1.000 USD · premium',t:'Complete con más acompañamiento directo',b:['Todo lo de Complete','Llamada 1:1 cada 30 días','Check-ins más frecuentes con tu coach','Ajuste de carga dentro de la semana']}
+ complete:{n:'Complete',ic:'🏋',c:'#C0392B',p:'$500 USD por trimestre',t:'Tu coach arma y ajusta tu programa a tu medida',b:['Todo lo de Basic, pero a tu medida (ejercicios, series y cargas)','Mesociclos de 6 semanas, sin límite de días','Chat directo con tu coach','Peso de referencia por ejercicio y ajustes según cómo te sientas','Tu coach comenta tus fotos y recibe tu reporte semanal','Llamada 1:1 cada ~45 días']},
+ elite:{n:'Elite',ic:'👑',c:'#C9A24B',p:'$1.000 USD por trimestre',t:'Complete con más acompañamiento directo',b:['Todo lo de Complete','Llamada 1:1 cada 30 días','Check-ins más frecuentes con tu coach','Ajuste de carga dentro de la semana']}
 };
 const PLAN_ROWS=[['Método Complete (movilidad, fuerza, resistencia, dominio)','✓','✓','✓'],['Programa','Por nivel','A tu medida','A tu medida'],['Mesociclo','5 sem.','6 sem.','6 sem.'],['Días de fuerza','Hasta 5','Sin límite','Sin límite'],['sec','Con tu coach'],['Chat con tu coach','—','✓','✓'],['Peso de referencia por ejercicio','—','✓','✓'],['Ajustes según cómo te sientas','—','✓','✓'],['Tu coach comenta tus fotos','—','✓','✓'],['Reporte semanal','Para ti','A tu coach','A tu coach'],['Llamada 1:1','—','~45 días','30 días'],['sec','Acompañamiento cercano'],['Check-ins más frecuentes','—','—','✓'],['Ajuste de carga dentro de la semana','—','—','✓']];
 function plansPublic(){
@@ -2220,7 +2220,7 @@ function plansPublic(){
   return `<details class="plall"><summary><span><b>💳 Elige tu membresía</b><small>Mira qué incluye cada plan y sus precios</small></span><i>▾</i></summary>
     ${['basic','complete','elite'].map(card).join('')}
     <details class="plcmp"><summary>¿No sabes cuál elegir? Compara los planes</summary>
-      <table class="cmpt"><thead><tr><th></th><th><b>Basic</b><small>$29</small></th><th><b>Complete</b><small>$500</small></th><th class="eg"><b>Elite</b><small>$1.000</small></th></tr></thead><tbody>${body}</tbody></table>
+      <table class="cmpt"><thead><tr><th></th><th><b>Basic</b><small>$29<br>al mes</small></th><th><b>Complete</b><small>$500<br>trimestre</small></th><th class="eg"><b>Elite</b><small>$1.000<br>trimestre</small></th></tr></thead><tbody>${body}</tbody></table>
       <div class="note">El mismo Método Complete en todos. Cambia el nivel de acompañamiento.</div></details>
   </details>`;
 }
@@ -3454,9 +3454,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1202';
+const APP_VER='19nov-1203';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1202')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1203')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
