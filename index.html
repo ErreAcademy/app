@@ -877,7 +877,7 @@ function trainView(){
    <div class="gdet">${g.inner}</div>
    ${(()=>{const f=S.fb[fbKey(g.k)];
      if(f)return `<div class="fbdone"><i>✓</i><span><b>${GT[g.k][0]} finalizado</b>${f.rpe?`Intensidad <i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${RC[f.rpe-1]};margin:0 2px 0 0;background-color:${RC[f.rpe-1]}"></i>${f.rpe}/10 · ${INT(f.rpe)}`:''}${f.feel?` · ${f.feel}`:''}</span></div><button class="btn" data-act="fbedit" data-g="${g.k}" style="width:100%;margin-top:10px">Editar feedback</button><button class="btn solid" data-act="gback" style="width:100%;margin-top:10px;padding:14px">Volver a la rutina de hoy</button>`;
-     return g.ct?`<button class="btn solid" data-act="fbopen" data-g="${g.k}" style="width:100%;margin-top:16px;padding:14px">Finalizar ${GT[g.k][1]}</button>`:`<button class="btn" data-act="gback" style="width:100%;margin-top:16px">Volver a la rutina de hoy</button>`;})()}`;}}
+     return g.ct?`<button class="btn solid" data-act="fbopen" data-g="${g.k}" style="width:100%;margin-top:16px;padding:14px">Finalizar ${GT[g.k][1]}</button>`:`<button class="btn" data-act="gback" style="width:100%;margin-top:16px">Volver a la rutina de hoy</button>`;})()}${gRstBtn(g.k)}`;}}
   return `
    ${calendar()}
    ${mesoLine()}
@@ -2044,6 +2044,7 @@ async function pushAll(){
     const row={client_id:uid,log_date:date,grp,intensity:e.rpe||null,feel:R_FEEL[e.feel]||null,note:e.note||null},j=JSON.stringify(row);
     if(LAST.fb[fk]!==j)fbs.push([fk,row,j]);}
   if(fbs.length){await DB.upsert('session_feedback',fbs.map(x=>x[1]),'client_id,log_date,grp');fbs.forEach(x=>LAST.fb[x[0]]=x[2]);}
+  for(const fk of Object.keys(LAST.fb)){if(S.fb&&S.fb[fk])continue;const [date,,gg]=fk.split('|'),grp=R_GRP[gg];if(grp&&date){await DB.del('session_feedback',{client_id:uid,log_date:date,grp});}delete LAST.fb[fk];}
   const pc=profileCols();if(pc){const j=JSON.stringify(pc);if(j!==LAST.profile){await DB.saveProfile(uid,pc);LAST.profile=j;}}
   for(const m of S.chat){
     if(m.from!=='client')continue;
@@ -2674,6 +2675,30 @@ document.addEventListener('click',async e=>{
     }
   }catch(x){acctMsg(/same|different/i.test(x.message||'')?'La nueva contraseña debe ser distinta a la actual.':(x.message||'No se pudo guardar. Intenta de nuevo.'),false);}
 });
+
+/* ===== Rehacer / reiniciar un entrenamiento ===== */
+const GBX={g_fuerza:['warm','main','acc'],g_cardio:['cardio'],g_calm:['calm']};
+function gRstHas(g){const d=DAYS[S.day];if(!d)return false;const fk=fbKey(g);if(S.fb&&S.fb[fk])return true;
+  const bl=GBX[g]||[];if(Object.keys(S.logs||{}).some(k=>bl.some(b=>k.indexOf(S.sel+'|'+d.id+'|'+b+'|')===0)))return true;
+  if(g==='g_cardio'){const c=(S.cardio||{})[cKey(d)];if(c&&(c.done||c.min||c.hr))return true;}
+  if(g==='g_fuerza'&&S.warmFA&&S.warmFA[cKey(d)])return true;return false;}
+function gRstBtn(g){if(!gRstHas(g))return '';const fin=!!(S.fb&&S.fb[fbKey(g)]);
+  return `<button class="btn" data-act="grst" data-g="${g}" style="width:100%;margin-top:10px;color:var(--red-strong)">${fin?'Rehacer este entrenamiento':'Reiniciar este entrenamiento'}</button>`;}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act="grst"]');if(!t)return;e.stopPropagation();
+  const g=t.dataset.g,d=DAYS[S.day];if(!d)return;
+  if(!confirm('¿Reiniciar este entrenamiento? Se borran las series, el cardio y el feedback que registraste hoy en él, y queda como nuevo para hacerlo de nuevo.'))return;
+  const fk=fbKey(g);
+  (GBX[g]||[]).forEach(b=>{const pre=S.sel+'|'+d.id+'|'+b+'|';Object.keys(S.logs||{}).forEach(k=>{if(k.indexOf(pre)===0)delete S.logs[k];});});
+  if(g==='g_cardio'&&S.cardio&&S.cardio[cKey(d)]){const c=S.cardio[cKey(d)];delete c.done;delete c.min;delete c.hr;}
+  if(g==='g_fuerza'&&S.warmFA)delete S.warmFA[cKey(d)];
+  if(S.fb)delete S.fb[fk];
+  if(S.chat)S.chat=S.chat.filter(m=>m.key!==fk);
+  if(S.sum)delete S.sum[S.sel];
+  if(S.tw===g){S.tw=null;S.tgAt=null;}
+  try{fbd={};}catch(x){}
+  save();render();toast('Entrenamiento reiniciado');
+},true);
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
