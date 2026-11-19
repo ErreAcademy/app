@@ -1433,7 +1433,7 @@ document.addEventListener('click',e=>{
   else if(a==='tog'){S.open[t.dataset.b]=S.open[t.dataset.b]?0:1;save();render();}
   else if(a==='week'){S.week=+t.dataset.v;save();render();}
   else if(a==='day'){S.day=+t.dataset.v;save();render();}
-  else if(a==='reset'){S.logs={};S.swaps={};S.extras={};S.cardio={};S.tasks={};S.weights={};S.steps={};S.fb={};S.chat=[];S.chatRead=0;S.sum={};S.call=null;for(const k in PH)delete PH[k];store.set('erre_photos',PH);save();render();}
+  else if(a==='reset'){S._logsDel=true;S.logs={};S.swaps={};S.extras={};S.cardio={};S.tasks={};S.weights={};S.steps={};S.fb={};S.chat=[];S.chatRead=0;S.sum={};S.call=null;for(const k in PH)delete PH[k];store.set('erre_photos',PH);save();render();}
   else if(a==='done'){const L=S.logs[t.dataset.k]=S.logs[t.dataset.k]||[];const s=+t.dataset.s;L[s]=L[s]||{};L[s].done=!L[s].done;save();render();if(L[s].done)startTimer(+t.dataset.rest);else stopTimer();;chk(b4);}
   else if(a==='swap'){swapCtx={b:t.dataset.b,i:+t.dataset.i};eqFilter='Todos';openSwap();}
   else if(a==='restore'){delete S.swaps[skey(d,t.dataset.b,+t.dataset.i)];save();render();}
@@ -2132,10 +2132,13 @@ async function pushAll(){
     LAST[tbl]=Object.assign({},src);
   }
   const blobs=[];
-  for(const k of SLICES){const v=S[k]===undefined?null:S[k],j=JSON.stringify(v);if(v!==null&&j!==LAST.slices[k])blobs.push({client_id:uid,key:k,value:v,updated_at:new Date().toISOString(),_j:j});}
+  for(const k of SLICES){const v=S[k]===undefined?null:S[k],j=JSON.stringify(v);
+    if(k==='logs'&&v&&LAST.slices.logs&&j!==LAST.slices.logs){let n0=0;try{n0=Object.keys(JSON.parse(LAST.slices.logs)||{}).length;}catch(x){}
+      if(Object.keys(v).length<n0&&!S._logsDel){console.warn('logs: se evitó sobrescribir con menos datos');S.logsGuard=(S.logsGuard||0)+1;continue;}}
+    if(v!==null&&j!==LAST.slices[k])blobs.push({client_id:uid,key:k,value:v,updated_at:new Date().toISOString(),_j:j});}
   const prefs={rem:S.rem,stepGoal:S.stepGoal,chatRead:S.chatRead,start:S.start},pj=JSON.stringify(prefs);
   if(pj!==LAST.prefs)blobs.push({client_id:uid,key:'prefs',value:prefs,updated_at:new Date().toISOString(),_j:pj,_p:1});
-  if(blobs.length){await DB.upsert('client_data',blobs.map(({_j,_p,...r})=>r),'client_id,key');blobs.forEach(b=>{if(b._p)LAST.prefs=b._j;else LAST.slices[b.key]=b._j;});}
+  if(blobs.length){await DB.upsert('client_data',blobs.map(({_j,_p,...r})=>r),'client_id,key');blobs.forEach(b=>{if(b._p)LAST.prefs=b._j;else LAST.slices[b.key]=b._j;});S._logsDel=false;}
   const fbs=[];
   for(const fk in S.fb){const [date,,g]=fk.split('|'),e=S.fb[fk],grp=R_GRP[g];if(!grp||!date)continue;
     const row={client_id:uid,log_date:date,grp,intensity:e.rpe||null,feel:R_FEEL[e.feel]||null,note:e.note||null,duration_min:e.dur||null,skip_reason:e.skip||null},j=JSON.stringify(row);
@@ -3063,7 +3066,7 @@ document.addEventListener('click',e=>{
   else if(a==='prestart'){const k=t.dataset.b;if(S.tw!==k||S.tgD!==today()){S.tw=k;S.tgAt=Date.now();S.tgD=today();}}
   else if(a==='ipgo'){e.stopPropagation();S.tab='entrenar';S.tg=S.tw;save();render();window.scrollTo(0,0);}
   else if(a==='ipdel'){e.stopPropagation();{const nn=gRstN(S.tw);if(!confirm(nn?'Llevas '+nn+(nn===1?' serie registrada':' series registradas')+'. Si descartas el entrenamiento las pierdes. Para seguir después, toca "Volver" o sal de la pantalla: tu progreso queda guardado.\n\n¿Descartar y borrar?':'¿Descartar este entrenamiento en curso?'))return;}
-    const d=DAYS[S.day];if(d){const pre=S.sel+'|'+d.id+'|';Object.keys(S.logs).forEach(k=>{if(k.indexOf(pre)===0)delete S.logs[k];});}
+    const d=DAYS[S.day];if(d){const pre=S.sel+'|'+d.id+'|';S._logsDel=true;Object.keys(S.logs).forEach(k=>{if(k.indexOf(pre)===0)delete S.logs[k];});}
     S.tw=null;S.tgAt=null;if(S.tg===S.tw)S.tg=null;S.tg=null;save();render();}
 },true);
 setInterval(()=>{try{const b=document.querySelector('.ipbar em');if(b&&S.tgAt)b.textContent=ipTime();}catch(e){}},1000);
@@ -3232,7 +3235,7 @@ document.addEventListener('click',e=>{
   const nn=gRstN(g),fin0=!!(S.fb&&S.fb[fbKey(g)]);
   if(!confirm(fin0?'¿Rehacer este entrenamiento? Se borra lo que registraste hoy en él (series, cardio y feedback) y queda como nuevo.':(nn?'Llevas '+nn+(nn===1?' serie registrada':' series registradas')+'. Si cancelas el entrenamiento las pierdes. Si solo quieres seguir después, usa "Volver" y tu progreso queda guardado.\n\n¿Cancelar y borrar este entrenamiento?':'¿Cancelar este entrenamiento?')))return;
   const fk=fbKey(g);
-  (GBX[g]||[]).forEach(b=>{const pre=S.sel+'|'+d.id+'|'+b+'|';Object.keys(S.logs||{}).forEach(k=>{if(k.indexOf(pre)===0)delete S.logs[k];});});
+  S._logsDel=true;(GBX[g]||[]).forEach(b=>{const pre=S.sel+'|'+d.id+'|'+b+'|';Object.keys(S.logs||{}).forEach(k=>{if(k.indexOf(pre)===0)delete S.logs[k];});});
   if(g==='g_cardio'&&S.cardio&&S.cardio[cKey(d)]){const c=S.cardio[cKey(d)];delete c.done;delete c.min;delete c.hr;}
   if(g==='g_fuerza'&&S.warmFA)delete S.warmFA[cKey(d)];
   if(S.fb)delete S.fb[fk];
@@ -3507,9 +3510,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1713';
+const APP_VER='19nov-1717';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1713')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1717')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
