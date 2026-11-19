@@ -614,7 +614,7 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .cpfi .cpq{display:block;font-size:13px;margin-top:4px;color:inherit}
 .cpfk{display:inline-block;font-size:10px;font-weight:700;border-radius:6px;padding:1px 6px;margin-right:6px;color:#fff;background:#E88A2A}.cpfk.hito{background:#D4A937}.cpfk.com{background:#3B82C4}.cpfk.mol{background:#C0392B}
 .cpal{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:1px solid var(--line);border-left:4px solid #D4A937;border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--card,#fff);cursor:pointer;color:inherit;font-family:inherit}.cpal.warn{border-left-color:#C0392B}.cpal.info{border-left-color:#3B82C4}.cpal b{display:block;font-size:14px}.cpal small{display:block;color:var(--mut,#777);font-size:12px;margin-top:2px}
-.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
+.cprep{display:flex;align-items:center;gap:8px;margin:4px 0 10px;font-size:14px}.cprep span{flex:1}.cprepb{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.cpal{padding:0;gap:0;align-items:stretch}.cpalb{flex:1;display:flex;gap:10px;align-items:flex-start;text-align:left;background:none;border:0;padding:10px 12px;cursor:pointer;color:inherit;font-family:inherit;min-width:0}.cpalb>span{flex:1;min-width:0}.cpalb b{display:block;font-size:14px}.cpalb small{display:block;color:var(--mut,#777);font-size:12px;margin-top:2px}.cpok{flex:none;align-self:center;margin-right:10px;background:none;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:11px;cursor:pointer;color:inherit;font-family:inherit}.cpok:hover{border-color:#2E9D6B;color:#2E9D6B}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
 </style>
 </head>
 <body>
@@ -2246,6 +2246,9 @@ function cpShell(inner){
   return `<div class="cpshell${CP.wide&&CP.view==='client'?' cpfull':''}"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small><button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
 }
 const dAgo=s=>{if(!s)return '—';const n=Math.floor((Date.now()-new Date(s+'T12:00:00'))/864e5);return n<=0?'Hoy':n===1?'Ayer':'hace '+n+' d';};
+const CPDIS_K='erre_cp_dis';
+const cpDisGet=()=>{try{return JSON.parse(localStorage.getItem(CPDIS_K)||'{}');}catch(e){return {};}};
+const cpDisSet=o=>{try{localStorage.setItem(CPDIS_K,JSON.stringify(o));}catch(e){}};
 const cpIni=n=>(n||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
 const cpRel=d=>{const n=diffD(today(),d);return n<=0?'Hoy':n===1?'Ayer':'Hace '+n+' d';};
 function cpHomeData(){
@@ -2257,25 +2260,26 @@ function cpHomeData(){
   feed.sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:0);
   C.forEach(c=>{
     const has=M.rt[c.id]&&M.rt[c.id].n,last=M.last[c.id],coachP=c.plan!=='basic',pf=prefs[c.id]||{};
-    if(!has)al.push({s:0,cid:c.id,t:'Sin rutina asignada',q:'Asígnale un programa para que pueda entrenar.'});
+    if(!has)al.push({s:0,k:c.id+'|norut',cid:c.id,t:'Sin rutina asignada',q:'Asígnale un programa para que pueda entrenar.'});
     else{
-      if(last){const n=diffD(tdy,last);if(n>=4)al.push({s:1,cid:c.id,t:'Lleva '+n+' días sin entrenar',q:'Última sesión: '+fdate(last)+'.'});}
-      else al.push({s:2,cid:c.id,t:'Aún no registra ninguna sesión',q:'Escríbele para que arranque.'});
+      if(last){const n=diffD(tdy,last);if(n>=4)al.push({s:1,k:c.id+'|inact|'+last,cid:c.id,t:'Lleva '+n+' días sin entrenar',q:'Última sesión: '+fdate(last)+'.'});}
+      else al.push({s:2,k:c.id+'|nosess',cid:c.id,t:'Aún no registra ninguna sesión',q:'Escríbele para que arranque.'});
     }
-    (H.fb||[]).filter(f=>f.client_id===c.id&&f.feel==='molestia'&&f.log_date>=addD(tdy,-7)).slice(0,1).forEach(f=>al.push({s:0,cid:c.id,t:'Reportó una molestia',q:fdate(f.log_date)+(f.note?' · “'+f.note+'”':'')+' Revisa y ajusta la rutina.'}));
-    if(coachP&&has&&pf.start){const P=PERIOD[planOf(c)],raw=Math.floor(diffD(monOf(tdy),pf.start)/7)+1;if(raw>=1){const wk=((raw-1)%P.weeks)+1;if(wk===P.weeks)al.push({s:1,cid:c.id,t:'Última semana del mesociclo',q:'Programa el siguiente antes del domingo.'});}}
-    if(coachP&&!calls[c.id])al.push({s:2,cid:c.id,t:'Sin llamada 1:1 agendada',q:'Agéndala en su pestaña Llamada 1:1.'});
+    (H.fb||[]).filter(f=>f.client_id===c.id&&f.feel==='molestia'&&f.log_date>=addD(tdy,-7)).slice(0,1).forEach(f=>al.push({s:0,k:c.id+'|mol|'+f.log_date,cid:c.id,t:'Reportó una molestia',q:fdate(f.log_date)+(f.note?' · “'+f.note+'”':'')+' Revisa y ajusta la rutina.'}));
+    if(coachP&&has&&pf.start){const P=PERIOD[planOf(c)],raw=Math.floor(diffD(monOf(tdy),pf.start)/7)+1;if(raw>=1){const wk=((raw-1)%P.weeks)+1;if(wk===P.weeks)al.push({s:1,k:c.id+'|meso|'+monOf(tdy),cid:c.id,t:'Última semana del mesociclo',q:'Programa el siguiente antes del domingo.'});}}
+    if(coachP&&!calls[c.id])al.push({s:2,k:c.id+'|call',cid:c.id,t:'Sin llamada 1:1 agendada',q:'Agéndala en su pestaña Llamada 1:1.'});
   });
   al.sort((a,b)=>a.s-b.s);
-  return {feed:feed.slice(0,20),al,nm};
+  const dis=cpDisGet(),hid=al.filter(a=>dis[a.k]);
+  return {feed:feed.slice(0,20),al:al.filter(a=>!dis[a.k]),nm,nh:hid.length};
 }
 function cpHomePage(){
-  const {feed,al,nm}=cpHomeData(),K={ses:'Workout',hito:'Logro',com:'Comentario',mol:'Molestia'};
+  const {feed,al,nm,nh}=cpHomeData(),K={ses:'Workout',hito:'Logro',com:'Comentario',mol:'Molestia'};
   const fh=feed.length?feed.map(f=>{const c=nm[f.cid]||{};return `<button class="cpfi" data-act="cpopen" data-id="${f.cid}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')} <small style="display:inline">${esc(f.t)}</small></b><small><i class="cpfk ${f.k}" style="font-style:normal">${K[f.k]}</i>${f.rpe?'Esfuerzo '+f.rpe+'/10 · ':''}${f.feel?esc(f.feel):''}</small>${f.q?`<span class="cpq">“${esc(f.q)}”</span>`:''}</span><em>${cpRel(f.d)}</em></button>`;}).join(''):'<div class="note">Aún no hay actividad en los últimos 14 días.</div>';
-  const ah=al.length?al.map(a=>{const c=nm[a.cid]||{};return `<button class="cpal ${a.s===0?'warn':a.s===1?'':'info'}" data-act="cpopen" data-id="${a.cid}"><i class="cpav" style="flex:none;width:34px;height:34px;font-size:12px">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')}</b><b style="font-weight:600;color:${a.s===0?'#C0392B':'inherit'}">${esc(a.t)}</b><small>${esc(a.q)}</small></span></button>`;}).join(''):'<div class="note">Todo en orden ✓ Ningún cliente necesita tu atención ahora.</div>';
+  const ah=al.length?al.map(a=>{const c=nm[a.cid]||{};return `<div class="cpal ${a.s===0?'warn':a.s===1?'':'info'}"><button class="cpalb" data-act="cpopen" data-id="${a.cid}"><i class="cpav" style="flex:none;width:34px;height:34px;font-size:12px">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')}</b><b style="font-weight:600;color:${a.s===0?'#C0392B':'inherit'}">${esc(a.t)}</b><small>${esc(a.q)}</small></span></button><button class="cpok" data-act="cpdis" data-k="${esc(a.k)}" title="Marcar como atendida">✓ Atendida</button></div>`;}).join(''):'<div class="note">Todo en orden ✓ Ningún cliente necesita tu atención ahora.</div>';
   return `<div class="cphead"><h2 class="h2" style="margin:0">Inicio</h2><em class="cpcount">${(CP.clients||[]).length} clientes</em></div>
    <div class="cphome"><section class="sec"><div class="sec-h"><b>Actividad reciente</b><em>${feed.length}</em></div>${fh}</section>
-   <section class="sec"><div class="sec-h"><b>Necesitan tu atención</b><em>${al.length}</em></div>${ah}</section></div>`;
+   <section class="sec"><div class="sec-h"><b>Necesitan tu atención</b><em>${al.length}</em></div>${ah}${nh?`<button class="lblbtn" data-act="cprestore" style="margin-top:6px">Mostrar ${nh} atendida${nh>1?'s':''}</button>`:''}</section></div>`;
 }
 function cpClientsPage(){
   const q=nrm(CP.q),m=CP.meta,all=CP.clients;
@@ -2357,7 +2361,7 @@ function coachRender(keepInput){
 const cxList=()=>((S.ctasks&&S.ctasks.tasks)||[]);
 function cxSync(){
   for(let i=DAYS.length-1;i>=0;i--)if(DAYS[i].x)DAYS.splice(i,1);
-  cxList().forEach(t=>{if(t.type==='workout'&&t.day){const d=JSON.parse(JSON.stringify(t.day));d.id='x'+t.id;d.x=1;d.label=t.title||d.name||'Workout';DAYS.push(d);}});
+  cxList().forEach(t=>{const sd=t.day||(t.ref&&(cxList().find(q=>q.id===t.ref)||{}).day);if(t.type==='workout'&&sd){const d=JSON.parse(JSON.stringify(sd));d.id='x'+t.id;d.x=1;d.label=t.title||d.name||'Workout';DAYS.push(d);}});
 }
 function cxCard(){return cxList().filter(t=>t.date===S.sel&&t.type==='cardio').pop()||null;}
 const cxTier=t=>((cxCard()||{}).tier)||t;
@@ -2370,6 +2374,7 @@ async function cpSaveTasks(list){
 }
 const cpTid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const CPT_SOON=['Vídeo','Nutrición','Documento','Registrar evolución','Sesión presencial / online','Programar mensaje','Formulario'];
+function cpTmSync(){const m=CP.tm;if(!m)return;const d=document.getElementById('cptD'),u=document.getElementById('cptU');if(d&&d.value)m.date=d.value;if(u&&u.value)m.until=u.value;}
 function cpTaskModal(){
   const m=CP.tm;if(!m){const o=document.getElementById('cptm');if(o)o.remove();return;}
   let o=document.getElementById('cptm');if(!o){o=document.createElement('div');o.id='cptm';o.className='cpdv';document.body.appendChild(o);}
@@ -2377,6 +2382,8 @@ function cpTaskModal(){
   const T=(k,n,ic,body)=>`<div class="cptt${m.type===k?' on':''}"><button class="cpth2" data-act="cptype" data-v="${k}"><i class="cpdot" style="background:${ic}"></i><b>${n}</b><span>${m.type===k?'▴':'▾'}</span></button>${m.type===k?`<div class="cptb">${body}</div>`:''}</div>`;
   o.innerHTML=`<div class="cpdc" style="max-width:560px"><div class="cpdhd"><div><b>Añadir nueva tarea</b><small>${fmtL(m.date)}</small></div><button class="cpdx" data-act="cptclose" aria-label="Cerrar">✕</button></div>
    <label class="pfl">Fecha</label><input class="fld" type="date" id="cptD" value="${m.date}" style="margin-bottom:10px">
+   <div class="cprep"><span>¿Quieres repetir esta tarea?</span><button class="chip${m.rep?'':' on'}" data-act="cprep" data-v="0">No</button><button class="chip${m.rep?' on':''}" data-act="cprep" data-v="1">Sí</button></div>
+   ${m.rep?`<div class="cprepb"><div class="chips">${DNL.map((n,i)=>`<button class="chip${(m.rd||[]).includes(i)?' on':''}" data-act="cprd" data-v="${i}">${n}</button>`).join('')}</div><label class="pfl">Repetir hasta</label><input class="fld" type="date" id="cptU" value="${m.until||addD(m.date,28)}"></div>`:''}
    ${T('workout','Workout','#F0A020',`<select class="fld" id="cptW"><option value="">Elige el entrenamiento…</option>${progDays.length?`<optgroup label="Días del programa del cliente">${progDays.map((d,i)=>`<option value="p:${i}">${esc(d.label||('Día '+(i+1)))} · ${esc(d.name||'')}</option>`).join('')}</optgroup>`:''}${wk.length?`<optgroup label="Workouts guardados">${wk.map(t=>`<option value="w:${t.id}">${esc(t.name)}</option>`).join('')}</optgroup>`:''}</select><div class="note">Reemplaza el entrenamiento que le tocaba ese día. Si no le tocaba ninguno, se suma como un día extra.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Asignar workout</button>`)}
    ${T('rest','Descanso','#8A8F98',`<div class="note">El cliente verá ese día como descanso y no tendrá entrenamiento.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Marcar descanso</button>`)}
    ${T('note','Nota para el cliente','#3B82C4',`<textarea class="fld" id="cptN" rows="3" placeholder="Ej. Hoy prioriza técnica, baja el peso un 10 %."></textarea><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Guardar nota</button>`)}
@@ -2491,7 +2498,7 @@ const cpHas=dt=>{const i=cpDayInfo(dt);return !!i.d||cxList().some(t=>t.date===d
 function cpDayHTML(date){
   const d=CP.d;
   return cpWith(()=>withDate(date,()=>{
-    const inf=cpDayInfo(date),TL=cxList().filter(t=>t.date===date),tlh=`<div class="cpdhd"><div><b>${fmtL(date)}</b><small>${inf.d?'Entrenamiento y tareas':'Tareas del día'}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div><button class="btn solid" data-act="cptnew" data-v="${date}" style="width:100%;margin-bottom:10px">+ Tarea</button>${TL.map(t=>`<div class="cptask"><span><b>${t.type==='workout'?'Workout · '+esc(t.title||''):t.type==='rest'?'Descanso':t.type==='cardio'?'Cardio · '+esc(((typeof CMODS!=='undefined'&&CMODS[t.mod])||{n:''}).n)+(t.tier?' · '+t.tier:'')+(t.min?' · '+t.min+' min':''):'Nota'}</b>${t.type==='note'?'<small>'+esc(t.text||'')+'</small>':''}</span><button class="cpdx" data-act="cptdel" data-id="${t.id}" aria-label="Quitar">✕</button></div>`).join('')}`;
+    const inf=cpDayInfo(date),TL=cxList().filter(t=>t.date===date),tlh=`<div class="cpdhd"><div><b>${fmtL(date)}</b><small>${inf.d?'Entrenamiento y tareas':'Tareas del día'}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div><button class="btn solid" data-act="cptnew" data-v="${date}" style="width:100%;margin-bottom:10px">+ Tarea</button>${TL.map(t=>`<div class="cptask"><span><b>${t.type==='workout'?'Workout · '+esc(t.title||''):t.type==='rest'?'Descanso':t.type==='cardio'?'Cardio · '+esc(((typeof CMODS!=='undefined'&&CMODS[t.mod])||{n:''}).n)+(t.tier?' · '+t.tier:'')+(t.min?' · '+t.min+' min':''):'Nota'}</b>${t.type==='note'?'<small>'+esc(t.text||'')+'</small>':''}</span><button class="cpdx" data-act="cptdel" data-id="${t.id}" aria-label="Quitar">✕</button>${t.series?`<button class="lblbtn" data-act="cptdel" data-all="1" data-id="${t.id}" style="font-size:11px">Quitar serie</button>`:''}</div>`).join('')}`;
     if(!inf.d)return tlh+(TL.length?'':'<p class="lead">Ese día no tiene entrenamiento programado ni tareas.</p>');
     const dy=inf.d,st=cpSt(inf,date),pct=inf.total?Math.round(inf.done/inf.total*100):0,ec=(d.data&&d.data.excom)||d.excom||{};
     let sets=0,vol=0,fe=null;
@@ -2529,7 +2536,7 @@ document.addEventListener('click',async e=>{
   if(a==='cpremind'){const v=((document.getElementById('cpRm')||{}).value||'').trim();if(!v)return;try{await DB.sendCoach(CP.cid,ME.id,v);CP.d=await DB.clientDetail(CP.cid);cpDayClose();toast('Mensaje enviado ✓');}catch(x){toast('No se pudo enviar');}return;}
   if(a==='cpwide'){CP.wide=!CP.wide;coachRender();return;}
   if(a==='cpedit'){const date=t.dataset.v,dy=cpWith(()=>withDate(date,()=>ctxFor(date).d));if(!dy)return;cpDayClose();
-    if(dy.x){const tk2=cxListOf(CP.d).find(x=>'x'+x.id===dy.id);if(!tk2)return;rtOpen('client',{cid:CP.cid,name:'Workout asignado',days:[tk2.day]});RT.xt=tk2.id;RT.sel=0;rtShow();}
+    if(dy.x){const tk2=cxListOf(CP.d).find(x=>'x'+x.id===dy.id);if(!tk2)return;rtOpen('client',{cid:CP.cid,name:'Workout asignado',days:[tk2.day||(cxListOf(CP.d).find(q=>q.id===tk2.ref)||{}).day]});RT.xt=tk2.id;RT.sel=0;rtShow();}
     else{const ix=((CP.routine&&CP.routine.days)||[]).findIndex(x=>x.id===dy.id);if(ix<0){toast('No se encontró ese día en la rutina');return;}rtOpen('client',{cid:CP.cid,name:CP.routine.name,days:CP.routine.days});RT.sel=ix;rtShow();}
     return;}
   if(a==='cpcard'){const [date,sc]=t.dataset.v.split('|'),g=id=>((document.getElementById(id)||{}).value||'').trim(),mod=g('cpEm'),tier=g('cpEt'),mn=+g('cpEn')||0,tx=g('cpEx');
@@ -2538,12 +2545,19 @@ document.addEventListener('click',async e=>{
       else{const dy=cpWith(()=>withDate(date,()=>ctxFor(date).d)),ix=dy?((CP.routine&&CP.routine.days)||[]).findIndex(x=>x.id===dy.id):-1;if(ix<0){toast('No se encontró ese día en la rutina');return;}
         CP.routine.days[ix].cardioDefault=mod;await DB.saveRoutine(CP.cid,CP.routine.name,CP.routine.days,ME.id);toast('Cardio de la rutina actualizado ✓');}
       cpDayClose();coachRender();}catch(x){console.warn(x);toast('No se pudo guardar el cardio');}return;}
+  if(a==='cpdis'){const o=cpDisGet();o[t.dataset.k]=Date.now();cpDisSet(o);coachRender();return;}
+  if(a==='cprestore'){cpDisSet({});coachRender();return;}
   if(a==='cpview'){CP.cv=t.dataset.v;coachRender();return;}
   if(a==='cptnew'){CP.tm={date:t.dataset.v||today(),type:'workout'};cpTaskModal();return;}
   if(a==='cptclose'){CP.tm=null;cpTaskModal();return;}
-  if(a==='cptype'){const dv=document.getElementById('cptD');if(dv&&CP.tm)CP.tm.date=dv.value||CP.tm.date;CP.tm.type=CP.tm.type===t.dataset.v?'':t.dataset.v;cpTaskModal();return;}
+  if(a==='cprep'){cpTmSync();CP.tm.rep=t.dataset.v==='1';if(CP.tm.rep&&!(CP.tm.rd||[]).length)CP.tm.rd=[wdOf(CP.tm.date)];cpTaskModal();return;}
+  if(a==='cprd'){cpTmSync();const v=+t.dataset.v,r=CP.tm.rd||[];CP.tm.rd=r.includes(v)?r.filter(x=>x!==v):r.concat(v);cpTaskModal();return;}
+  if(a==='cptype'){cpTmSync();CP.tm.type=CP.tm.type===t.dataset.v?'':t.dataset.v;cpTaskModal();return;}
   if(a==='cptprog'){CP.tm=null;cpTaskModal();cpDayClose();CP.tab='rutina';coachRender();return;}
-  if(a==='cptdel'){const id=t.dataset.id,date=(cxListOf(CP.d).find(x=>x.id===id)||{}).date;try{await cpSaveTasks(cxListOf(CP.d).filter(x=>x.id!==id));coachRender();if(date)cpDayOpen(date);toast('Tarea quitada ✓');}catch(x){toast('No se pudo quitar la tarea');}return;}
+  if(a==='cptdel'){const id=t.dataset.id,all=cxListOf(CP.d),tk0=all.find(x=>x.id===id)||{},date=tk0.date,whole=t.dataset.all==='1'&&tk0.series;try{
+    let L=whole?all.filter(x=>x.series!==tk0.series):all.filter(x=>x.id!==id);
+    if(!whole&&tk0.day){const nx=L.find(x=>x.ref===id);if(nx){L=L.map(x=>x.id===nx.id?Object.assign({},x,{day:tk0.day,ref:undefined}):(x.ref===id?Object.assign({},x,{ref:nx.id}):x));}}
+    await cpSaveTasks(L);coachRender();if(date)cpDayOpen(date);toast('Tarea quitada ✓');}catch(x){toast('No se pudo quitar la tarea');}return;}
   if(a==='cptsave'){
     const m=CP.tm,type=m.type,date=(document.getElementById('cptD')||{}).value||m.date;let task={id:cpTid(),date,type,by:'coach',at:Date.now()};
     if(type==='workout'){const v=(document.getElementById('cptW')||{}).value;if(!v){toast('Elige el entrenamiento');return;}
@@ -2553,7 +2567,10 @@ document.addEventListener('click',async e=>{
     else if(type==='note'){const tx=((document.getElementById('cptN')||{}).value||'').trim();if(!tx){toast('Escribe la nota');return;}task.text=tx;}
     else if(type==='cardio'){task.mod=(document.getElementById('cptCm')||{}).value||'camin_cam';task.tier=(document.getElementById('cptCt')||{}).value||'';task.min=+((document.getElementById('cptCn')||{}).value)||0;task.text=(((document.getElementById('cptCx')||{}).value)||'').trim();task.title='Cardio';}
     else if(type!=='rest')return;
-    try{const keep=cxListOf(CP.d).filter(x=>!(x.date===date&&((type==='rest'||type==='workout')&&(x.type==='rest'||x.type==='workout')||(type==='cardio'&&x.type==='cardio'))));await cpSaveTasks(keep.concat(task));CP.tm=null;cpTaskModal();coachRender();cpDayOpen(date);toast('Tarea asignada ✓ El cliente la verá al abrir su app');}catch(x){console.warn(x);toast('No se pudo guardar la tarea');}return;}
+    cpTmSync();
+    let dates=[date];if(m.rep){const until=(document.getElementById('cptU')||{}).value||m.until||addD(date,28),rd=(m.rd&&m.rd.length)?m.rd:[wdOf(date)];dates=[];for(let x=date,n=0;x<=until&&n<400;x=addD(x,1),n++)if(x===date||rd.includes(wdOf(x)))dates.push(x);if(dates.length>90){toast('Máximo 90 repeticiones. Acorta la fecha final.');return;}}
+    const sid=dates.length>1?cpTid():null,news=dates.map((dt,i)=>{const o=Object.assign({},task,{id:i?cpTid():task.id,date:dt});if(sid)o.series=sid;if(type==='workout'&&i){delete o.day;o.ref=task.id;}return o;});
+    try{const clash=(x,dt)=>x.date===dt&&((type==='rest'||type==='workout')&&(x.type==='rest'||x.type==='workout')||(type==='cardio'&&x.type==='cardio'));const keep=cxListOf(CP.d).filter(x=>!dates.some(dt=>clash(x,dt)));await cpSaveTasks(keep.concat(news));CP.tm=null;cpTaskModal();coachRender();cpDayOpen(date);toast('Tarea asignada ✓ El cliente la verá al abrir su app');}catch(x){console.warn(x);toast('No se pudo guardar la tarea');}return;}
   if(a==='cpdclose'){cpDayClose();return;}
   if(a==='cpcal'){const v=+t.dataset.v,vw=CP.cv||'mes',cd=CP.cd||today();
     if(!v)CP.cd=today();else if(vw==='sem')CP.cd=addD(cd,7*v);else if(vw==='dia')CP.cd=addD(cd,v);else{const [y,m]=cd.split('-').map(Number),n=new Date(y,m-1+v,1,12);CP.cd=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-01';}
