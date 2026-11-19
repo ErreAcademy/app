@@ -2006,6 +2006,7 @@ function realDB(){
   return {
     async session(){const {data}=await sb.auth.getSession();return data.session;},
     async signIn(email,pw){const r=await sb.auth.signInWithPassword({email,password:pw});if(r.error)throw r.error;return r.data.session;},
+    async signUp(email,pw,name){const r=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name}}});if(r.error)throw r.error;return r.data;},
     async sendCode(email){const r=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});if(r.error)throw r.error;},
     async verify(email,token){const r=await sb.auth.verifyOtp({email,token,type:'email'});if(r.error)throw r.error;return r.data.session;},
     async push(body){try{const r=await sb.functions.invoke('push',{body});return r.data||null;}catch(e){return null;}},
@@ -2079,7 +2080,7 @@ function realDB(){
         sf(sb.from('calls').select('client_id,starts_at').gte('starts_at',new Date().toISOString()))]);
       return {fb,hi,cd,ca};
     },
-    async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level').eq('role','client').order('full_name'));}
+    async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level,status').eq('role','client').order('full_name'));}
   };
 }
 const DB=window.DB_MOCK||realDB();
@@ -2233,14 +2234,28 @@ function loginView(){
   if(LG.mode==='code')return authHead()+bar+`<button class="lblbtn" data-act="lgback" style="color:var(--gray);margin:10px 0 0">‹ Volver</button><h2 class="h2" style="margin-top:6px">Escribe tu código</h2><p class="lead">Te lo enviamos a <b>${esc(LG.email)}</b>. Revisa también spam. Cuando entres, cambia tu contraseña en Perfil → Mi cuenta.</p>${e}${ok}
     <input class="fld" id="lgCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Código" style="font-size:22px;letter-spacing:.2em;text-align:center">
     <button class="btn solid" data-act="lgverify" style="width:100%;padding:14px;margin-top:14px"${LG.busy?' disabled':''}>${LG.busy?'Entrando…':'Entrar'}</button>`;
+  if(LG.mode==='signup')return authHead()+bar+`<button class="lblbtn" data-act="lgback" style="color:var(--gray);margin:10px 0 0">‹ Volver</button><h2 class="h2" style="margin-top:6px">Crear cuenta</h2><p class="lead">Empiezas con el plan Basic. Tu coach activa tu cuenta y te asigna tu plan.</p>${e}${ok}
+    <label class="pfl">Nombre</label><input class="fld" id="lgName" autocomplete="name" placeholder="Tu nombre" value="${esc(LG.name||'')}">
+    <label class="pfl" style="margin-top:10px">Correo</label><input class="fld" id="lgEmail" type="email" inputmode="email" autocomplete="username" placeholder="tu@correo.com" value="${LG.email}">
+    <label class="pfl" style="margin-top:10px">Contraseña (mínimo 6)</label><input class="fld" id="lgPass" type="password" autocomplete="new-password" placeholder="Crea una contraseña">
+    <button class="btn solid" data-act="lgsignup" style="width:100%;padding:14px;margin-top:14px"${LG.busy?' disabled':''}>${LG.busy?'Creando…':'Crear mi cuenta'}</button>`;
   return authHead()+bar+`<h2 class="h2" style="margin-top:14px">Entra a tu cuenta</h2><p class="lead">Escribe tu correo y tu contraseña.</p>${e}${ok}
     <label class="pfl">Correo</label><input class="fld" id="lgEmail" type="email" inputmode="email" autocomplete="username" placeholder="tu@correo.com" value="${LG.email}">
     <label class="pfl" style="margin-top:10px">Contraseña</label><input class="fld" id="lgPass" type="password" autocomplete="current-password" placeholder="Tu contraseña">
     <button class="btn solid" data-act="lgsend" style="width:100%;padding:14px;margin-top:14px"${LG.busy?' disabled':''}>${LG.busy?'Entrando…':'Entrar'}</button>
     <button class="lblbtn" data-act="lgforgot" style="display:block;margin:12px auto 0;color:var(--gray)">¿Olvidaste tu contraseña?</button>
-    <div class="plwrap"><div class="pltitle">¿Aún no tienes cuenta?</div>${plansPublic()}<div class="foot" style="margin-top:10px">Elige tu plan y escríbele a tu coach: él te crea el acceso.</div></div>`;
+    <div class="plwrap"><div class="pltitle">¿Aún no tienes cuenta?</div><button class="btn solid" data-act="lgsignmode" style="width:100%;padding:14px;margin:4px 0 12px">Crear cuenta</button>${plansPublic()}<div class="foot" style="margin-top:10px">Te registras y tu coach activa tu plan.</div></div>`;
 }
 function showLogin(){$('#app').innerHTML=loginView();}
+function pendingView(){
+  const nm=esc((PROFILE.full_name||'').split(' ')[0]||'');
+  const msg=encodeURIComponent('Hola Juanjo, acabo de crear mi cuenta en la app ('+(ME.email||'')+'). ¿Me activas?');
+  return authHead()+`<h2 class="h2" style="margin-top:14px">¡Hola${nm?' '+nm:''}! Tu cuenta está pendiente</h2><p class="lead">Ya quedó creada. Tu coach la activa y te asigna tu plan; en cuanto lo haga, entras a tu programa.</p>
+    <div class="note">Elige el plan que quieres y avísale a tu coach para que lo active más rápido.</div>${plansPublic()}
+    <a class="btn solid" style="display:block;text-align:center;padding:14px;margin-top:14px;text-decoration:none" href="https://wa.me/${COACH_WA}?text=${msg}" target="_blank" rel="noopener">Avisarle a mi coach</a>
+    <button class="btn" data-act="pendchk" style="width:100%;padding:14px;margin-top:10px">Ya me activaron: revisar</button>
+    <button class="lblbtn" data-act="pendout" style="display:block;margin:12px auto 0;color:var(--gray)">Cerrar sesión</button>`;
+}
 function consentView(){
   return authHead()+`<h2 class="h2" style="margin-top:14px">Tu información, protegida</h2>
    <p class="lead">ERRE Complete guarda tus datos de entrenamiento, tu peso, tus fotos de progreso y tus mensajes de forma privada. Solo tú y tu coach pueden verlos.</p>
@@ -2298,6 +2313,7 @@ function cpHomeData(){
   (H.ca||[]).forEach(c=>calls[c.client_id]=c.starts_at);
   feed.sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:0);
   C.forEach(c=>{
+    if(c.status==='pending'){al.push({s:0,k:c.id+'|pend',cid:c.id,t:'Cuenta nueva por activar',q:'Se registró en la app. Ábrela, actívala y elige su plan.'});return;}
     const has=M.rt[c.id]&&M.rt[c.id].n,last=M.last[c.id],coachP=c.plan!=='basic',pf=prefs[c.id]||{};
     if(!has)al.push({s:0,k:c.id+'|norut',cid:c.id,t:'Sin rutina asignada',q:'Asígnale un programa para que pueda entrenar.'});
     else{
@@ -2327,7 +2343,7 @@ function cpClientsPage(){
   return `<div class="cphead"><h2 class="h2" style="margin:0">Clientes</h2><em class="cpcount">${all.length}</em></div>
    <div class="cptabs">${['todos','basic','complete','elite'].map(k=>`<button class="cptab${CP.pf===k?' on':''}" data-act="cppf" data-v="${k}">${k==='todos'?'Todos':PNAME[k]} <em>${cnt(k)}</em></button>`).join('')}</div>
    <input class="fld" id="cpQ" placeholder="Buscar cliente…" value="${esc(CP.q)}" autocomplete="off" style="margin:10px 0">
-   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Rutina</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><b>${esc(c.full_name||'Sin nombre')}</b>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em></span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin rutina</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
+   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Rutina</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><b>${esc(c.full_name||'Sin nombre')}</b>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em>${c.status==='pending'?' <em class="cpwarn">Pendiente</em>':''}</span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin rutina</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
 }
 async function coachHome(){CP.view='list';coachRender();try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{CP.home=await DB.homeData();}catch(e){console.warn('home',e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
@@ -2395,6 +2411,7 @@ function coachRender(keepInput){
   const pp=d?d.profile:{},ini=(pp.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
   el.innerHTML=cpShell(`<div class="cpcrumb"><button class="lblbtn" data-act="cpback">Clientes</button> / <b>${nm}</b></div>
     <div class="cphead"><span class="cpav">${esc(ini)}</span><div><h2 class="h2" style="margin:0">${nm}</h2><small>${d?(PNAME[pp.plan]||'')+' · '+(GN[pp.goal]||pp.goal||'Sin objetivo')+' · '+fidSpan(fidMonths(fidSince(pp)))+' con ERRE':''}</small></div></div>
+    ${pp&&pp.status==='pending'?`<section class="sec" style="border:2px solid #F28C28;margin:10px 0"><div class="sec-h"><b>Cuenta pendiente</b></div><div class="note" style="margin-bottom:8px">Se registró solo. Elige su plan (Resumen → Plan) y actívala para que entre a la app.</div><button class="btn solid" data-act="cpactivate" style="width:100%">Activar cuenta</button></section>`:''}
     ${cpW()&&!CP.wide?`<div class="cpcx"><nav class="cpsb">${SB.map(([k,n,ds])=>`<button class="cpsi${CP.tab===k?' on':''}" data-act="cptab" data-v="${k}"><b>${n}</b><small>${ds}</small></button>`).join('')}</nav><div class="cpcc">${CP.err?`<div class="note">${CP.err}</div>`:''}${body}</div></div>`:`<div class="cptabs">${tabs.map(t=>`<button class="cptab${CP.tab===t?' on':''}" data-act="cptab" data-v="${t}">${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}${body}`}`);cpWideCls(el);
 }
 /* tareas asignadas por el coach (cliente + coach) */
@@ -2711,6 +2728,7 @@ document.addEventListener('click',async e=>{
   else if(a==='cptab'){CP.tab=t.dataset.v;coachRender();}
   else if(a==='cpmod'){const cur=CP.d.profile.modules||[],v=t.dataset.v,nx=cur.includes(v)?cur.filter(x=>x!==v):cur.concat(v);try{await DB.updateClient(CP.cid,{modules:nx});CP.d.profile.modules=nx;CP.err='';coachRender();toast('Módulos actualizados ✓');}catch(x){CP.err='No se pudo actualizar.';coachRender();}}
   else if(a==='cpreset'){if(!confirm('¿Reiniciar registros y hitos de este cliente? No se puede deshacer.'))return;try{await DB.resetClient(CP.cid);CP.d=await DB.clientDetail(CP.cid);CP.err='';coachRender();toast('Registros reiniciados ✓');}catch(x){CP.err='No se pudo reiniciar.';coachRender();}}
+  else if(a==='cpactivate'){try{await DB.updateClient(CP.cid,{status:'active'});CP.d.profile.status='active';const c=(CP.clients||[]).find(x=>x.id===CP.cid);if(c)c.status='active';CP.err='';coachRender();toast('Cuenta activada');pushTo&&pushTo(CP.cid,'¡Cuenta activada!','Ya puedes entrar a tu programa en ERRE.');}catch(x){CP.err='No se pudo activar.';coachRender();}}
   else if(a==='cpplan'){try{await DB.updateClient(CP.cid,{plan:t.dataset.v});CP.d.profile.plan=t.dataset.v;CP.err='';coachRender();toast('Plan actualizado');}catch(x){CP.err='No se pudo cambiar el plan.';coachRender();}}
   else if(a==='cpsend'){const i=document.getElementById('cpIn'),v=(i.value||'').trim();if(!v)return;i.value='';
     try{await DB.sendCoach(CP.cid,ME.id,v);CP.d=await DB.clientDetail(CP.cid);CP.err='';}catch(x){CP.err='No se pudo enviar el mensaje.';}coachRender();window.scrollTo(0,document.body.scrollHeight);}
@@ -2725,6 +2743,7 @@ async function enter(ses){
   PROFILE=await DB.profile(uid);await pushRefresh();
   if(store.get('erre_uid')!==uid){resetLocal();store.set('erre_uid',uid);}
   if(PROFILE.role==='coach'){await coachHome();return;}
+  if(PROFILE.status==='pending'){$('#app').innerHTML=pendingView();return;}
   if(!PROFILE.consent_at){$('#app').innerHTML=consentView();return;}
   await startClient();
 }
@@ -2754,6 +2773,20 @@ document.addEventListener('click',async e=>{
     LG.err='';LG.busy=true;showLogin();
     try{const ses=await DB.signIn(em,pw);LG.busy=false;await enter(ses);}
     catch(x){LG.busy=false;LG.err=/invalid|credentials/i.test(x.message||'')?'Correo o contraseña incorrectos.':'No pudimos entrar. Revisa tu conexión e intenta de nuevo.';showLogin();}}
+  else if(a==='lgsignmode'){LG.mode='signup';LG.err='';LG.ok='';showLogin();}
+  else if(a==='lgsignup'){const g=id=>((document.getElementById(id)||{}).value||'').trim();const nm=g('lgName'),em=g('lgEmail').toLowerCase(),pw=(document.getElementById('lgPass')||{}).value||'';
+    LG.name=nm;LG.email=em;
+    if(nm.length<2){LG.err='Escribe tu nombre.';showLogin();return;}
+    if(!/^\S+@\S+\.\S+$/.test(em)){LG.err='Escribe un correo válido.';showLogin();return;}
+    if(pw.length<6){LG.err='La contraseña debe tener al menos 6 caracteres.';showLogin();return;}
+    LG.err='';LG.busy=true;showLogin();
+    try{const r=await DB.signUp(em,pw,nm);LG.busy=false;
+      if(r.session){LG.mode='';await enter(r.session);}
+      else if(r.user&&r.user.identities&&!r.user.identities.length){LG.mode='';LG.err='Ese correo ya tiene cuenta. Entra con tu contraseña o usa «¿Olvidaste tu contraseña?».';showLogin();}
+      else{LG.mode='';LG.ok='Cuenta creada. Revisa tu correo para confirmarla y luego entra aquí con tu contraseña.';showLogin();}}
+    catch(x){LG.busy=false;const m=x.message||'';LG.err=/already|registered/i.test(m)?'Ese correo ya tiene cuenta. Entra con tu contraseña.':/rate|limit/i.test(m)?'Demasiados intentos. Espera unos minutos.':/password/i.test(m)?'Contraseña muy débil. Usa al menos 6 caracteres.':'No pudimos crear la cuenta. Intenta de nuevo.';showLogin();}}
+  else if(a==='pendchk'){try{PROFILE=await DB.profile(ME.id);if(PROFILE.status==='pending'){toast('Aún pendiente. Tu coach te activará pronto.');}else{await enter({user:ME});}}catch(x){toast('No pudimos revisar. Intenta de nuevo.');}}
+  else if(a==='pendout'){try{await DB.signOut();}catch(x){}location.reload();}
   else if(a==='lgforgot'){LG.mode='forgot';LG.err='';LG.ok='';const v=((document.getElementById('lgEmail')||{}).value||'').trim();if(v)LG.email=v;showLogin();}
   else if(a==='lgback'){LG.mode='';LG.err='';LG.ok='';showLogin();}
   else if(a==='lgcode'){const em=((document.getElementById('lgEmail')||{}).value||'').trim().toLowerCase();LG.email=em;
@@ -3454,9 +3487,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1203';
+const APP_VER='19nov-1210';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1203')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1210')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
