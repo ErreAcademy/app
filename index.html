@@ -552,6 +552,25 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .cdet{width:100%;margin:10px 0;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-weight:600;font-size:14px;display:flex;justify-content:space-between}
 .cdetb{padding-top:4px}
 [data-drag]{cursor:grab}.dragging{opacity:.4}.dropon{outline:2px dashed var(--red,#C0392B);outline-offset:2px;background:var(--red-tint,#fbeceb)}
+.msov{position:fixed;inset:0;z-index:100;background:rgba(28,27,25,.62);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity .25s}
+.msov.on{opacity:1}
+.msbox{position:relative;overflow:hidden;background:var(--card);border-radius:22px;padding:30px 24px 20px;width:100%;max-width:360px;text-align:center;transform:scale(.8);animation:mspop .55s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes mspop{to{transform:scale(1)}}
+.msico{font-size:64px;line-height:1;animation:msbounce 1s ease-in-out .3s 2}
+@keyframes msbounce{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-14px) rotate(-8deg)}60%{transform:translateY(0) rotate(6deg)}}
+.mskick{display:block;margin-top:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red,#C0392B);font-size:12px}
+.msbox h3{margin:6px 0 8px;font-size:22px}.msbox p{color:var(--gray);font-size:14px;margin:0}
+.msmore{margin-top:12px;font-size:13px;color:var(--ink);background:var(--bg);border-radius:10px;padding:8px 10px}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-14px;border-radius:2px;opacity:0;animation:cfall 1.9s ease-in forwards}
+@keyframes cfall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(420px) rotate(calc(var(--r) + 540deg))}}
+.sring{position:relative;width:176px;height:176px;margin:8px auto 4px}.sring svg{width:100%;height:100%}
+.sring .bgc{fill:none;stroke:var(--line);stroke-width:14}.sring .arc{fill:none;stroke:var(--ink);stroke-width:14;stroke-linecap:round;transition:stroke-dashoffset .35s ease,stroke .3s}.sring .arc.ok{stroke:var(--red,#C0392B)}
+.sin{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}.sin b{font-size:34px;line-height:1.05}.sin small{color:var(--gray);font-size:12px}.sfoot{font-size:20px}
+.sring.bump{animation:sbump .6s ease}@keyframes sbump{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+.smsg{text-align:center;font-weight:600;font-size:14px;margin:4px 0 10px;min-height:20px}
+.sslide{width:100%;accent-color:#C0392B;height:34px}
+@media(prefers-reduced-motion:reduce){.msico,.msbox,.confetti i,.sring.bump{animation:none!important}.msbox{transform:none}}
 </style>
 </head>
 <body>
@@ -752,7 +771,7 @@ const today=()=>toISO(new Date());
 const defaultsS=()=>({program:'complete',week:1,day:0,goal:'complete',swaps:{},logs:{},extras:{},cardio:{},tab:'inicio',tasks:{},exp:{},user:null,ob:null,off:0,cardioX:{},cm:'reloj',wm:'fa',warmFA:{},fb:{},chat:[],chatRead:0,elite:false,profile:false,call:null,rem:{train:{on:true,time:'06:30'},weigh:{on:false,time:'07:00'},breath:{on:false,time:'07:15'}},chatOpen:false,role:'client',cseg:'mensajes',sum:{},steps:{},stepGoal:8000,weights:{},prog:{seg:'resumen',range:30},start:monOf(today()),open:{warm:1,main:1,acc:1,cardio:1,calm:0}});
 const S=Object.assign(defaultsS(),store.get('erre_state')||{});
 S.sel=today();S.off=0;
-const save=()=>{store.set('erre_state',S);if(window.SYNC)SYNC.dirty();};
+const save=()=>{store.set('erre_state',S);if(window.SYNC)SYNC.dirty();try{msSoon();}catch(e){}};
 const $=s=>document.querySelector(s);
 const ikey=(d,b,i)=>`${S.sel}|${d.id}|${b}|${i}`;
 const skey=(d,b,i)=>`${S.sel}|${d.id}|${b}|${i}`;
@@ -1053,7 +1072,7 @@ const PIL={
  alim:{n:'Alimentación',c:'#4E7D63',verbo:'Nutrir'},
  progreso:{n:'Progreso',c:'#1C1B19',verbo:'Tu evolución'},
  peso:{n:'Peso',c:'#1C1B19',verbo:''},
- pasos:{n:'Pasos',c:'#5A554E',verbo:''}
+ pasos:{n:'Pasos diarios',c:'#5A554E',verbo:''}
 };
 const isC=()=>S.program==='complete';
 const tier=()=>isC()?(S.elite?'elite':'complete'):'basic';
@@ -1090,7 +1109,7 @@ function shellHeader(){
   const p=PIL[S.tab], u=S.user||{};
   const title=S.tab==='inicio'?`Hola, ${u.name||'Camila'}`:p.n;
   const sub=S.tab==='inicio'?fmtL(S.sel):S.tab==='entrenar'?(S.program==='complete'?'Método Complete · Coaching 1:1':`Método Complete · Basic · Nivel ${u.level||'Principiante'} · Bloque 1`):p.verbo;
-  return `<header class="top">${logo(p.c)}<div class="who"><h1 style="font-size:16px">${title}</h1><small>${sub}</small></div><div class="hr"><button class="pill" data-act="chat" style="color:var(--ink)">Coach${isC()&&S.chat.filter(m=>m.from==='coach').length>S.chatRead?'<i class="cdot"></i>':''}</button><button class="avatar t-${tier()}" data-act="profile" aria-label="Mi perfil">${avHTML()}</button></div></header>`;
+  return `<header class="top">${logo(S.tab==='progreso'?'#C0392B':p.c)}<div class="who"><h1 style="font-size:16px">${title}</h1><small>${sub}</small></div><div class="hr"><button class="pill" data-act="chat" style="color:var(--ink)">Coach${isC()&&S.chat.filter(m=>m.from==='coach').length>S.chatRead?'<i class="cdot"></i>':''}</button><button class="avatar t-${tier()}" data-act="profile" aria-label="Mi perfil">${avHTML()}</button></div></header>`;
 }
 function homeView(){return homeWrap(homeView0());}
 function homeView0(){
@@ -1619,7 +1638,7 @@ function milestones(g){
 }
 /* ---------- pasos ---------- */
 let ts_=0;
-function showSteps(){
+function showSteps0(){
   const g=S.stepGoal, p=Math.min(100,Math.round(ts_/g*100));
   sheet(`<h3>Tus pasos</h3><div class="sub">${fmtL(S.sel)} · meta diaria: ${g.toLocaleString('es-CO')} pasos</div>
    <div class="wnum" style="margin:6px auto 4px"><b>${ts_.toLocaleString('es-CO')}</b><small>pasos</small></div>
@@ -1631,7 +1650,7 @@ function showSteps(){
    <div class="wr" style="margin:10px 0"><input id="sgoal" inputmode="numeric" placeholder="Meta (pasos)" value="${g}"><button class="btn" data-act="sgoalsave">Cambiar meta</button></div>
    <button class="btn solid" data-act="sok" style="width:100%;padding:14px">Registrar ✓</button>`);
 }
-function celebrateSteps(){
+function celebrateSteps0(){
   const n=S.steps[S.sel], g=S.stepGoal, ok=n>=g, near=n>=g*.7;
   const t=ok?`Perfecto: cumpliste tus ${g.toLocaleString('es-CO')} pasos. Excelente.`:near?`Muy cerca: te faltaron ${(g-n).toLocaleString('es-CO')} pasos. Un paseo corto y lo cierras.`:`Cada paso suma. Mañana buscamos acercarnos a tu meta de ${g.toLocaleString('es-CO')}.`;
   sheet(`<div class="celeb"><div class="okc" style="background:${ok?'var(--red)':'var(--gray)'}">${ok?'✓':'👟'}</div><h3>${n.toLocaleString('es-CO')} pasos</h3><div class="sub" style="font-size:15px;color:var(--ink)">${t}</div>${ok?`<div class="streak">Meta cumplida</div>`:''}</div>
@@ -2262,6 +2281,87 @@ document.addEventListener('drop',async e=>{const z=e.target.closest&&e.target.cl
     await rtLoadTpls();coachRender();toast('Movido ✓');
   }catch(x){toast('No se pudo mover');}
 });
+
+/* ---------- hitos, pasos y efectos ---------- */
+const sndOn=()=>{try{return localStorage.getItem('erre_mute')!=='1';}catch(e){return true;}};
+function chime(kind){
+  if(!sndOn())return;try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const c=window._ac=window._ac||new A();if(c.state==='suspended')c.resume();
+    const N=kind==='soft'?[880,1175]:[784,1047,1319],t0=c.currentTime;
+    N.forEach((f,i)=>{const o=c.createOscillator(),gn=c.createGain();o.type='sine';o.frequency.value=f;gn.gain.setValueAtTime(0.0001,t0+i*.11);gn.gain.exponentialRampToValueAtTime(.07,t0+i*.11+.02);gn.gain.exponentialRampToValueAtTime(.0001,t0+i*.11+.55);o.connect(gn);gn.connect(c.destination);o.start(t0+i*.11);o.stop(t0+i*.11+.6);});
+  }catch(e){}
+}
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p);}catch(e){}};
+function confetti(host,n){
+  const cols=['#C0392B','#1C1B19','#B98A3C','#DCD6CC','#96271B'];let h='';
+  for(let i=0;i<(n||26);i++){const x=(Math.random()*100).toFixed(1),d=(Math.random()*.5).toFixed(2),r=Math.round(Math.random()*360),w=6+Math.round(Math.random()*6);h+=`<i style="left:${x}%;background:${cols[i%cols.length]};width:${w}px;height:${w*1.6}px;animation-delay:${d}s;--r:${r}deg"></i>`;}
+  const d=document.createElement('div');d.className='confetti';d.innerHTML=h;host.appendChild(d);setTimeout(()=>d.remove(),2600);
+}
+let msBusy=false;
+function msSoon(){clearTimeout(msSoon.t);msSoon.t=setTimeout(checkMilestones,900);}
+function checkMilestones(){
+  if(msBusy||!S||S.role==='coach'||typeof gam!=='function'||!S.user)return;
+  let g,ms;try{g=gam();ms=milestones(g);}catch(e){return;}
+  const done=ms.filter(m=>m.v>=m.n);
+  if(!S.msSeen){S.msSeen=done.map(m=>m.t);S.lvSeen=g.li;store.set('erre_state',S);return;}
+  const fresh=done.filter(m=>!S.msSeen.includes(m.t)),up=g.li>(S.lvSeen||0);
+  if(!fresh.length&&!up)return;
+  S.msSeen=done.map(m=>m.t);S.lvSeen=g.li;store.set('erre_state',S);showMilestone(fresh,up?{n:g.li+1,name:g.name}:null);
+}
+function showMilestone(list,lv){
+  msBusy=true;const top=lv&&!list.length?null:list[0];
+  const el=document.createElement('div');el.id='msov';el.className='msov';
+  const more=list.slice(1);
+  el.innerHTML=`<div class="msbox"><div class="msico">${lv&&!top?'⭐':top.i}</div><small class="mskick">${lv&&!top?'Subiste de nivel':'Hito logrado'}</small>
+   <h3>${lv&&!top?'Nivel '+lv.n+' · '+lv.name:top.t}</h3>
+   <p>${lv&&!top?'Tu constancia te llevó más lejos. Así se construye el hábito.':'Lo lograste con tu constancia. Un paso más hacia tu mejor versión.'}</p>
+   ${more.length?`<div class="msmore">También lograste: ${more.map(m=>m.i+' '+m.t).join(' · ')}</div>`:''}
+   ${lv&&top?`<div class="msmore">⭐ Y subiste al <b>Nivel ${lv.n} · ${lv.name}</b></div>`:''}
+   <button class="btn solid" data-act="prog" style="width:100%;margin-top:14px;padding:13px">Ver mis hitos</button>
+   <button class="btn" data-act="msclose" style="width:100%;margin-top:8px">Seguir</button>
+   <button class="lblbtn" data-act="msmute" style="margin-top:8px;color:var(--gray)">${sndOn()?'🔔 Sonido activado':'🔕 Sonido apagado'}</button></div>`;
+  document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add('on'));confetti(el.firstChild,34);chime();buzz([40,60,40]);
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest&&e.target.closest('#msov [data-act]');
+  if(!t){const ov=document.getElementById('msov');if(ov&&e.target===ov){ov.remove();msBusy=false;}return;}
+  const a=t.dataset.act;
+  if(a==='msmute'){try{localStorage.setItem('erre_mute',sndOn()?'1':'0');}catch(x){}t.textContent=sndOn()?'🔔 Sonido activado':'🔕 Sonido apagado';if(sndOn())chime('soft');return;}
+  const ov=document.getElementById('msov');if(ov){ov.remove();msBusy=false;}
+});
+/* pasos: anillo + deslizador */
+function stepsUpdate(first){
+  const g=S.stepGoal,v=ts_,p=Math.min(1,v/g),C=2*Math.PI*68,arc=document.getElementById('sarc');if(!arc)return;
+  arc.style.strokeDashoffset=(C*(1-p)).toFixed(1);const ok=v>=g;arc.classList.toggle('ok',ok);
+  const num=document.getElementById('snum');if(num)num.textContent=v.toLocaleString('es-CO');
+  const pc=document.getElementById('spct');if(pc)pc.textContent=Math.round(v/g*100)+'% de tu meta';
+  const msg=document.getElementById('smsg');
+  if(msg)msg.textContent=v<=0?'Mueve el deslizador o toca un botón':ok?(v>=g*1.25?'Día de campeón. Te pasaste de la meta 🔥':'¡Meta cumplida! 🎉'):v>=g*.7?`¡Casi! Te faltan ${(g-v).toLocaleString('es-CO')}`:v>=g*.35?'Buen ritmo, sigue sumando':'Cada paso suma 👟';
+  const sl=document.getElementById('sslide');if(sl&&+sl.value!==v)sl.value=v;
+  const box=document.getElementById('sring');if(box){const was=box.dataset.ok==='1';if(ok&&!was&&!first){box.classList.remove('bump');void box.offsetWidth;box.classList.add('bump');buzz(30);chime('soft');if(box.parentElement)confetti(box,18);}box.dataset.ok=ok?'1':'0';}
+}
+function showSteps(){
+  const g=S.stepGoal,C=2*Math.PI*68,mx=Math.max(Math.ceil(g*1.6/500)*500,Math.ceil((ts_+2000)/500)*500);
+  sheet(`<h3>Pasos diarios</h3><div class="sub">${fmtL(S.sel)} · meta: ${g.toLocaleString('es-CO')} pasos</div>
+   <div class="sring" id="sring" data-ok="${ts_>=g?'1':'0'}"><svg viewBox="0 0 160 160"><circle class="bgc" cx="80" cy="80" r="68"/><circle id="sarc" class="arc" cx="80" cy="80" r="68" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}" transform="rotate(-90 80 80)"/></svg>
+    <div class="sin"><span class="sfoot">👟</span><b id="snum">0</b><small id="spct"></small></div></div>
+   <div class="smsg" id="smsg"></div>
+   <input type="range" id="sslide" class="sslide" min="0" max="${mx}" step="100" value="${ts_}" aria-label="Pasos">
+   <div class="chips" style="justify-content:center;margin-top:10px"><button class="chip" data-act="sstep" data-d="-500">−500</button><button class="chip" data-act="sstep" data-d="500">+500</button><button class="chip" data-act="sstep" data-d="1000">+1.000</button><button class="chip" data-act="sstep" data-d="2500">+2.500</button></div>
+   <div class="wr" style="margin:10px 0"><input id="stype" inputmode="numeric" placeholder="O escribe el total del día: 8500"></div>
+   <div class="note">⌚ Reloj o celular (Apple Salud, Google Fit, Garmin…): <b>próximamente</b>. Por ahora anota el total que ves en tu reloj.</div>
+   <div class="wr" style="margin:10px 0"><input id="sgoal" inputmode="numeric" placeholder="Meta (pasos)" value="${g}"><button class="btn" data-act="sgoalsave">Cambiar meta</button></div>
+   <button class="btn solid" data-act="sok" style="width:100%;padding:14px">Registrar ✓</button>`);
+  stepsUpdate(true);
+}
+document.addEventListener('input',e=>{
+  if(e.target.id==='sslide'){ts_=parseInt(e.target.value)||0;stepsUpdate();if(ts_%1000===0)buzz(8);}
+  else if(e.target.id==='stype'){const v=parseInt(e.target.value);if(v>=0){ts_=v;stepsUpdate();}}
+});
+function celebrateSteps(){
+  celebrateSteps0();const n=S.steps[S.sel],ok=n>=S.stepGoal,host=document.querySelector('#sheet .celeb');
+  if(host){const b=host.querySelector('h3');if(b){let k=0;const end=n,st=Math.max(1,Math.round(end/30));const iv=setInterval(()=>{k=Math.min(end,k+st);b.textContent=k.toLocaleString('es-CO')+' pasos';if(k>=end)clearInterval(iv);},22);}
+    if(ok){confetti(host,28);chime('soft');buzz([30,40,30]);}}
+}
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
