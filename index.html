@@ -608,7 +608,7 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .cptask{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--card,#fff)}.cptask>span{flex:1}.cptask small{display:block;color:var(--mut,#777)}
 .cptt{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card,#fff)}.cpth2{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:12px;cursor:pointer;text-align:left;color:inherit}.cpth2 b{flex:1;font-size:14px}.cpth2 span{color:var(--mut,#777);font-size:12px}.cpdot{width:10px;height:10px;border-radius:50%;flex:none}.cptb{padding:0 12px 12px}.cptt.soon{opacity:.55}.cptt.soon .cpth2{cursor:default}
 .cxnote{background:#EAF3FB;border:1px solid #BBD6EE;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14px}.cxnote b{display:block;font-size:12px;color:#3B82C4;margin-bottom:2px}
-.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
+.cpfull{display:block!important}.cpfull .cpside{display:none}.cpfull .cpc{min-height:100px}.cpfull .cpgrid.cpwk .cpc{min-height:280px}.cpfull .cpc.big{min-height:160px}.cpwb{margin-left:auto;font-size:12px}.cpwb+.cpnew{margin-left:0!important}button.cpk{cursor:pointer;font-family:inherit}button.cpk:hover{filter:brightness(.95)}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
 </style>
 </head>
 <body>
@@ -2225,9 +2225,10 @@ function cardioWrap(h){
   return h.slice(0,k)+log+`<button class="cdet" data-act="exp" data-k="cardio.det">${open?'Ocultar detalles del cardio':'Ver detalles del cardio'} <i>${open?'⌃':'⌄'}</i></button>`+(open?`<div class="cdetb">${inner}</div>`:'')+h.slice(h.lastIndexOf(tail));
 }
 const cpW=()=>window.innerWidth>=1000;
+function cpWideCls(el){el.classList.toggle('cpwide',cpW());el.style.maxWidth=(CP.wide&&CP.view==='client'&&cpW())?'none':'';}
 function cpShell(inner){
   const nav=[['clientes','Clientes'],['editor','Editor de rutinas']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
-  return `<div class="cpshell"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small><button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
+  return `<div class="cpshell${CP.wide&&CP.view==='client'?' cpfull':''}"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small><button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
 }
 const dAgo=s=>{if(!s)return '—';const n=Math.floor((Date.now()-new Date(s+'T12:00:00'))/864e5);return n<=0?'Hoy':n===1?'Ayer':'hace '+n+' d';};
 function cpClientsPage(){
@@ -2250,7 +2251,7 @@ function coachRender(keepInput){
   const el=document.getElementById('app'),keep=keepInput&&document.getElementById('cpIn')?document.getElementById('cpIn').value:'';
   if(CP.view==='list'){
     const body=CP.sec==='editor'?rtTplList():cpClientsPage();
-    el.innerHTML=cpShell(body);el.classList.toggle('cpwide',cpW());const qi=document.getElementById('cpQ');if(qi&&CP.sec==='clientes'&&keepInput){qi.focus();qi.setSelectionRange(qi.value.length,qi.value.length);}return;
+    el.innerHTML=cpShell(body);cpWideCls(el);const qi=document.getElementById('cpQ');if(qi&&CP.sec==='clientes'&&keepInput){qi.focus();qi.setSelectionRange(qi.value.length,qi.value.length);}return;
   }
   const d=CP.d,SB=[['plan','Planificación','Organiza entrenamientos, tareas y objetivos'],['rutina','Rutina','Asigna y edita su programa'],['resumen','Información','Perfil, plan, módulos y fidelidad'],['alim','Nutrición','Planes y seguimiento nutricional'],['arch','Archivos','Documentos compartidos'],['evol','Evolución','Peso, pasos, sueño y sesiones'],['chat','Chat','Habla directo con tu cliente'],['llamada','Llamada 1:1','Agenda y avisa a tu cliente']],tabs=SB.map(x=>x[0]),TL=Object.fromEntries(SB.map(x=>[x[0],x[1]]));
   const nm=d?esc(d.profile.full_name||'Cliente'):'Cargando…';
@@ -2304,7 +2305,7 @@ function coachRender(keepInput){
   const pp=d?d.profile:{},ini=(pp.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
   el.innerHTML=cpShell(`<div class="cpcrumb"><button class="lblbtn" data-act="cpback">Clientes</button> / <b>${nm}</b></div>
     <div class="cphead"><span class="cpav">${esc(ini)}</span><div><h2 class="h2" style="margin:0">${nm}</h2><small>${d?(PNAME[pp.plan]||'')+' · '+(GN[pp.goal]||pp.goal||'Sin objetivo')+' · '+fidSpan(fidMonths(fidSince(pp)))+' con ERRE':''}</small></div></div>
-    ${cpW()?`<div class="cpcl"><nav class="cpsb">${SB.map(([k,n,ds])=>`<button class="cpsi${CP.tab===k?' on':''}" data-act="cptab" data-v="${k}"><b>${n}</b><small>${ds}</small></button>`).join('')}</nav><div class="cpcc">${CP.err?`<div class="note">${CP.err}</div>`:''}${body}</div></div>`:`<div class="cptabs">${tabs.map(t=>`<button class="cptab${CP.tab===t?' on':''}" data-act="cptab" data-v="${t}">${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}${body}`}`);el.classList.toggle('cpwide',cpW());
+    ${cpW()&&!CP.wide?`<div class="cpcl"><nav class="cpsb">${SB.map(([k,n,ds])=>`<button class="cpsi${CP.tab===k?' on':''}" data-act="cptab" data-v="${k}"><b>${n}</b><small>${ds}</small></button>`).join('')}</nav><div class="cpcc">${CP.err?`<div class="note">${CP.err}</div>`:''}${body}</div></div>`:`<div class="cptabs">${tabs.map(t=>`<button class="cptab${CP.tab===t?' on':''}" data-act="cptab" data-v="${t}">${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}${body}`}`);cpWideCls(el);
 }
 /* tareas asignadas por el coach (cliente + coach) */
 const cxList=()=>((S.ctasks&&S.ctasks.tasks)||[]);
@@ -2380,7 +2381,7 @@ function cpPlanBody(){
     else{const rows=ds.filter(x=>x.slice(0,7)===ym).map(x=>({x,h:cell(x,1)})).filter(r=>cpHas(r.x));main=rows.length?rows.map(r=>`<div class="cpl">${r.h}</div>`).join(''):'<div class="note">No hay tareas este mes.</div>';
       ds.filter(x=>x.slice(0,7)===ym).forEach(x=>{const st=cpSt(cpDayInfo(x),x);if(st==='ok')ok++;else if(st==='miss'||(st==='part'&&x<tdy))miss++;else if(st)plan++;});}
     const lbl=vw==='mes'||vw==='lista'?cpMonL(ym):vw==='sem'?'Semana del '+fdate(ds[0])+' al '+fdate(ds[6]):fmtL(cd);
-    return `<section class="sec"><div class="cpbar"><button class="arr" data-act="cpcal" data-v="-1" aria-label="Anterior">‹</button><button class="arr" data-act="cpcal" data-v="1" aria-label="Siguiente">›</button><button class="lblbtn" data-act="cpcal" data-v="0">Hoy</button><b class="cpbl">${lbl}</b><button class="btn solid cpnew" data-act="cptnew" data-v="${vw==='dia'?cd:tdy}">+ Tarea</button></div>
+    return `<section class="sec"><div class="cpbar"><button class="arr" data-act="cpcal" data-v="-1" aria-label="Anterior">‹</button><button class="arr" data-act="cpcal" data-v="1" aria-label="Siguiente">›</button><button class="lblbtn" data-act="cpcal" data-v="0">Hoy</button><b class="cpbl">${lbl}</b><button class="lblbtn cpwb" data-act="cpwide">${CP.wide?'⤡ Reducir':'⤢ Ampliar'}</button><button class="btn solid cpnew" data-act="cptnew" data-v="${vw==='dia'?cd:tdy}">+ Tarea</button></div>
       <div class="chips cpvw">${[['mes','Mes'],['sem','Semana'],['dia','Día'],['lista','Lista']].map(([k,n])=>`<button class="chip${vw===k?' on':''}" data-act="cpview" data-v="${k}">${n}</button>`).join('')}</div>
       <div class="cpkpi"><span><b>${ok}</b><small>Cumplidos</small></span><span><b>${miss}</b><small>Sin completar</small></span><span><b>${plan}</b><small>Por venir</small></span><span><b>${ok+miss?Math.round(ok/(ok+miss)*100):0}%</b><small>Cumplimiento</small></span></div>
       ${main}
@@ -2392,14 +2393,26 @@ function cpDefs(dt,lab){
   const d=CP.d,p=d.profile,tdy=today();if(dt>tdy)return '';
   const wd=(d.weights||[]).map(r=>r.log_date).sort(),cr=p.created_at?bogota(p.created_at).date:null,start=[wd[0],cr].filter(Boolean).sort()[0]||dt;if(dt<start)return '';
   const st=(ok,part)=>ok?'ok':part?'part':dt<tdy?'miss':'plan',out=[];
-  const add=(ic,n,s2,tip)=>out.push(`<span class="cpk ${s2}" title="${esc(n+(tip?' · '+tip:''))}">${ic}${lab?' '+n:''}</span>`);
-  const w=S.weights[dt];add('⚖','Peso',st(w!=null),w!=null?w.toFixed(1)+' kg':'sin registrar');
-  const sl=(d.sleep||{})[dt];if(Object.keys(d.sleep||{}).length)add('☾','Sueño',st(!!(sl&&(sl.h!=null||sl.q))),sl&&sl.h!=null?fmtHM(sl.h):'sin registrar');
-  const stp=S.steps[dt],g=p.step_goal||8000;add('👣','Pasos',st(stp>=g,stp>0),stp?stp.toLocaleString('es-CO')+' de '+g.toLocaleString('es-CO'):'sin registrar');
-  if((d.photos||[]).some(x=>x.taken_at===dt))add('📷','Foto','ok','foto de progreso');
+  const add=(ic,n,s2,tip,key)=>out.push(`<button class="cpk ${s2}" data-act="cpchip" data-v="${dt}|${key}" title="${esc(n+(tip?' · '+tip:''))}">${ic}${lab?' '+n:''}</button>`);
+  const w=S.weights[dt];add('⚖','Peso',st(w!=null),w!=null?w.toFixed(1)+' kg':'sin registrar','peso');
+  const sl=(d.sleep||{})[dt];if(Object.keys(d.sleep||{}).length)add('☾','Sueño',st(!!(sl&&(sl.h!=null||sl.q))),sl&&sl.h!=null?fmtHM(sl.h):'sin registrar','sueno');
+  const stp=S.steps[dt],g=p.step_goal||8000;add('👣','Pasos',st(stp>=g,stp>0),stp?stp.toLocaleString('es-CO')+' de '+g.toLocaleString('es-CO'):'sin registrar','pasos');
+  if((d.photos||[]).some(x=>x.taken_at===dt))add('📷','Foto','ok','foto de progreso','foto');
   const MN={recovery:['🫁','Respiración'],habitos:['✔','Hábitos'],alim:['🍽','Alimentación']};
-  (p.modules||[]).forEach(k=>{if(!MN[k]||!TASKS[k])return;const c=withDate(dt,()=>tcount(k));add(MN[k][0],MN[k][1],st(c.total>0&&c.done>=c.total,c.done>0),c.done+' de '+c.total);});
+  (p.modules||[]).forEach(k=>{if(!MN[k]||!TASKS[k])return;const c=withDate(dt,()=>tcount(k));add(MN[k][0],MN[k][1],st(c.total>0&&c.done>=c.total,c.done>0),c.done+' de '+c.total,k);});
   return `<div class="cpks">${out.join('')}</div>`;
+}
+function cpChipHTML(dt,key){
+  return cpWith(()=>withDate(dt,()=>{
+    const d=CP.d,p=d.profile,row=(a,b)=>`<div class="pfrow"><span><b>${a}</b><small>${b}</small></span></div>`;
+    let title='',body='',ok=true,msg='';const f=fdate(dt);
+    if(key==='peso'){const w=S.weights[dt],n=(d.wnotes||{})[dt]||{};title='Peso';ok=w!=null;body=ok?row('Peso del día',w.toFixed(1)+' kg')+((n.tags&&n.tags.length)?row('Contexto',n.tags.map(esc).join(' · ')):'')+(n.note?row('Nota','“'+esc(n.note)+'”'):''):row('Sin registro','No se pesó este día.');msg='No vi tu registro de peso del '+f+'. Cuando puedas, regístralo en la app.';}
+    else if(key==='sueno'){const n=(d.sleep||{})[dt];title='Sueño';ok=!!(n&&(n.h!=null||n.q));body=ok?row('Horas dormidas',n.h!=null?fmtHM(n.h):'—')+row('Calidad / energía',(n.q?'Calidad '+n.q:'—')+(n.e?' · Energía '+n.e:''))+((n.tags&&n.tags.length)?row('Contexto',n.tags.map(esc).join(' · ')):'')+(n.note?row('Nota','“'+esc(n.note)+'”'):''):row('Sin registro','No registró el sueño este día.');msg='No vi tu registro de sueño del '+f+'. Cuando puedas, cuéntame cómo dormiste.';}
+    else if(key==='pasos'){const st=S.steps[dt],g=p.step_goal||8000;title='Pasos';ok=st>=g;body=row('Pasos',st?st.toLocaleString('es-CO')+' de '+g.toLocaleString('es-CO')+' ('+Math.round(st/g*100)+'%)':'Sin registro');msg=st?'Vi que el '+f+' quedaste en '+st.toLocaleString('es-CO')+' pasos. ¡Vamos por la meta!':'No vi tus pasos del '+f+'. Acuérdate de registrarlos.';}
+    else if(key==='foto'){const ph=(d.photos||[]).filter(x=>x.taken_at===dt),AN={front:'De frente',side:'De lado',back:'De espalda'};title='Foto de progreso';body=row('Fotos subidas',ph.map(x=>AN[x.angle]||x.angle).join(' · ')||'—')+row('Mes',ph[0]?ph[0].month:'—');}
+    else{const T=TASKS[key],t=tk();title=({recovery:'Respiración',habitos:'Hábitos',alim:'Alimentación'})[key]||key;const done=T.items.filter(x=>t[key+'.'+x.id]).length;ok=done>=T.items.length;body=T.items.map(x=>`<div class="pfrow"><span><b>${t[key+'.'+x.id]?'✓':'○'} ${esc(x.t||x.n||x.id)}</b></span></div>`).join('');msg='No vi tus tareas de '+title+' del '+f+'. Ánimo, ¡tú puedes!';}
+    return `<div class="cpdhd"><div><b>${esc(title)}</b><small>${fmtL(dt)}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div>${body}${key!=='foto'?`<label class="pfl" style="margin-top:12px">Mensaje al cliente</label><textarea class="fld" id="cpRm" rows="3">${esc(msg)}</textarea><button class="btn solid" data-act="cpremind" style="width:100%;margin-top:8px">Enviar por chat</button>`:''}`;
+  }));
 }
 const cxListOf=d=>((((d&&d.data)||{}).ctasks||{}).tasks)||[];
 const cpHas=dt=>{const i=cpDayInfo(dt);return !!i.d||cxList().some(t=>t.date===dt);};
@@ -2439,6 +2452,9 @@ document.addEventListener('click',e=>{if(e.target.id==='cpdv')cpDayClose();});
 document.addEventListener('click',async e=>{
   const t=e.target.closest('[data-act]');if(!t||!PROFILE||PROFILE.role!=='coach')return;const a=t.dataset.act;
   if(a==='cpday'){cpDayOpen(t.dataset.v);return;}
+  if(a==='cpchip'){const [dt,k]=t.dataset.v.split('|');cpDayClose();const o=document.createElement('div');o.id='cpdv';o.className='cpdv';o.innerHTML='<div class="cpdc" style="max-width:520px">'+cpChipHTML(dt,k)+'</div>';document.body.appendChild(o);document.body.style.overflow='hidden';return;}
+  if(a==='cpremind'){const v=((document.getElementById('cpRm')||{}).value||'').trim();if(!v)return;try{await DB.sendCoach(CP.cid,ME.id,v);CP.d=await DB.clientDetail(CP.cid);cpDayClose();toast('Mensaje enviado ✓');}catch(x){toast('No se pudo enviar');}return;}
+  if(a==='cpwide'){CP.wide=!CP.wide;coachRender();return;}
   if(a==='cpview'){CP.cv=t.dataset.v;coachRender();return;}
   if(a==='cptnew'){CP.tm={date:t.dataset.v||today(),type:'workout'};cpTaskModal();return;}
   if(a==='cptclose'){CP.tm=null;cpTaskModal();return;}
