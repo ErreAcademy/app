@@ -571,6 +571,12 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .smsg{text-align:center;font-weight:600;font-size:14px;margin:4px 0 10px;min-height:20px}
 .sslide{width:100%;accent-color:#C0392B;height:34px}
 @media(prefers-reduced-motion:reduce){.msico,.msbox,.confetti i,.sring.bump{animation:none!important}.msbox{transform:none}}
+.prehd small{font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red,#C0392B);font-size:11px}.prehd h3{margin:4px 0 2px;font-size:20px}.presub{color:var(--ink);font-weight:600;font-size:14px}.predesc{color:var(--gray);font-size:14px;margin:8px 0 14px}
+.presheet{max-height:52vh;overflow:auto}.prerow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.prerow b{display:block;font-size:14px}.prerow small{color:var(--gray);font-size:12px}
+.pgs{border:1px solid var(--line);border-radius:12px;background:var(--card);margin:8px 0}.pgh{width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px;background:none;border:0;text-align:left}.pgh b{display:block;font-size:15px}.pgh small{color:var(--gray);font-size:12px}.pgh i{font-style:normal;color:var(--gray)}.pgb{padding:0 14px 14px}
+.lvr{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}.lvr:last-of-type{border-bottom:0}.lvn{width:32px;height:32px;border-radius:50%;background:var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 32px}.lvr.done .lvn{background:var(--ink);color:#fff}.lvr.cur .lvn{background:var(--red,#C0392B);color:#fff}.lvr.lock{opacity:.6}.lvr b{display:block}.lvr small{color:var(--gray);font-size:12px}
+.hitoc{background:var(--red-tint,#fbeceb);border:1px solid var(--red,#C0392B);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14px;font-weight:600}
+.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
 </style>
 </head>
 <body>
@@ -920,6 +926,7 @@ const emptyCard=(t,p)=>`<div class="banner" style="border-color:var(--line)"><sp
 const fdate=x=>cap(pd(x).toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'}));
 function msgHTML(m,mine){
   if(m.kind==='session')return `<div class="scard${mine?' me':''}"><b>${GT[m.g][0]} · ${fdate(m.date)}</b><span class="rb" style="background:${RC[(m.rpe||1)-1]}">${m.rpe||'–'}</span>${m.rpe?INT(m.rpe)+' · ':''}${m.feel||''}${m.feel==='Con molestia'?'<span class="tagm">Molestia</span>':''}${m.text?`<div style="margin-top:6px">${m.text.replace(/</g,'&lt;')}</div>`:''}</div>`;
+  if(m.kind==='hito')return `<div class="hitoc">🏆 ${m.text.replace(/</g,'&lt;')}</div>`;
   return `<div class="bubble ${mine?'me':'co'}">${m.text.replace(/</g,'&lt;')}</div>`;
 }
 function threadHTML(role){
@@ -1350,7 +1357,7 @@ document.addEventListener('click',e=>{
     const fe=S.fb[fk];if(isC()&&g!=='g_calm'&&(fe.note||fe.feel==='Con molestia')){const msg={from:'client',kind:'session',key:fk,g,date:S.sel,rpe:fe.rpe,feel:fe.feel,text:fe.note,at:Date.now()},ix=S.chat.findIndex(m=>m.key===fk);if(ix>=0)S.chat[ix]=msg;else S.chat.push(msg);}
     fbd={};save();closeSheet();render();toast(g==='g_calm'?'Vuelta a la calma finalizada ✓':(S.fb[fk].note&&isC()?'Sesión guardada. Tu coach recibe tu nota ✓':'Sesión guardada. Buen trabajo ✓'));
     setTimeout(()=>{if(allFinished()&&!S.sum[S.sel]){S.sum[S.sel]=1;save();openSummary();}},900);}
-  else if(a==='gopen'){S.tg=t.dataset.b;save();render();window.scrollTo(0,0);}
+  else if(a==='gopen'){if(preOpen(t.dataset.b))return;S.tg=t.dataset.b;save();render();window.scrollTo(0,0);}
   else if(a==='gback'){S.tg=null;save();render();window.scrollTo(0,0);}
   else if(a==='gtog'){const k=t.dataset.b;S.open[k]=og(k)?0:1;save();render();}
   else if(a==='wdone'){const L=S.logs[t.dataset.k]=S.logs[t.dataset.k]||[],n=+t.dataset.n,all=n>0&&Array.from({length:n},(_,q)=>L[q]&&L[q].done).every(Boolean);for(let q=0;q<n;q++){L[q]=L[q]||{};L[q].done=!all;}save();render();;chk(b4);}
@@ -1545,10 +1552,7 @@ function progresoView(){
     h+=`<div class="prof"><div class="lvbadge">${g.li+1}</div><div><small>Nivel de disciplina</small><b>${g.name}</b><em>${g.xp} puntos${g.nx?` · faltan ${g.nx[0]-g.xp} para ${g.nx[1]}`:' · nivel máximo'}</em></div></div>
      <div class="progress" style="margin:8px 0 4px"><i style="width:${pct}%"></i></div>
      <button class="lblbtn" data-act="lvinfo" style="color:var(--gray);margin-bottom:6px">¿Cómo se ganan puntos? ›</button>
-     <div class="stats"><div><small>Racha</small><b>${g.streak} d</b></div><div><small>Mejor racha</small><b>${g.best} d</b></div><div><small>Entrenamientos</small><b>${g.nT}</b></div></div>
-     <div class="stats"><div><small>Esta semana</small><b>${g.wt}/${g.wp}</b></div><div><small>Días cumplidos</small><b>${g.okDays}</b></div><div><small>Días con meta de pasos</small><b>${g.stepsOk}</b></div></div>
-     ${nxt?`<h2 class="h2">Siguiente hito</h2><div class="nxt"><span class="mi">${nxt.i}</span><div><b>${nxt.t}</b><div class="progress" style="margin:6px 0 2px"><i style="width:${Math.round(nxt.v/nxt.n*100)}%"></i></div><small>${nxt.v} de ${nxt.n}</small></div></div>`:''}
-     <h2 class="h2">Hitos</h2><div class="ms">${ms.map(m=>`<div class="m${m.v>=m.n?' on':''}"><span class="mi">${m.i}</span><b>${m.t}</b>${m.v>=m.n?'<small>Logrado ✓</small>':`<small>${m.v} de ${m.n}</small>`}</div>`).join('')}</div>`;
+     ${progBody(g,ms,nxt)}`;
     return h;
   }
   if(seg==='pasos'){
@@ -1939,7 +1943,7 @@ function realDB(){
     async delFolder(id){ok(await sb.from('routine_folders').delete().eq('id',id));},
     async delTemplate(id){ok(await sb.from('routines').delete().eq('id',id));},
     async customEx(){return ok(await sb.from('custom_exercises').select('id,data'));},
-    async saveCustomEx(id,data,uid){ok(await sb.from('custom_exercises').insert({id,data,created_by:uid}));},
+    async saveCustomEx(id,data,uid){ok(await sb.from('custom_exercises').upsert({id,data,created_by:uid},{onConflict:'id'}));},
     async signOut(){await sb.auth.signOut();},
     async profile(uid){return ok(await sb.from('profiles').select('*').eq('id',uid).single());},
     async saveProfile(uid,f){ok(await sb.from('profiles').update(f).eq('id',uid));},
@@ -1977,7 +1981,7 @@ function realDB(){
     async resetClient(cid){ok(await sb.rpc('reset_client_records',{cid}));},
     async moveTemplate(id,folder_id){ok(await sb.from('routines').update({folder_id:folder_id||null}).eq('id',id));},
     async moveFolder(id,parent_id){ok(await sb.from('routine_folders').update({parent_id:parent_id||null}).eq('id',id));},
-    async clientsMeta(){const r=await sb.from('routines').select('client_id,name,days,updated_at').eq('is_template',false);const f=await sb.from('session_feedback').select('client_id,log_date').order('log_date',{ascending:false}).limit(800);const m={rt:{},last:{}};(r.data||[]).forEach(x=>{if(x.client_id)m.rt[x.client_id]={name:x.name,n:(x.days||[]).length,at:x.updated_at};});(f.data||[]).forEach(x=>{if(!m.last[x.client_id])m.last[x.client_id]=x.log_date;});return m;},
+    async clientsMeta(){const r=await sb.from('routines').select('client_id,name,days,updated_at').eq('is_template',false);const f=await sb.from('session_feedback').select('client_id,log_date').order('log_date',{ascending:false}).limit(800);const h=await sb.from('chat_messages').select('client_id,body,created_at').eq('kind','hito').order('created_at',{ascending:false}).limit(200);const m={rt:{},last:{},hito:{}};(h.data||[]).forEach(x=>{if(!m.hito[x.client_id])m.hito[x.client_id]={at:x.created_at,body:x.body};});(r.data||[]).forEach(x=>{if(x.client_id)m.rt[x.client_id]={name:x.name,n:(x.days||[]).length,at:x.updated_at};});(f.data||[]).forEach(x=>{if(!m.last[x.client_id])m.last[x.client_id]=x.log_date;});return m;},
     async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level').eq('role','client').order('full_name'));}
   };
 }
@@ -2059,6 +2063,7 @@ window.SYNC=SYNC;
 function mapChat(rows,uid){
   return rows.map(r=>{const base={id:r.id,from:r.sender_id===uid?'client':'coach',at:Date.parse(r.created_at)};
     if(r.kind==='session'){let p={};try{p=JSON.parse(r.body)}catch(e){}return Object.assign(base,{kind:'session',key:p.key,g:p.g,date:p.date,rpe:p.rpe,feel:p.feel,text:p.text||'',_sig:r.body});}
+    if(r.kind==='hito')return Object.assign(base,{kind:'hito',text:r.body||'',_sig:r.body});
     if(r.kind==='call')return Object.assign(base,{kind:'msg',text:r.body||''});
     return Object.assign(base,{kind:'msg',text:r.body||'',_sig:r.body});});
 }
@@ -2158,7 +2163,7 @@ function cpClientsPage(){
   return `<div class="cphead"><h2 class="h2" style="margin:0">Clientes</h2><em class="cpcount">${all.length}</em></div>
    <div class="cptabs">${['todos','basic','complete','elite'].map(k=>`<button class="cptab${CP.pf===k?' on':''}" data-act="cppf" data-v="${k}">${k==='todos'?'Todos':PNAME[k]} <em>${cnt(k)}</em></button>`).join('')}</div>
    <input class="fld" id="cpQ" placeholder="Buscar cliente…" value="${esc(CP.q)}" autocomplete="off" style="margin:10px 0">
-   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Rutina</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><b>${esc(c.full_name||'Sin nombre')}</b></span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em></span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin rutina</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
+   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Rutina</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><b>${esc(c.full_name||'Sin nombre')}</b>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em></span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin rutina</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
 }
 async function coachHome(){CP.view='list';coachRender();try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
@@ -2326,6 +2331,7 @@ function showMilestone(list,lv){
    <button class="btn" data-act="msclose" style="width:100%;margin-top:8px">Seguir</button>
    <button class="lblbtn" data-act="msmute" style="margin-top:8px;color:var(--gray)">${sndOn()?'🔔 Sonido activado':'🔕 Sonido apagado'}</button></div>`;
   document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add('on'));confetti(el.firstChild,34);chime();buzz([40,60,40]);
+  try{if(typeof isC==='function'&&isC()&&ME&&DB.insertChat){const txt=[].concat(list.map(m=>m.i+' '+m.t),lv?['⭐ Subió al Nivel '+lv.n+' · '+lv.name]:[]).join(' · ');DB.insertChat({client_id:ME.id,sender_id:ME.id,kind:'hito',body:'Hito logrado: '+txt}).catch(()=>{});}}catch(e){}
 }
 document.addEventListener('click',e=>{
   const t=e.target.closest&&e.target.closest('#msov [data-act]');
@@ -2368,6 +2374,77 @@ function celebrateSteps(){
   if(host){const b=host.querySelector('h3');if(b){let k=0;const end=n,st=Math.max(1,Math.round(end/30));const iv=setInterval(()=>{k=Math.min(end,k+st);b.textContent=k.toLocaleString('es-CO')+' pasos';if(k>=end)clearInterval(iv);},22);}
     if(ok){confetti(host,28);chime('soft');buzz([30,40,30]);}}
 }
+
+/* ---------- hoja previa al entrenamiento ---------- */
+function preDur(d,wk){
+  let min=6;
+  ['main','acc'].forEach(k=>{const b=d.blocks.find(x=>x.k===k);if(!b)return;b.items.forEach(it=>{let p;try{p=presc(it);}catch(e){return;}const rs=(typeof restSecs==='function'?restSecs(it):90);min+=(p.sets||2)*(rs+40)/60;});});
+  const wb=d.blocks.find(x=>x.k==='warm');if(wb)min+=Math.min(8,(wb.items||[]).length*1.2);
+  return Math.max(15,Math.round(min/5)*5);
+}
+function preOpen(k){
+  if(k!=='g_fuerza'&&k!=='g_cardio')return false;
+  if(S.fb&&S.fb[fbKey(k)])return false;
+  const d=DAYS[S.day];if(!d)return false;
+  const P=PERIOD[S.program],wk=Math.min(S.week,P.weeks);
+  let title,sub,desc;
+  if(k==='g_fuerza'){
+    const nM=(d.blocks.find(x=>x.k==='main')||{items:[]}).items.length,nA=(d.blocks.find(x=>x.k==='acc')||{items:[]}).items.length;
+    title=`Rutina ${S.pos+1} · ${d.name}`;sub=`Semana ${wk} de ${P.weeks} · ≈ ${preDur(d,wk)} min`;
+    desc=`Calentamiento, ${nM} ejercicios centrales y ${nA} accesorios. Mantén una técnica controlada y registra tus series.`;
+  }else{
+    const t=CARDIO[S.goal][wk-1];
+    title='Cardio de hoy';sub=`Semana ${wk} de ${P.weeks} · ${t?DUR[t]:'15–35 min'}`;
+    desc=t?`${t} · Zona ${TIERZONE[t]}. Un ritmo en el que puedas mantener el control de tu respiración.`:'Semana de NEAT: movimiento suave en zonas 1–2, sin buscar intensidad.';
+  }
+  sheet(`<div class="prehd"><small>${k==='g_fuerza'?'Entrenamiento de fuerza':'Cardio'}</small><h3>${esc(title)}</h3><div class="presub">${esc(sub)}</div><p class="predesc">${esc(desc)}</p></div>
+   <button class="btn solid" data-act="prestart" data-b="${k}" style="width:100%;padding:14px">${k==='g_fuerza'?'Comenzar entrenamiento':'Comenzar cardio'}</button>
+   <button class="btn" data-act="prelist" data-b="${k}" style="width:100%;margin-top:8px">${k==='g_fuerza'?'Ver ejercicios':'Ver opciones de cardio'}</button>`);
+  return true;
+}
+function preList(k){
+  const d=DAYS[S.day];let h='';
+  if(k==='g_fuerza'){
+    const BN={warm:'Calentamiento',main:'Rutina central',acc:'Accesorios'};
+    ['warm','main','acc'].forEach(bk=>{const b=d.blocks.find(x=>x.k===bk);if(!b||!b.items.length)return;
+      h+=`<div class="grp" style="margin-top:12px">${BN[bk]}</div>`+b.items.map((it,i)=>{const id=curEx(d,bk,i,it),e=E[id]||{};let p={};try{p=presc(it);}catch(x){}
+        const meta=bk==='warm'?((it.fixed&&it.fixed.reps)||''):(p.sets?`${p.sets} series · ${p.reps||''} reps`:'');
+        return `<div class="prerow">${typeof thumb==='function'?thumb(id):''}<span><b>${esc(e.n||id)}</b><small>${esc(meta)}</small></span></div>`;}).join('');});
+  }else{
+    h=Object.values(CMODS).map(x=>`<div class="prerow"><span><b>${esc(x.n)}</b></span></div>`).join('');
+  }
+  sheet(`<h3>${k==='g_fuerza'?'Ejercicios de hoy':'Opciones de cardio'}</h3><div class="presheet">${h}</div>
+   <button class="btn solid" data-act="prestart" data-b="${k}" style="width:100%;padding:14px;margin-top:12px">${k==='g_fuerza'?'Comenzar entrenamiento':'Comenzar cardio'}</button>
+   <button class="btn" data-act="preback" data-b="${k}" style="width:100%;margin-top:8px">Atrás</button>`);
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest&&e.target.closest('#sheet [data-act^="pre"]');if(!t)return;const a=t.dataset.act,k=t.dataset.b;
+  if(a==='prestart'){closeSheet();S.tg=k;save();render();window.scrollTo(0,0);}
+  else if(a==='prelist')preList(k);
+  else if(a==='preback')preOpen(k);
+});
+/* ---------- progreso: desplegables ---------- */
+const MS_CATS=[['Entrenamientos',0,5],['Rachas',5,9],['Peso',9,11],['Pasos',11,13],['Cardio',13,14],['Fotos',14,16]];
+function pgSec(key,title,badge,inner,def){
+  const open=S.exp[key]===undefined?!!def:!!S.exp[key];
+  return `<section class="pgs"><button class="pgh" data-act="pgtog" data-k="${key}"><span><b>${title}</b>${badge?`<small>${badge}</small>`:''}</span><i>${open?'⌃':'⌄'}</i></button>${open?`<div class="pgb">${inner}</div>`:''}</section>`;
+}
+function progBody(g,ms,nxt){
+  const top=LEVELS[LEVELS.length-1],pctTotal=Math.min(100,Math.round(g.xp/top[0]*100));
+  const lv=`<div class="note" style="margin:0 0 10px">Meta final: <b>${top[1]}</b> · ${top[0].toLocaleString('es-CO')} puntos. Llevas ${g.xp.toLocaleString('es-CO')} (${pctTotal}%).</div><div class="progress" style="margin:0 0 12px"><i style="width:${pctTotal}%"></i></div>
+   <div class="lvl">${LEVELS.map((l,i)=>{const st=i<g.li?'done':i===g.li?'cur':'lock';return `<div class="lvr ${st}"><span class="lvn">${st==='done'?'✓':st==='cur'?i+1:'🔒'}</span><span><b>${l[1]}</b><small>${i===0?'Desde el inicio':l[0].toLocaleString('es-CO')+' puntos'}${st==='cur'?' · estás aquí':''}${st==='lock'?' · te faltan '+(l[0]-g.xp).toLocaleString('es-CO'):''}</small></span></div>`;}).join('')}</div>
+   <button class="lblbtn" data-act="lvinfo" style="color:var(--gray);margin-top:8px">¿Cómo se ganan puntos? ›</button>`;
+  const stats=`<div class="stats"><div><small>Racha</small><b>${g.streak} d</b></div><div><small>Mejor racha</small><b>${g.best} d</b></div><div><small>Entrenamientos</small><b>${g.nT}</b></div></div>
+   <div class="stats"><div><small>Esta semana</small><b>${g.wt}/${g.wp}</b></div><div><small>Días cumplidos</small><b>${g.okDays}</b></div><div><small>Días con meta de pasos</small><b>${g.stepsOk}</b></div></div>`;
+  const nx=nxt?`<div class="nxt"><span class="mi">${nxt.i}</span><div><b>${nxt.t}</b><div class="progress" style="margin:6px 0 2px"><i style="width:${Math.round(nxt.v/nxt.n*100)}%"></i></div><small>${nxt.v} de ${nxt.n}</small></div></div>`:'';
+  const doneN=ms.filter(m=>m.v>=m.n).length;
+  const msx=MS_CATS.map(([n,a,b])=>{const L=ms.slice(a,b),d=L.filter(m=>m.v>=m.n).length;return pgSec('pg.m.'+n,n,`${d} de ${L.length}`,`<div class="ms">${L.map(m=>`<div class="m${m.v>=m.n?' on':''}"><span class="mi">${m.i}</span><b>${m.t}</b>${m.v>=m.n?'<small>Logrado ✓</small>':`<small>${m.v} de ${m.n}</small>`}</div>`).join('')}</div>`,false);}).join('');
+  return `${nxt?`<h2 class="h2">Siguiente hito</h2>${nx}`:''}
+   ${pgSec('pg.lv','Niveles',`Nivel ${g.li+1} de ${LEVELS.length} · ${g.name}`,lv,false)}
+   ${pgSec('pg.st','Mis números',`Racha ${g.streak} d · ${g.nT} entrenamientos`,stats,false)}
+   <h2 class="h2">Hitos <small style="font-weight:400;color:var(--gray)">${doneN} de ${ms.length}</small></h2>${msx}`;
+}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pgtog"]');if(!t)return;const k=t.dataset.k;S.exp[k]=!(S.exp[k]===undefined?false:S.exp[k]);save();render();});
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
@@ -2494,7 +2571,7 @@ function pkList(P0,act){
   const P=P0||RT.pk,q=nrm(P.q);act=act||'rtpickex';
   let ids=Object.keys(E).filter(k=>(RT.all||E[k].yt||k.slice(0,2)==='x_')&&(P.g==='Todos'||E[k].g===P.g)&&(!P.pat||E[k].pat===P.pat)&&(!q||nrm(E[k].n+' '+(E[k].pat||'')+' '+(E[k].mus||'')+' '+(E[k].eq||'')).includes(q)));
   ids.sort((a,b)=>(E[a].lvl||1)-(E[b].lvl||1)||E[a].n.localeCompare(E[b].n));
-  return `<div class="pkcount">${ids.length} ejercicios</div>`+ids.slice(0,80).map(k=>`<button class="pkrow" data-act="${act}" data-id="${k}">${thumb(k)}<span class="pkt"><b>${esc(E[k].n)}${E[k].yt?' <em class="pkyt">▶</em>':''}</b><small>${esc([E[k].s||E[k].mus,E[k].eq].filter(Boolean).join(' · '))}</small></span><i class="pklv l${E[k].lvl||1}">${LVN[E[k].lvl||1]}</i></button>`).join('')+(ids.length>80?'<div class="note">Afina con un filtro o la búsqueda.</div>':'');
+  return `<div class="pkcount">${ids.length} ejercicios</div>`+ids.slice(0,80).map(k=>`<button class="pkrow" data-act="${act}" data-id="${k}">${thumb(k)}<span class="pkt"><b>${esc(E[k].n)}${E[k].yt?' <em class="pkyt">▶</em>':''}</b><small>${esc([E[k].s||E[k].mus,E[k].eq].filter(Boolean).join(' · '))}</small></span><span class="pkedit" data-act="rtexedit" data-id="${k}" title="Editar tags">✎</span><i class="pklv l${E[k].lvl||1}">${LVN[E[k].lvl||1]}</i></button>`).join('')+(ids.length>80?'<div class="note">Afina con un filtro o la búsqueda.</div>':'');
 }
 function pendSave(P){if(!P)return;const g=i=>(document.getElementById(i)||{}).value;P.s=g('pdS')||'';P.r=g('pdR')||'';P.k=g('pdK')||'';}
 function pendHTML(P,bk){
@@ -2667,6 +2744,23 @@ document.addEventListener('click',async e=>{
   else if(a==='rtlibg'){pendSave(RT.pend);RT.lib.g=t.dataset.v;RT.lib.pat='';rtShow();}
   else if(a==='rtlibp'){pendSave(RT.pend);RT.lib.pat=RT.lib.pat===t.dataset.v?'':t.dataset.v;rtShow();}
   else if(a==='rtlibadd'){RT.pend={id:t.dataset.id};rtShow();const q=document.getElementById('pdS');if(q)q.focus();}
+  else if(a==='rtexedit'){const id=t.dataset.id,e=E[id];if(!e)return;RT.ex=id;
+    const pats=[...new Set(Object.values(E).map(x=>x.pat).filter(Boolean))].sort(),alts=Object.entries(E).filter(([k,x])=>k!==id&&x.pat===e.pat);
+    sheet(`<h3>Editar ejercicio</h3><div class="sub">Los tags definen los filtros y las alternativas que ve el cliente al tocar "Cambiar".</div>
+     <label class="pfl">Nombre</label><input class="fld" id="exN" value="${esc(e.n)}">
+     <label class="pfl" style="margin-top:8px">Grupo</label><select class="fld" id="exG">${R_GRPX.map(x=>`<option${x===e.g?' selected':''}>${x}</option>`).join('')}</select>
+     <label class="pfl" style="margin-top:8px">Patrón de movimiento (define las alternativas)</label><input class="fld" id="exP" list="exPl" value="${esc(e.pat||'')}"><datalist id="exPl">${pats.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
+     <label class="pfl" style="margin-top:8px">Músculo</label><input class="fld" id="exM" value="${esc(e.mus||'')}">
+     <label class="pfl" style="margin-top:8px">Equipo</label><select class="fld" id="exE">${['Máquina','Mancuerna','Barra','Polea','Banda','Peso corporal','Smith','Kettlebell'].map(x=>`<option${x===e.eq?' selected':''}>${x}</option>`).join('')}</select>
+     <label class="pfl" style="margin-top:8px">Nivel</label><select class="fld" id="exL">${[1,2,3].map(n=>`<option value="${n}"${(e.lvl||1)===n?' selected':''}>${LVN[n]}</option>`).join('')}</select>
+     <label class="pfl" style="margin-top:8px">Video de YouTube (link o código)</label><input class="fld" id="exY" value="${esc(e.yt?'https://youtu.be/'+e.yt:'')}" placeholder="https://youtu.be/…">
+     <div class="note" style="margin-top:10px"><b>Alternativas hoy (mismo patrón):</b> ${alts.length?alts.slice(0,12).map(([k,x])=>esc(x.n)).join(' · ')+(alts.length>12?' · +'+(alts.length-12)+' más':''):'ninguna todavía'}</div>
+     <button class="btn solid" data-act="rtexsave" style="width:100%;margin-top:12px;padding:13px">Guardar cambios</button><button class="btn" data-act="rtexcancel" style="width:100%;margin-top:8px">Cancelar</button>`);}
+  else if(a==='rtexcancel'){closeSheet();}
+  else if(a==='rtexsave'){const id=RT.ex,e=E[id],v=i=>(document.getElementById(i).value||'').trim();if(!v('exN')){toast('Escribe el nombre');return;}
+    let yt=v('exY');const m=yt.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);yt=m?m[1]:(/^[A-Za-z0-9_-]{11}$/.test(yt)?yt:'');
+    const data=Object.assign({},e,{n:v('exN'),g:v('exG'),pat:v('exP')||e.pat,mus:v('exM')||e.mus,eq:v('exE'),lvl:+v('exL')||1});if(yt)data.yt=yt;else delete data.yt;
+    try{await DB.saveCustomEx(id,data,ME.id);E[id]=data;closeSheet();toast('Ejercicio actualizado ✓');rtShow&&RT.open?rtShow():coachRender();}catch(x){toast('No se pudo guardar');}}
   else if(a==='rtpendno'){if(RT.pk&&RT.pk.pend){RT.pk.pend=null;pkRender();}else{RT.pend=null;rtShow();}}
   else if(a==='rtpendok'){if(RT.pk&&RT.pk.pend){const P=RT.pk;rtPendAdd(P.di,P.bk,P.pend);P.pend=null;RT.dirty=true;closeSheet();rtShow();toast('Ejercicio añadido ✓');}
     else if(RT.pend){rtPendAdd(RT.sel,RT.lib.bk,RT.pend);RT.pend=null;RT.dirty=true;rtShow();toast('Ejercicio añadido ✓');}}
