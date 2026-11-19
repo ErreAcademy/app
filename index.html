@@ -2376,11 +2376,11 @@ function cpHomeData(){
   });
   al.sort((a,b)=>a.s-b.s);
   const dis=cpDisGet(),hid=al.filter(a=>dis[a.k]);
-  return {feed:feed.slice(0,20),al:al.filter(a=>!dis[a.k]),nm,nh:hid.length};
+  return {feed:feed.slice(0,8),al:al.filter(a=>!dis[a.k]),nm,nh:hid.length};
 }
 function cpHomePage(){
   const {feed,al,nm,nh}=cpHomeData(),K={ses:'Workout',hito:'Logro',com:'Comentario',mol:'Molestia'};
-  const AK={prog:'Programa',task:'Tarea',call:'Llamada',cli:'Cliente'},act=((CP.home&&CP.home.act)||[]).slice(0,12);
+  const AK={prog:'Programa',task:'Tarea',call:'Llamada',cli:'Cliente'},act=((CP.home&&CP.home.act)||[]).slice(0,8);
   const ahist=act.length?act.map(a=>{const c=nm[a.client_id]||{},dt=new Date(a.created_at),b=bogota(a.created_at);return `<button class="cpfi" data-act="cpopen" data-id="${a.client_id||''}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')} <small style="display:inline">${esc(a.text)}</small></b><small><i class="cpfk" style="font-style:normal;background:#EEF3FB;color:#2A5BA8">${AK[a.kind]||'Acción'}</i>${cpRel(b.date)} · ${b.time}</small></span></button>`;}).join(''):'<div class="note" style="padding:10px 4px">Aquí verás lo que vayas haciendo con tus clientes: programas, tareas, llamadas.</div>';
   const fh=feed.length?feed.map(f=>{const c=nm[f.cid]||{};return `<button class="cpfi" data-act="cpopen" data-id="${f.cid}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')} <small style="display:inline">${esc(f.t)}</small></b><small><i class="cpfk ${f.k}" style="font-style:normal">${K[f.k]}</i>${f.rpe?'Esfuerzo '+f.rpe+'/10 · ':''}${f.feel?esc(f.feel):''}</small>${f.q?`<span class="cpq">“${esc(f.q)}”</span>`:''}</span><em>${cpRel(f.d)}</em></button>`;}).join(''):'<div class="note">Aún no hay actividad en los últimos 14 días.</div>';
   const ah=al.length?al.map(a=>{const c=nm[a.cid]||{};return `<div class="cpal ${a.s===0?'warn':a.s===1?'':'info'}"><button class="cpalb" data-act="cpopen" data-id="${a.cid}"><i class="cpav" style="flex:none;width:34px;height:34px;font-size:12px">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')}</b><b style="font-weight:600;color:${a.s===0?'#C0392B':'inherit'}">${esc(a.t)}</b><small>${esc(a.q)}</small></span></button><button class="cpok" data-act="cpdis" data-k="${esc(a.k)}" title="Marcar como atendida">✓ Atendida</button></div>`;}).join(''):'<div class="note">Todo en orden ✓ Ningún cliente necesita tu atención ahora.</div>';
@@ -3545,9 +3545,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1732';
+const APP_VER='19nov-1736';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1732')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1736')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
