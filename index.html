@@ -1974,6 +1974,7 @@ function realDB(){
     async updateClient(cid,f){ok(await sb.from('profiles').update(f).eq('id',cid));},
     async sendCoach(cid,uid,body){return ok(await sb.from('chat_messages').insert({client_id:cid,sender_id:uid,kind:'msg',body}).select('id,created_at').single());},
     async scheduleCall(cid,uid,iso){ok(await sb.from('calls').delete().eq('client_id',cid).gte('starts_at',new Date().toISOString()));ok(await sb.from('calls').insert({client_id:cid,starts_at:iso,created_by:uid}));},
+    async resetClient(cid){ok(await sb.rpc('reset_client_records',{cid}));},
     async moveTemplate(id,folder_id){ok(await sb.from('routines').update({folder_id:folder_id||null}).eq('id',id));},
     async moveFolder(id,parent_id){ok(await sb.from('routine_folders').update({parent_id:parent_id||null}).eq('id',id));},
     async clientsMeta(){const r=await sb.from('routines').select('client_id,name,days,updated_at').eq('is_template',false);const f=await sb.from('session_feedback').select('client_id,log_date').order('log_date',{ascending:false}).limit(800);const m={rt:{},last:{}};(r.data||[]).forEach(x=>{if(x.client_id)m.rt[x.client_id]={name:x.name,n:(x.days||[]).length,at:x.updated_at};});(f.data||[]).forEach(x=>{if(!m.last[x.client_id])m.last[x.client_id]=x.log_date;});return m;},
@@ -1982,7 +1983,7 @@ function realDB(){
 }
 const DB=window.DB_MOCK||realDB();
 let ME=null,PROFILE=null,LG={step:'email',email:'',err:'',busy:false},CHATT=null;
-const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user'];
+const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen'];
 const LAST={weights:{},steps:{},slices:{},prefs:'',fb:{},profile:'',chatKey:{},photos:{},upl:{}};
 let needs=false,syncing=false,pend=false,tmr=null;
 const R_GRP={g_fuerza:'fuerza',g_cardio:'cardio',g_calm:'calma'};
@@ -2184,6 +2185,7 @@ function coachRender(keepInput){
       body=`<section class="sec"><div class="sec-h"><b>Plan</b><em>${PNAME[p.plan]}</em></div>
         <div class="chips">${['basic','complete','elite'].map(k=>`<button class="chip${p.plan===k?' on':''}" data-act="cpplan" data-v="${k}">${PNAME[k]}</button>`).join('')}</div>
         <div class="note">Cambiar el plan cambia lo que ve el cliente en su app.</div></section>
+       <section class="sec"><div class="sec-h"><b>Pruebas</b></div><div class="note" style="margin-bottom:8px">Borra los registros de este cliente (peso, pasos, entrenamientos, feedback, hitos y niveles) para volver a probar desde cero. No borra su perfil, rutina, fotos ni chat.</div><button class="btn" data-act="cpreset" style="width:100%">Reiniciar registros y hitos</button></section>
        <section class="sec"><div class="sec-h"><b>Módulos de la app</b></div>
         <div class="note" style="margin-bottom:8px">Por defecto el cliente solo ve Inicio, Entrenar y Progreso. Activa lo que quieras que vea.</div>
         <div class="chips">${[['recovery','Respiración'],['habitos','Hábitos'],['alim','Alimentación']].map(([k,n])=>`<button class="chip${(p.modules||[]).includes(k)?' on':''}" data-act="cpmod" data-v="${k}">${n}</button>`).join('')}</div></section>
@@ -2222,6 +2224,7 @@ document.addEventListener('click',async e=>{
   else if(a==='cpback'){clearInterval(CP.poll);CP.err='';CP.sec='clientes';coachHome();}
   else if(a==='cptab'){CP.tab=t.dataset.v;coachRender();}
   else if(a==='cpmod'){const cur=CP.d.profile.modules||[],v=t.dataset.v,nx=cur.includes(v)?cur.filter(x=>x!==v):cur.concat(v);try{await DB.updateClient(CP.cid,{modules:nx});CP.d.profile.modules=nx;CP.err='';coachRender();toast('Módulos actualizados ✓');}catch(x){CP.err='No se pudo actualizar.';coachRender();}}
+  else if(a==='cpreset'){if(!confirm('¿Reiniciar registros y hitos de este cliente? No se puede deshacer.'))return;try{await DB.resetClient(CP.cid);CP.d=await DB.clientDetail(CP.cid);CP.err='';coachRender();toast('Registros reiniciados ✓');}catch(x){CP.err='No se pudo reiniciar.';coachRender();}}
   else if(a==='cpplan'){try{await DB.updateClient(CP.cid,{plan:t.dataset.v});CP.d.profile.plan=t.dataset.v;CP.err='';coachRender();toast('Plan actualizado');}catch(x){CP.err='No se pudo cambiar el plan.';coachRender();}}
   else if(a==='cpsend'){const i=document.getElementById('cpIn'),v=(i.value||'').trim();if(!v)return;i.value='';
     try{await DB.sendCoach(CP.cid,ME.id,v);CP.d=await DB.clientDetail(CP.cid);CP.err='';}catch(x){CP.err='No se pudo enviar el mensaje.';}coachRender();window.scrollTo(0,document.body.scrollHeight);}
@@ -2241,6 +2244,9 @@ async function enter(ses){
 }
 async function startClient(){
   await loadClientRoutine(ME.id);const d=await DB.load(ME.id);await applyRemote(d);
+  try{const rb=(d.blobs||[]).find(b=>b.key==='reset');if(rb&&String(rb.value)!==localStorage.getItem('erre_reset_seen')){
+    const df=typeof defaultsS==='function'?defaultsS():{};SLICES.forEach(k=>{if(k==='user')return;S[k]=(k==='msSeen'||k==='lvSeen')?undefined:(df[k]!==undefined?df[k]:{});LAST.slices[k]=null;});
+    S.weights={};S.steps={};LAST.weights={};LAST.steps={};LAST.fb={};S.msSeen=null;S.lvSeen=undefined;localStorage.setItem('erre_reset_seen',String(rb.value));}}catch(e){console.warn('reset',e);}
   S.mods=PROFILE.modules||[];S.program=planOf(PROFILE);S.elite=PROFILE.plan==='elite';S.role='client';
   if(S.user){S.user.plan=S.program;}
   else{S.ob={step:'type',plan:S.program,form:{name:PROFILE.full_name||'',goals:['complete'],main:'complete',days:4,level:'Principiante',pain:'No',wd:[0,1,3,4],session:'60'}};}
