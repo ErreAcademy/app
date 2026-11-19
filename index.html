@@ -548,6 +548,10 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .cpfoot{position:absolute;bottom:0;left:0;right:18px;flex-direction:column;align-items:flex-start;gap:4px}
 }
 @media(max-width:999px){.cpside .top{display:none}.cptr{grid-template-columns:2fr 1fr 1fr}.cptr>span:nth-child(n+4){display:none}.cpcols{grid-template-columns:1fr}.cpside{display:block}}
+.prio{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red,#C0392B);margin:14px 0 6px}
+.cdet{width:100%;margin:10px 0;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-weight:600;font-size:14px;display:flex;justify-content:space-between}
+.cdetb{padding-top:4px}
+[data-drag]{cursor:grab}.dragging{opacity:.4}.dropon{outline:2px dashed var(--red,#C0392B);outline-offset:2px;background:var(--red-tint,#fbeceb)}
 </style>
 </head>
 <body>
@@ -916,9 +920,9 @@ function calStamp(c){return new Date(`${c.date}T${c.time}:00-05:00`);}
 const z2=n=>String(n).padStart(2,'0');
 const icsD=d=>d.getUTCFullYear()+z2(d.getUTCMonth()+1)+z2(d.getUTCDate())+'T'+z2(d.getUTCHours())+z2(d.getUTCMinutes())+'00Z';
 function calLinks(c){
-  const a=calStamp(c),b=new Date(a.getTime()+45*60000),title='Llamada 1:1 · ERRE Academy';
+  const a=calStamp(c),b=new Date(a.getTime()+45*60000),title='Llamada 1:1 · ERRE Complete';
   const g='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title)+'&dates='+icsD(a)+'/'+icsD(b)+'&details='+encodeURIComponent('Llamada 1:1 con tu coach para revisar objetivos y ajustes.');
-  const ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//ERRE Academy//ES\r\nBEGIN:VEVENT\r\nUID:'+icsD(a)+'@erre\r\nDTSTAMP:'+icsD(new Date())+'\r\nDTSTART:'+icsD(a)+'\r\nDTEND:'+icsD(b)+'\r\nSUMMARY:'+title+'\r\nDESCRIPTION:Llamada 1:1 con tu coach\r\nBEGIN:VALARM\r\nTRIGGER:-PT30M\r\nACTION:DISPLAY\r\nDESCRIPTION:Llamada 1:1 en 30 minutos\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR';
+  const ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//ERRE Complete//ES\r\nBEGIN:VEVENT\r\nUID:'+icsD(a)+'@erre\r\nDTSTAMP:'+icsD(new Date())+'\r\nDTSTART:'+icsD(a)+'\r\nDTEND:'+icsD(b)+'\r\nSUMMARY:'+title+'\r\nDESCRIPTION:Llamada 1:1 con tu coach\r\nBEGIN:VALARM\r\nTRIGGER:-PT30M\r\nACTION:DISPLAY\r\nDESCRIPTION:Llamada 1:1 en 30 minutos\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR';
   return {g,ics};
 }
 function openCal(){
@@ -1088,11 +1092,12 @@ function shellHeader(){
   const sub=S.tab==='inicio'?fmtL(S.sel):S.tab==='entrenar'?(S.program==='complete'?'Método Complete · Coaching 1:1':`Método Complete · Basic · Nivel ${u.level||'Principiante'} · Bloque 1`):p.verbo;
   return `<header class="top">${logo(p.c)}<div class="who"><h1 style="font-size:16px">${title}</h1><small>${sub}</small></div><div class="hr"><button class="pill" data-act="chat" style="color:var(--ink)">Coach${isC()&&S.chat.filter(m=>m.from==='coach').length>S.chatRead?'<i class="cdot"></i>':''}</button><button class="avatar t-${tier()}" data-act="profile" aria-label="Mi perfil">${avHTML()}</button></div></header>`;
 }
-function homeView(){
+function homeView(){return homeWrap(homeView0());}
+function homeView0(){
   const c=ctxFor(S.sel), d=c.d, ts=trainStats(), rows=[];
   if(S.raw>=1){ if(d) rows.push({p:'entrenar',t:`Día ${S.pos+1} · ${d.name}`,s:`${ts.done} de ${ts.total} series y cardio`,done:ts.done,total:ts.total});
     else rows.push({p:'entrenar',t:'Día de descanso',s:'Camina y muévete suave',rest:true,done:0,total:0}); }
-  ['recovery','habitos','alim'].forEach(p=>{const k=tcount(p);rows.push({p,t:{recovery:'Tu respiración',habitos:'Tus hábitos',alim:'Tu conducta de alimentación'}[p],s:`${k.done} de ${k.total} listas`,done:k.done,total:k.total});});
+  ['recovery','habitos','alim'].filter(modOn).forEach(p=>{const k=tcount(p);rows.push({p,t:{recovery:'Tu respiración',habitos:'Tus hábitos',alim:'Tu conducta de alimentación'}[p],s:`${k.done} de ${k.total} listas`,done:k.done,total:k.total});});
   const wv=S.weights[S.sel], wst=weightStats(S.sel), wdd=(wst&&wst.prev&&wv!=null)?wv-wst.prev.w:null, stk=(S.sel===today())?wStreak():0;
   rows.push({p:'peso',t:wv!=null?`${wv.toFixed(1)} kg registrado`:(S.sel===today()?'Pésate hoy':'Registra tu peso'),s:wv!=null?((wdd!=null?`${wdd>0?'+':''}${wdd.toFixed(1)} kg vs tu registro anterior`:'Primer registro')+(stk>=2?` · Racha de ${stk} días`:'')):'10 segundos · mejor en la mañana y en las mismas condiciones',done:wv!=null?1:0,total:1});
   const sv=S.steps[S.sel]||0;
@@ -1121,7 +1126,7 @@ function pillarView(p){
 }
 function tabbar(){
   const ico=k=>k==='inicio'?`<svg viewBox="270 270 590 540"><polygon fill="#1C1B19" points="283,280 722,280 845,402 650,583 448,583 672,395 411,395 411,676 283,795"/></svg>`:`<svg viewBox="430 585 420 225"><polygon fill="${PIL[k].c}" points="445,598 641,598 838,795 637,795"/></svg>`;
-  return `<nav class="tabbar">${['inicio','entrenar','recovery','habitos','alim','progreso'].map(k=>`<button class="tab${S.tab===k?' on':''}" data-act="tab" data-v="${k}" style="--c:${PIL[k].c}">${ico(k)}<span>${PIL[k].n}</span></button>`).join('')}</nav>`;
+  return `<nav class="tabbar">${tabsOn().map(k=>`<button class="tab${S.tab===k?' on':''}" data-act="tab" data-v="${k}" style="--c:${PIL[k].c}">${ico(k)}<span>${PIL[k].n}</span></button>`).join('')}</nav>`;
 }
 function render(){
   if(!S.user||(S.ob&&S.ob.step==='done')){renderOnboarding();return;}
@@ -1210,7 +1215,8 @@ function zoneList(set){
   return `<div class="grp" style="margin-top:14px">Zonas de intensidad</div><div class="zmini">${ZONES.map(Z=>`<div class="zm${set.includes(Z.z)?' cur':''}"><span class="zb" style="background:${ZC[Z.z]}">${Z.z}</span><div><b>${Z.s}</b><small>${Z.a}–${Z.b} % de tu FC máx.${fcMax()?' · '+bpmRange(Z):''}</small><small>${Z.talk}</small></div></div>`).join('')}</div>
    <button class="lblbtn" data-act="zones" style="color:var(--red-strong);margin:2px 0 4px">Qué es una zona, cómo se calcula y cómo medirla ›</button>`;
 }
-function cardioBlock(b,d){
+function cardioBlock(b,d){return cardioWrap(cardioBlock0(b,d));}
+function cardioBlock0(b,d){
   const t=CARDIO[S.goal][Math.min(S.week,PERIOD[S.program].weeks)-1];
   const lbl={bajar:'Bajar peso',complete:'Complete',aumentar:'Aumentar'}[S.goal];
   const open=S.open[b.k]?' open':'';
@@ -1732,7 +1738,7 @@ const sec=(t,b)=>`<div class="obsec"><div class="grp">${t}</div>${b}</div>`;
 const lab=t=>`<label class="fl">${t}</label>`;
 function renderOnboarding(){
   const o=S.ob||(S.ob={step:'plan',form:{}}), f=o.form||{}, full=o.type==='full';
-  const head=`<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Academy</h1><small>Método Complete</small></div></header>`;
+  const head=`<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Complete</h1><small>Método Complete</small></div></header>`;
   let h='';
   if(o.step==='plan') h=`<h2 class="h2" style="margin-top:8px">Bienvenido</h2><p class="lead">Para esta prueba, elige con qué perfil quieres entrar.</p>
    <button class="pcard" data-act="obplan" data-v="complete"><b>Soy cliente Complete</b><small>Coaching 1:1 · tu coach diseña tu programa</small></button>
@@ -1829,7 +1835,7 @@ function openInfo(v){
   else sheet(`<h3>${INFO[v].t}</h3><div style="height:6px"></div>${INFO[v].b.replace('RPE_TABLE',rpeTable())}<button class="btn" data-act="close" style="width:100%;margin-top:10px">Entendido</button>`);
 }
 function openVideo(id){
-  const x=E[id], q=encodeURIComponent('ERRE Academy '+x.n+' técnica');
+  const x=E[id], q=encodeURIComponent('ERRE Complete '+x.n+' técnica');
   sheet(`<h3>${x.n}</h3><div class="sub">${x.pat} · ${x.eq}</div>
     ${x.yt?`<div class="video" style="padding:0;overflow:hidden;position:relative"><iframe src="https://www.youtube.com/embed/${x.yt}?rel=0&playsinline=1" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" title="${x.n}"></iframe></div>`:''}
     ${x.yt?'<div style="display:none">':''}<div class="video"><b style="font-size:15px">Video técnico</b><small>En la app real, aquí se reproduce el video de tu canal de YouTube (embebido, sin salir de la app).</small><a href="https://www.youtube.com/results?search_query=${q}" target="_blank" rel="noopener">Buscar en YouTube</a></div>${x.yt?'</div>':''}
@@ -1949,6 +1955,8 @@ function realDB(){
     async updateClient(cid,f){ok(await sb.from('profiles').update(f).eq('id',cid));},
     async sendCoach(cid,uid,body){return ok(await sb.from('chat_messages').insert({client_id:cid,sender_id:uid,kind:'msg',body}).select('id,created_at').single());},
     async scheduleCall(cid,uid,iso){ok(await sb.from('calls').delete().eq('client_id',cid).gte('starts_at',new Date().toISOString()));ok(await sb.from('calls').insert({client_id:cid,starts_at:iso,created_by:uid}));},
+    async moveTemplate(id,folder_id){ok(await sb.from('routines').update({folder_id:folder_id||null}).eq('id',id));},
+    async moveFolder(id,parent_id){ok(await sb.from('routine_folders').update({parent_id:parent_id||null}).eq('id',id));},
     async clientsMeta(){const r=await sb.from('routines').select('client_id,name,days,updated_at').eq('is_template',false);const f=await sb.from('session_feedback').select('client_id,log_date').order('log_date',{ascending:false}).limit(800);const m={rt:{},last:{}};(r.data||[]).forEach(x=>{if(x.client_id)m.rt[x.client_id]={name:x.name,n:(x.days||[]).length,at:x.updated_at};});(f.data||[]).forEach(x=>{if(!m.last[x.client_id])m.last[x.client_id]=x.log_date;});return m;},
     async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level').eq('role','client').order('full_name'));}
   };
@@ -2071,7 +2079,7 @@ function resetLocal(){
 }
 
 /* ---------- pantallas: acceso, consentimiento, coach ---------- */
-function authHead(){return `<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Academy</h1><small>Método Complete</small></div></header>`;}
+function authHead(){return `<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Complete</h1><small>Método Complete</small></div></header>`;}
 function loginView(){
   const e=LG.err?`<div class="note" style="border-color:var(--red);color:var(--red-strong)">${LG.err}</div>`:'';
   return authHead()+`<h2 class="h2" style="margin-top:14px">Entra a tu cuenta</h2><p class="lead">Escribe tu correo y tu contraseña.</p>${e}
@@ -2083,7 +2091,7 @@ function loginView(){
 function showLogin(){$('#app').innerHTML=loginView();}
 function consentView(){
   return authHead()+`<h2 class="h2" style="margin-top:14px">Tu información, protegida</h2>
-   <p class="lead">ERRE Academy guarda tus datos de entrenamiento, tu peso, tus fotos de progreso y tus mensajes de forma privada. Solo tú y tu coach pueden verlos.</p>
+   <p class="lead">ERRE Complete guarda tus datos de entrenamiento, tu peso, tus fotos de progreso y tus mensajes de forma privada. Solo tú y tu coach pueden verlos.</p>
    <section class="sec"><div class="pfrow"><span><b>Qué guardamos</b><small>Datos personales, peso, pasos, entrenamientos, feedback, fotos y chat con tu coach.</small></span></div>
    <div class="pfrow"><span><b>Para qué</b><small>Armar y ajustar tu programa y hacerte seguimiento.</small></span></div>
    <div class="pfrow"><span><b>Tus derechos</b><small>Puedes pedir ver, corregir o eliminar tus datos cuando quieras escribiéndole a tu coach.</small></span></div></section>
@@ -2102,6 +2110,21 @@ function sparkOf(L,W=260,H=44){
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" aria-hidden="true"><path d="${pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ')}" fill="none" stroke="#1C1B19" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${lp[0]}" cy="${lp[1]}" r="5" fill="#C0392B"/></svg>`;
 }
 const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const modOn=k=>(S.mods||[]).includes(k);
+const tabsOn=()=>['inicio','entrenar'].concat(['recovery','habitos','alim'].filter(modOn),['progreso']);
+function homeWrap(h){
+  const i=h.indexOf('<div class="mini2">'),j=h.indexOf('<h2 class="h2">');
+  if(i>j&&j>0)h=h.slice(0,j)+'<div class="prio">Lo primero de hoy</div>'+h.slice(i)+h.slice(j,i);
+  if(!['recovery','habitos','alim'].some(modOn))h=h.replace('Mientras, puedes ir con tu respiración, hábitos y alimentación.','Mientras, puedes registrar tu peso y tus pasos.');
+  return h;
+}
+function cardioWrap(h){
+  const tail='</div></div></section>',zi=h.indexOf('</em></div></div>');if(zi<0)return h;const k=zi+'</em></div></div>'.length;
+  let inner=h.slice(k,h.lastIndexOf(tail)),log='';const m=inner.match(/<div class="setwrap[^>]*>[\s\S]*?<\/button><\/div><\/div>/);
+  if(m){log=m[0];inner=inner.replace(log,'');}
+  const open=!!S.exp['cardio.det'];
+  return h.slice(0,k)+log+`<button class="cdet" data-act="exp" data-k="cardio.det">${open?'Ocultar detalles del cardio':'Ver detalles del cardio'} <i>${open?'⌃':'⌄'}</i></button>`+(open?`<div class="cdetb">${inner}</div>`:'')+h.slice(h.lastIndexOf(tail));
+}
 const cpW=()=>window.innerWidth>=1000;
 function cpShell(inner){
   const nav=[['clientes','Clientes'],['editor','Editor de rutinas']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
@@ -2142,6 +2165,9 @@ function coachRender(keepInput){
       body=`<section class="sec"><div class="sec-h"><b>Plan</b><em>${PNAME[p.plan]}</em></div>
         <div class="chips">${['basic','complete','elite'].map(k=>`<button class="chip${p.plan===k?' on':''}" data-act="cpplan" data-v="${k}">${PNAME[k]}</button>`).join('')}</div>
         <div class="note">Cambiar el plan cambia lo que ve el cliente en su app.</div></section>
+       <section class="sec"><div class="sec-h"><b>Módulos de la app</b></div>
+        <div class="note" style="margin-bottom:8px">Por defecto el cliente solo ve Inicio, Entrenar y Progreso. Activa lo que quieras que vea.</div>
+        <div class="chips">${[['recovery','Respiración'],['habitos','Hábitos'],['alim','Alimentación']].map(([k,n])=>`<button class="chip${(p.modules||[]).includes(k)?' on':''}" data-act="cpmod" data-v="${k}">${n}</button>`).join('')}</div></section>
        <section class="sec"><div class="sec-h"><b>Perfil</b></div>
         <div class="pfrow"><span><b>Objetivo</b><small>${GN[p.goal]||p.goal||'—'}</small></span><span><b>Nivel</b><small>${esc(p.level||'—')}</small></span></div>
         <div class="pfrow"><span><b>Días</b><small>${(p.train_days||[]).map(i=>DAYL[i]).join(' · ')||'—'}</small></span><span><b>Edad</b><small>${edad!=null?edad+' años':'—'}</small></span></div>
@@ -2176,6 +2202,7 @@ document.addEventListener('click',async e=>{
   else if(a==='cppf'){CP.pf=t.dataset.v;coachRender();}
   else if(a==='cpback'){clearInterval(CP.poll);CP.err='';CP.sec='clientes';coachHome();}
   else if(a==='cptab'){CP.tab=t.dataset.v;coachRender();}
+  else if(a==='cpmod'){const cur=CP.d.profile.modules||[],v=t.dataset.v,nx=cur.includes(v)?cur.filter(x=>x!==v):cur.concat(v);try{await DB.updateClient(CP.cid,{modules:nx});CP.d.profile.modules=nx;CP.err='';coachRender();toast('Módulos actualizados ✓');}catch(x){CP.err='No se pudo actualizar.';coachRender();}}
   else if(a==='cpplan'){try{await DB.updateClient(CP.cid,{plan:t.dataset.v});CP.d.profile.plan=t.dataset.v;CP.err='';coachRender();toast('Plan actualizado');}catch(x){CP.err='No se pudo cambiar el plan.';coachRender();}}
   else if(a==='cpsend'){const i=document.getElementById('cpIn'),v=(i.value||'').trim();if(!v)return;i.value='';
     try{await DB.sendCoach(CP.cid,ME.id,v);CP.d=await DB.clientDetail(CP.cid);CP.err='';}catch(x){CP.err='No se pudo enviar el mensaje.';}coachRender();window.scrollTo(0,document.body.scrollHeight);}
@@ -2195,7 +2222,7 @@ async function enter(ses){
 }
 async function startClient(){
   await loadClientRoutine(ME.id);const d=await DB.load(ME.id);await applyRemote(d);
-  S.program=planOf(PROFILE);S.elite=PROFILE.plan==='elite';S.role='client';
+  S.mods=PROFILE.modules||[];S.program=planOf(PROFILE);S.elite=PROFILE.plan==='elite';S.role='client';
   if(S.user){S.user.plan=S.program;}
   else{S.ob={step:'type',plan:S.program,form:{name:PROFILE.full_name||'',goals:['complete'],main:'complete',days:4,level:'Principiante',pain:'No',wd:[0,1,3,4],session:'60'}};}
   S.sel=today();store.set('erre_state',S);
@@ -2222,6 +2249,19 @@ document.addEventListener('click',async e=>{
 },true);
 
 document.addEventListener('input',e=>{if(e.target.id==='cpQ'&&PROFILE&&PROFILE.role==='coach'&&CP.view==='list'){CP.q=e.target.value;coachRender(true);}});
+
+document.addEventListener('dragstart',e=>{const t=e.target.closest&&e.target.closest('[data-drag]');if(!t)return;e.dataTransfer.setData('text/plain',t.dataset.drag);e.dataTransfer.effectAllowed='move';t.classList.add('dragging');});
+document.addEventListener('dragend',e=>{document.querySelectorAll('.dragging,.dropon').forEach(x=>x.classList.remove('dragging','dropon'));});
+document.addEventListener('dragover',e=>{const z=e.target.closest&&e.target.closest('[data-drop]');if(!z)return;e.preventDefault();document.querySelectorAll('.dropon').forEach(x=>x!==z&&x.classList.remove('dropon'));z.classList.add('dropon');});
+document.addEventListener('drop',async e=>{const z=e.target.closest&&e.target.closest('[data-drop]');if(!z||!PROFILE||PROFILE.role!=='coach')return;e.preventDefault();z.classList.remove('dropon');
+  const v=e.dataTransfer.getData('text/plain')||'',kind=v.slice(0,2),id=v.slice(2),dest=z.dataset.drop||null;
+  try{
+    if(kind==='t:'){await DB.moveTemplate(id,dest);}
+    else if(kind==='f:'){if(id===dest)return;let p=RT.fo.find(x=>x.id===dest);while(p){if(p.id===id){toast('No puedes meter una carpeta dentro de sí misma');return;}p=RT.fo.find(x=>x.id===p.parent_id);}await DB.moveFolder(id,dest);}
+    else return;
+    await rtLoadTpls();coachRender();toast('Movido ✓');
+  }catch(x){toast('No se pudo mover');}
+});
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
@@ -2462,9 +2502,9 @@ function rtTplList(){
   return `<section class="sec"><div class="sec-h"><b>Editor de rutinas</b><em>${RT.tpls.length}</em></div>
    <div class="chips">${['workout','program'].map(x=>`<button class="chip${k===x?' on':''}" data-act="rtlbkind" data-v="${x}">${tkLbl(x)}</button>`).join('')}</div>
    <div class="note" style="margin:8px 0">${k==='workout'?'Un workout es un solo día de entreno (ej. Tren superior). Puedes sumarlo a la rutina de cualquier cliente.':'Un programa es la rutina completa de varios días (ej. N1 · 4 días · Mujer).'}</div>
-   <div class="crumbs"><button class="lblbtn" data-act="rtlbopen" data-id="">${tkLbl(k)}</button>${crumbs.map(c=>` › <button class="lblbtn" data-act="rtlbopen" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>
-   ${subs.map(x=>`<div class="pfrow rtfold"><button class="rtfb" data-act="rtlbopen" data-id="${x.id}"><i>📁</i><span><b>${esc(x.name)}</b><small>${cnt(x.id)} elementos</small></span></button><span class="rtfa"><button class="rtb" data-act="rtlbren" data-id="${x.id}" aria-label="Renombrar">✎</button><button class="rtb" data-act="rtlbdelf" data-id="${x.id}" aria-label="Eliminar carpeta">✕</button></span></div>`).join('')}
-   ${items.map(t=>`<button class="pfrow rtitem" data-act="rttpl" data-id="${t.id}"><span><b>${esc(t.name)}</b><small>${t.days.length} ${t.days.length===1?'día':'días'}</small></span><span>›</span></button>`).join('')}
+   <div class="crumbs"><button class="lblbtn" data-drop="" data-act="rtlbopen" data-id="">${tkLbl(k)}</button>${crumbs.map(c=>` › <button class="lblbtn" data-drop="${c.id}" data-act="rtlbopen" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div><div class="note" style="margin:0 0 8px;font-size:12px">Arrastra un elemento sobre una carpeta (o sobre la ruta de arriba) para moverlo.</div>
+   ${subs.map(x=>`<div class="pfrow rtfold" draggable="true" data-drag="f:${x.id}" data-drop="${x.id}"><button class="rtfb" data-act="rtlbopen" data-id="${x.id}"><i>📁</i><span><b>${esc(x.name)}</b><small>${cnt(x.id)} elementos</small></span></button><span class="rtfa"><button class="rtb" data-act="rtlbren" data-id="${x.id}" aria-label="Renombrar">✎</button><button class="rtb" data-act="rtlbdelf" data-id="${x.id}" aria-label="Eliminar carpeta">✕</button></span></div>`).join('')}
+   ${items.map(t=>`<button class="pfrow rtitem" draggable="true" data-drag="t:${t.id}" data-act="rttpl" data-id="${t.id}"><span><b>${esc(t.name)}</b><small>${t.days.length} ${t.days.length===1?'día':'días'}</small></span><span>›</span></button>`).join('')}
    ${(!subs.length&&!items.length)?'<div class="note">Esta carpeta está vacía.</div>':''}
    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-act="rtlbnewf" style="flex:1">+ Carpeta</button><button class="btn solid" data-act="rtlbnew" style="flex:1">+ ${k==='workout'?'Workout':'Programa'}</button></div>
    ${(!RT.tpls.length)?'<button class="btn" data-act="rtseed" style="width:100%;margin-top:8px">Cargar los 6 programas N1 de ERRE</button>':''}</section>
