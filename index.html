@@ -3513,12 +3513,15 @@ function rtItemHTML(di,bk,ii,it,num){
 const TIPOS=['Calentamiento','Fuerza','Cardio','Estiramiento','Respiración'];
 const TCOL={Todos:'#555',Calentamiento:'#2E9D6B',Fuerza:'#C0392B',Cardio:'#D03A68',Calma:'#5B7FC7',Estiramiento:'#5B7FC7','Respiración':'#5B7FC7'},TICO={Calentamiento:'🔥',Fuerza:'🏋',Cardio:'🏃',Calma:'🧘',Estiramiento:'🧘','Respiración':'🌬'};
 const RGRP_F=['Espalda','Pecho','Hombro','Brazos','Pierna','Glúteo','Core','Full Body'];
+const PATM={'Aperturas de pecho':'Empuje horizontal','Dorsal aislado':'Tracción horizontal','Sentadilla':'Dominante de rodilla','Zancada':'Dominante de rodilla','Extensión de rodilla':'Dominante de rodilla','Bisagra de cadera':'Dominante de cadera','Curl femoral':'Dominante de cadera','Flexión de rodilla':'Dominante de cadera','Puente de glúteo':'Dominante de cadera','Flexión de codo':'Aislamiento','Extensión de codo':'Aislamiento','Elevación lateral':'Aislamiento','Deltoide posterior':'Aislamiento','Trapecio':'Aislamiento','Hombro':'Aislamiento','Manguito rotador':'Aislamiento','Antebrazo':'Aislamiento','Glúteo aislado':'Aislamiento','Abducción':'Aislamiento','Aducción':'Aislamiento','Patada de glúteo':'Aislamiento','Gemelos':'Aislamiento','Rutina completa':'Metabólico','Otros':'Metabólico'};
+const patMain=k=>{const p=(E[k]||{}).pat||'';return PATM[p]||p;};
+const exFA=k=>/follow along|\(F-A\)|^NIVEL ?\d|^\(ANTIGUO\) Estiramientos|^Estiramientos |^FORTALECIMIENTO \|/i.test((E[k]||{}).n||'');
 function exTipos(k){const e=E[k]||{};if(Array.isArray(e.tipos)&&e.tipos.length)return e.tipos;
   if(/^resp/i.test(k)||/respiraci/i.test(e.n||'')||e.pat==='Respiración')return ['Respiración'];
   if(e.g==='Calentamiento')return ['Calentamiento'];if(e.g==='Estiramiento')return ['Estiramiento'];if(e.g==='Cardio'||e.pat==='Cardio')return ['Cardio'];return ['Fuerza'];}
 const exIsCalma=k=>exTipos(k).some(t=>t==='Estiramiento'||t==='Respiración');
 function exTipoOk(k,P){const t=P.t||'Todos';if(t==='Todos')return true;const T=exTipos(k);
-  if(t==='Calma'){if(!exIsCalma(k))return false;return !P.st||P.st==='Todos'||T.includes(P.st);}return T.includes(t);}
+  if(t==='Calma'){if(!exIsCalma(k))return false;return !P.st||P.st==='Todos'||P.st==='Follow along'||T.includes(P.st);}return T.includes(t);}
 function exAllTags(){const o={};Object.keys(E).forEach(k=>(E[k].tags||[]).forEach(x=>o[x]=(o[x]||0)+1));return Object.keys(o).sort();}
 function exMatch(k,P,skipG){const e=E[k];if(!e||!e.n||/\(ANTIGUO\)/i.test(e.n))return false;const q=nrm(P.q||'');
   const vd=P.vid||'con';if(vd==='con'&&!e.yt)return false;if(vd==='sin'&&e.yt)return false;
@@ -3526,19 +3529,22 @@ function exMatch(k,P,skipG){const e=E[k];if(!e||!e.n||/\(ANTIGUO\)/i.test(e.n))r
   if(P.fav&&!(RT.favs&&RT.favs.has(k)))return false;
   if(P.tag&&!(e.tags||[]).includes(P.tag))return false;
   if(!skipG&&P.g&&P.g!=='Todos'&&e.g!==P.g)return false;
-  if(!skipG&&P.pat&&e.pat!==P.pat)return false;
+  if(!skipG&&P.pat&&patMain(k)!==P.pat)return false;
+  if(P.st==='Follow along'&&!exFA(k))return false;if(P.st==='Ejercicios'&&exFA(k))return false;
+  if(P.st==='Estiramiento'&&exFA(k))return false;
   return !q||nrm(e.n+' '+(e.pat||'')+' '+(e.mus||'')+' '+(e.eq||'')+' '+(e.tags||[]).join(' ')).includes(q);}
 function pkFilters(P,w){
   const T=['Todos','Calentamiento','Fuerza','Cardio','Calma'],tags=exAllTags();
-  const sub=P.t==='Calma'?`<div class="pkchips">${['Todos','Estiramiento','Respiración'].map(x=>`<button class="chip sm tc${(P.st||'Todos')===x?' on':''}" style="--tc:${TCOL.Calma}" data-act="rtfst" data-w="${w}" data-v="${x}">${x}</button>`).join('')}</div>`:'';
-  const pool=Object.keys(E).filter(k=>exMatch(k,Object.assign({},P,{g:'Todos',pat:''}),true)),pats={},gs={};pool.forEach(k=>{if(E[k].pat)pats[E[k].pat]=1;if(E[k].g)gs[E[k].g]=1;});
+  const subL=P.t==='Calma'?['Todos','Estiramiento','Respiración','Follow along']:(P.t==='Calentamiento'||P.t==='Cardio')?['Todos','Ejercicios','Follow along']:null;
+  const sub=subL?`<div class="pkchips">${subL.map(x=>`<button class="chip sm tc${(P.st||'Todos')===x?' on':''}" style="--tc:${TCOL.Calma}" data-act="rtfst" data-w="${w}" data-v="${x}">${x}</button>`).join('')}</div>`:'';
+  const pool=Object.keys(E).filter(k=>exMatch(k,Object.assign({},P,{g:'Todos',pat:''}),true)),pats={},gs={};pool.forEach(k=>{if(E[k].g)gs[E[k].g]=1;});Object.keys(E).filter(k=>exMatch(k,Object.assign({},P,{pat:''}))).forEach(k=>{const p=patMain(k);if(p)pats[p]=(pats[p]||0)+1;});const PORD=['Empuje horizontal','Empuje vertical','Tracción horizontal','Tracción vertical','Dominante de rodilla','Dominante de cadera','Aislamiento','Core','Metabólico'];const patK=Object.keys(pats).sort((a,b)=>((PORD.indexOf(a)+1||99)-(PORD.indexOf(b)+1||99))||a.localeCompare(b));
   const gshow=(P.t==='Fuerza'||!P.t||P.t==='Todos')?['Todos'].concat(RGRP_F.filter(g=>gs[g]||P.t==='Todos'||!P.t)):[];
   const vc={con:0,sin:0,todos:0};Object.keys(E).forEach(k=>{if(exMatch(k,Object.assign({},P,{vid:'todos'}))){vc.todos++;E[k].yt?vc.con++:vc.sin++;}});const vd=P.vid||'con';
   const vidbar=`<div class="vidbar"><span>Video</span>${[['con','▶ Con video',vc.con],['sin','🎬 Sin video (por grabar)',vc.sin],['todos','Todos',vc.todos]].map(([k,n,c])=>`<button class="vb vb-${k}${vd===k?' on':''}" data-act="rtfvid" data-w="${w}" data-v="${k}">${n} <em>${c}</em></button>`).join('')}</div>`;
   return `${vidbar}<div class="pkchips pkt">${T.map(x=>`<button class="chip tc${(P.t||'Todos')===x?' on':''}" style="--tc:${TCOL[x]}" data-act="rtft" data-w="${w}" data-v="${x}">${TICO[x]?TICO[x]+' ':''}${x}</button>`).join('')}<button class="chip${P.fav?' on':''}" data-act="rtffav" data-w="${w}">♥ Favoritos</button></div>${sub}
    ${tags.length?`<div class="pkchips pat">${tags.slice(0,14).map(x=>`<button class="chip sm${P.tag===x?' on':''}" data-act="rtftag" data-w="${w}" data-v="${esc(x)}">#${esc(x)}</button>`).join('')}</div>`:''}
    ${gshow.length?`<div class="pkchips">${gshow.map(g=>`<button class="chip${(P.g||'Todos')===g?' on':''}" data-act="${w==='lib'?'rtlibg':'rtpkg'}" data-v="${g}">${g}</button>`).join('')}</div>`:''}
-   <div class="pkchips pat">${Object.keys(pats).sort().map(p=>`<button class="chip sm${P.pat===p?' on':''}" data-act="${w==='lib'?'rtlibp':'rtpkp'}" data-v="${esc(p)}">${esc(p)}</button>`).join('')}</div>`;}
+   <div class="pkchips pat">${patK.map(p=>`<button class="chip sm${P.pat===p?' on':''}" data-act="${w==='lib'?'rtlibp':'rtpkp'}" data-v="${esc(p)}">${esc(p)} <em style="font-style:normal;opacity:.6">${pats[p]}</em></button>`).join('')}</div>`;}
 function exPreview(yt){return yt?`<div class="expv"><iframe src="https://www.youtube.com/embed/${yt}" title="Video" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:'<div class="note">Este ejercicio aún no tiene video. Pega un link de YouTube abajo.</div>';}
 function exTagsHTML(){const t=(RT.exSt&&RT.exSt.tags)||[];return t.length?t.map(x=>`<span class="extag">#${esc(x)}<button data-act="rtextagdel" data-v="${esc(x)}" aria-label="Quitar">✕</button></span>`).join(''):'<small style="color:#888">Sin etiquetas todavía</small>';}
 function pkList(P0,act){
