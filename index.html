@@ -2875,7 +2875,8 @@ function showMilestone(list,lv){
    <p>${lv&&!top?'Tu constancia te llevó más lejos. Así se construye el hábito.':'Lo lograste con tu constancia. Un paso más hacia tu mejor versión.'}</p>
    ${more.length?`<div class="msmore">También lograste: ${more.map(m=>m.i+' '+m.t).join(' · ')}</div>`:''}
    ${lv&&top?`<div class="msmore">⭐ Y subiste al <b>Nivel ${lv.n} · ${lv.name}</b></div>`:''}
-   <button class="btn solid" data-act="prog" style="width:100%;margin-top:14px;padding:13px">Ver mis hitos</button>
+   <button class="btn solid" data-act="mshare" data-t="${esc(lv&&!top?'Nivel '+lv.n+' · '+lv.name:top.t)}" data-i="${lv&&!top?'⭐':top.i}" data-k="${lv&&!top?'Subí de nivel':'Hito logrado'}" style="width:100%;margin-top:14px;padding:13px">📤 Compartir en mis historias</button>
+   <button class="btn" data-act="prog" style="width:100%;margin-top:8px">Ver mis hitos</button>
    <button class="btn" data-act="msclose" style="width:100%;margin-top:8px">Seguir</button>
    <button class="lblbtn" data-act="msmute" style="margin-top:8px;color:var(--gray)">${sndOn()?'🔔 Sonido activado':'🔕 Sonido apagado'}</button></div>`;
   document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add('on'));confetti(el.firstChild,34);chime();buzz([40,60,40]);
@@ -2995,7 +2996,7 @@ function progBody(g,ms,nxt){
    <div class="stats"><div><small>Esta semana</small><b>${g.wt}/${g.wp}</b></div><div><small>Días cumplidos</small><b>${g.okDays}</b></div><div><small>Días con meta de pasos</small><b>${g.stepsOk}</b></div></div>`;
   const nx=nxt?`<div class="nxt"><span class="mi">${nxt.i}</span><div><b>${nxt.t}</b><div class="progress" style="margin:6px 0 2px"><i style="width:${Math.round(nxt.v/nxt.n*100)}%"></i></div><small>${nxt.v} de ${nxt.n}</small></div></div>`:'';
   const doneN=ms.filter(m=>m.v>=m.n).length;
-  const msx=MS_CATS.map(([n,a,b])=>{const L=ms.slice(a,b),d=L.filter(m=>m.v>=m.n).length;return pgSec('pg.m.'+n,n,`${d} de ${L.length}`,`<div class="ms">${L.map(m=>`<div class="m${m.v>=m.n?' on':''}"><span class="mi">${m.i}</span><b>${m.t}</b>${m.v>=m.n?'<small>Logrado ✓</small>':`<small>${m.v} de ${m.n}</small>`}</div>`).join('')}</div>`,false);}).join('');
+  const msx=MS_CATS.map(([n,a,b])=>{const L=ms.slice(a,b),d=L.filter(m=>m.v>=m.n).length;return pgSec('pg.m.'+n,n,`${d} de ${L.length}`,`<div class="ms">${L.map(m=>`<div class="m${m.v>=m.n?' on':''}"${m.v>=m.n?` data-act="mshare" data-t="${esc(m.t)}" data-i="${m.i}" data-k="Hito logrado"`:''}><span class="mi">${m.i}</span><b>${m.t}</b>${m.v>=m.n?'<small>Logrado ✓ · Compartir ↗</small>':`<small>${m.v} de ${m.n}</small>`}</div>`).join('')}</div>`,false);}).join('');
   return `${nxt?`<h2 class="h2">Siguiente hito</h2>${nx}`:''}
    ${fidSince()&&PROFILE&&S.role!=='coach'?pgSec('pg.fid','Mi tiempo con ERRE',fidSpan(fidMonths(fidSince())),fidBody(),false):''}
    ${pgSec('pg.lv','Niveles',`Nivel ${g.li+1} de ${LEVELS.length} · ${g.name}`,lv,false)}
@@ -3510,9 +3511,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1717';
+const APP_VER='19nov-1719';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1717')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1719')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
@@ -3733,6 +3734,46 @@ document.addEventListener('click',async e=>{
     if(CB.ctx==='client'){S.circuits=cirLst().filter(x=>x.id!==c.id);save();CB=null;cirHome();}
     else{try{if(c.dbid)await DB.delCircuit(c.dbid);if(CB.onDel)CB.onDel(c);CB=null;closeSheet();}catch(x){toast('No se pudo eliminar.');}}}
 },true);
+
+
+/* ===== Compartir hito (imagen para historias / WhatsApp / Instagram) ===== */
+function msCard(i,title,kick,name){
+  return new Promise(res=>{
+    const W=1080,H=1920,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1C1B19');g.addColorStop(1,'#34211B');x.fillStyle=g;x.fillRect(0,0,W,H);
+    x.fillStyle='rgba(230,71,122,.10)';x.beginPath();x.arc(W-120,260,420,0,7);x.fill();x.fillStyle='rgba(59,130,196,.10)';x.beginPath();x.arc(100,H-300,460,0,7);x.fill();
+    const draw=(img)=>{
+      if(img){x.save();x.beginPath();x.roundRect?x.roundRect(W/2-90,170,180,180,42):x.rect(W/2-90,170,180,180);x.clip();x.drawImage(img,W/2-90,170,180,180);x.restore();}
+      x.textAlign='center';x.fillStyle='#fff';
+      x.font='300px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';x.fillText(i,W/2,930);
+      x.fillStyle='#E8B64C';x.font='700 46px system-ui,-apple-system,Segoe UI,sans-serif';
+      let t0=(kick||'Hito logrado').toUpperCase().split('').join(String.fromCharCode(8202));x.fillText(t0,W/2,1090);
+      x.fillStyle='#fff';x.font='800 96px system-ui,-apple-system,Segoe UI,sans-serif';
+      const words=String(title).split(' '),lines=[];let cur='';words.forEach(w=>{const t=cur?cur+' '+w:w;if(x.measureText(t).width>W-200&&cur){lines.push(cur);cur=w;}else cur=t;});if(cur)lines.push(cur);
+      lines.slice(0,3).forEach((l,q)=>x.fillText(l,W/2,1230+q*112));
+      x.fillStyle='rgba(255,255,255,.75)';x.font='500 48px system-ui,-apple-system,Segoe UI,sans-serif';
+      if(name)x.fillText(name,W/2,1230+Math.min(lines.length,3)*112+40);
+      x.fillStyle='#fff';x.font='800 44px system-ui,-apple-system,Segoe UI,sans-serif';x.fillText('ERRE ACADEMY',W/2,1740);
+      x.fillStyle='rgba(255,255,255,.6)';x.font='500 34px system-ui,-apple-system,Segoe UI,sans-serif';x.fillText('Método Complete · Entrena con sistema',W/2,1792);
+      try{c.toBlob(b=>res(b),'image/png');}catch(e){res(null);}
+    };
+    const im=new Image();im.onload=()=>draw(im);im.onerror=()=>draw(null);im.src='icon-192.png';
+  });
+}
+async function msShare(t,i,kick){
+  toast('Preparando tu imagen…');
+  const nm=(S.user&&S.user.name||'').split(' ')[0],blob=await msCard(i,t,kick,nm);
+  const txt=i+' '+(kick||'Hito logrado')+': '+t+' en ERRE Academy 💪';
+  if(blob){
+    const f=new File([blob],'erre-hito.png',{type:'image/png'});
+    try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:txt});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='erre-hito.png';document.body.appendChild(a);a.click();a.remove();
+    toast('Imagen guardada. Súbela a tus historias o estados 💪');return;
+  }
+  try{if(navigator.share){await navigator.share({text:txt});return;}}catch(e){}
+  toast('No se pudo crear la imagen en este navegador');
+}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="mshare"]');if(!t)return;e.stopPropagation();msShare(t.dataset.t,t.dataset.i,t.dataset.k);},true);
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
