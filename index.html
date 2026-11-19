@@ -2113,20 +2113,25 @@ function realDB(){
     async moveTemplate(id,folder_id){ok(await sb.from('routines').update({folder_id:folder_id||null}).eq('id',id));},
     async moveFolder(id,parent_id){ok(await sb.from('routine_folders').update({parent_id:parent_id||null}).eq('id',id));},
     async clientsMeta(){const r=await sb.from('routines').select('client_id,name,days,updated_at').eq('is_template',false);const f=await sb.from('session_feedback').select('client_id,log_date').order('log_date',{ascending:false}).limit(800);const h=await sb.from('chat_messages').select('client_id,body,created_at').eq('kind','hito').order('created_at',{ascending:false}).limit(200);const m={rt:{},last:{},hito:{}};(h.data||[]).forEach(x=>{if(!m.hito[x.client_id])m.hito[x.client_id]={at:x.created_at,body:x.body};});(r.data||[]).forEach(x=>{if(x.client_id)m.rt[x.client_id]={name:x.name,n:(x.days||[]).length,at:x.updated_at};});(f.data||[]).forEach(x=>{if(!m.last[x.client_id])m.last[x.client_id]=x.log_date;});return m;},
+    async logAct(cid,kind,text){try{await sb.from('coach_activity').insert({client_id:cid||null,kind,text});}catch(e){}},
+    async coachAct(){return await sb.from('coach_activity').select('client_id,kind,text,created_at').order('created_at',{ascending:false}).limit(25).then(ok).catch(()=>[]);},
     async homeData(){
       const since=new Date(Date.now()-14*864e5).toISOString().slice(0,10),sf=p=>p.then(ok).catch(()=>[]);
-      const [fb,hi,cd,ca]=await Promise.all([
+      const [fb,hi,cd,ca,act]=await Promise.all([
         sf(sb.from('session_feedback').select('client_id,log_date,grp,intensity,feel,note,duration_min,skip_reason').gte('log_date',since).order('log_date',{ascending:false}).limit(150)),
         sf(sb.from('chat_messages').select('client_id,body,created_at').eq('kind','hito').order('created_at',{ascending:false}).limit(40)),
         sf(sb.from('client_data').select('client_id,key,value').in('key',['prefs','excom'])),
-        sf(sb.from('calls').select('client_id,starts_at').gte('starts_at',new Date().toISOString()))]);
-      return {fb,hi,cd,ca};
+        sf(sb.from('calls').select('client_id,starts_at').gte('starts_at',new Date().toISOString())),
+        DB.coachAct()]);
+      return {fb,hi,cd,ca,act};
     },
     async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level,status').eq('role','client').order('full_name'));}
   };
 }
 const DB=window.DB_MOCK||realDB();
-if(DB.saveRoutine){const _sr=DB.saveRoutine.bind(DB);DB.saveRoutine=async(cid,n,d,uid)=>{const r=await _sr(cid,n,d,uid);try{if(uid&&cid!==uid)pushPlan(cid);}catch(e){}return r;};}
+if(DB.scheduleCall){const _sc=DB.scheduleCall.bind(DB);DB.scheduleCall=async(cid,uid,iso)=>{const r=await _sc(cid,uid,iso);try{const b=bogota(iso);DB.logAct(cid,'call','Agendó llamada 1:1 para el '+b.date+' a las '+b.time);}catch(e){}return r;};}
+if(DB.updateClient){const _uc=DB.updateClient.bind(DB);DB.updateClient=async(cid,f)=>{const r=await _uc(cid,f);try{DB.logAct(cid,'cli',f.status==='active'?'Activó la cuenta y asignó el plan':f.plan?'Cambió el plan a '+f.plan:f.modules?'Cambió los módulos del cliente':'Editó datos del cliente');}catch(e){}return r;};}
+if(DB.saveRoutine){const _sr=DB.saveRoutine.bind(DB);DB.saveRoutine=async(cid,n,d,uid)=>{const r=await _sr(cid,n,d,uid);try{if(uid&&cid!==uid){pushPlan(cid);DB.logAct(cid,'prog','Actualizó el programa «'+(n||'Programa')+'» ('+(d||[]).length+' workouts)');}}catch(e){}return r;};}
 let ME=null,PROFILE=null,LG={step:'email',email:'',err:'',busy:false},CHATT=null;
 const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom','ctasks','circuits','lowE'];
 const LAST={weights:{},steps:{},slices:{},prefs:'',fb:{},profile:'',chatKey:{},photos:{},upl:{}};
@@ -2375,10 +2380,13 @@ function cpHomeData(){
 }
 function cpHomePage(){
   const {feed,al,nm,nh}=cpHomeData(),K={ses:'Workout',hito:'Logro',com:'Comentario',mol:'Molestia'};
+  const AK={prog:'Programa',task:'Tarea',call:'Llamada',cli:'Cliente'},act=((CP.home&&CP.home.act)||[]).slice(0,12);
+  const ahist=act.length?act.map(a=>{const c=nm[a.client_id]||{},dt=new Date(a.created_at),b=bogota(a.created_at);return `<button class="cpfi" data-act="cpopen" data-id="${a.client_id||''}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')} <small style="display:inline">${esc(a.text)}</small></b><small><i class="cpfk" style="font-style:normal;background:#EEF3FB;color:#2A5BA8">${AK[a.kind]||'Acción'}</i>${cpRel(b.date)} · ${b.time}</small></span></button>`;}).join(''):'<div class="note" style="padding:10px 4px">Aquí verás lo que vayas haciendo con tus clientes: programas, tareas, llamadas.</div>';
   const fh=feed.length?feed.map(f=>{const c=nm[f.cid]||{};return `<button class="cpfi" data-act="cpopen" data-id="${f.cid}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')} <small style="display:inline">${esc(f.t)}</small></b><small><i class="cpfk ${f.k}" style="font-style:normal">${K[f.k]}</i>${f.rpe?'Esfuerzo '+f.rpe+'/10 · ':''}${f.feel?esc(f.feel):''}</small>${f.q?`<span class="cpq">“${esc(f.q)}”</span>`:''}</span><em>${cpRel(f.d)}</em></button>`;}).join(''):'<div class="note">Aún no hay actividad en los últimos 14 días.</div>';
   const ah=al.length?al.map(a=>{const c=nm[a.cid]||{};return `<div class="cpal ${a.s===0?'warn':a.s===1?'':'info'}"><button class="cpalb" data-act="cpopen" data-id="${a.cid}"><i class="cpav" style="flex:none;width:34px;height:34px;font-size:12px">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')}</b><b style="font-weight:600;color:${a.s===0?'#C0392B':'inherit'}">${esc(a.t)}</b><small>${esc(a.q)}</small></span></button><button class="cpok" data-act="cpdis" data-k="${esc(a.k)}" title="Marcar como atendida">✓ Atendida</button></div>`;}).join(''):'<div class="note">Todo en orden ✓ Ningún cliente necesita tu atención ahora.</div>';
   return `<div class="cphead"><h2 class="h2" style="margin:0">Inicio</h2><em class="cpcount">${(CP.clients||[]).length} clientes</em></div>
    <div class="cphome"><section class="sec"><div class="sec-h"><b>Actividad reciente</b><em>${feed.length}</em></div>${fh}</section>
+   <section class="sec"><div class="sec-h"><b>Mi actividad como coach</b><em>${act.length}</em></div>${ahist}</section>
    <section class="sec"><div class="sec-h"><b>Necesitan tu atención</b><em>${al.length}</em></div>${ah}${nh?`<button class="lblbtn" data-act="cprestore" style="margin-top:6px">Mostrar ${nh} atendida${nh>1?'s':''}</button>`:''}</section></div>`;
 }
 function cpClientsPage(){
@@ -2475,6 +2483,10 @@ function cxSessBar(){const c=ctxFor(S.sel),ss=c.ss||[];if(ss.length<2)return '';
 function cxNotes(){const cc=cxCard(),ch=cc?`<div class="cxnote" style="background:#FDECF1;border-color:#F0BCCB"><b style="color:#D03A68">Cardio asignado por tu coach</b>${esc(((typeof CMODS!=='undefined'&&CMODS[cc.mod])||{n:'Cardio'}).n)}${cc.tier?' · '+esc(cc.tier):''}${cc.min?' · '+cc.min+' min':''}${cc.text?'<br>'+esc(cc.text):''}</div>`:'';const L=cxList().filter(t=>t.date===S.sel&&t.type==='note');return cxSessBar()+ch+L.map(t=>`<div class="cxnote"><b>Nota de tu coach</b>${esc(t.text||'')}</div>`).join('');}
 async function cpSaveTasks(list){
   const value={tasks:list};
+  try{const old=cxListOf(CP.d)||[],ids=new Set(old.map(t=>t.id)),nw=list.filter(t=>!ids.has(t.id)),TL={workout:'un entrenamiento',cardio:'cardio',note:'una nota',steps:'pasos'};
+    if(nw.length)nw.forEach(t=>DB.logAct(CP.cid,'task','Asignó '+(TL[t.type]||'una tarea')+' para el '+t.date));
+    else if(list.length<old.length)DB.logAct(CP.cid,'task','Quitó '+(old.length-list.length)+' tarea(s) asignada(s)');
+    else DB.logAct(CP.cid,'task','Editó una tarea asignada');}catch(e){}
   await DB.upsert('client_data',[{client_id:CP.cid,key:'ctasks',value,updated_at:new Date().toISOString()}],'client_id,key');
   CP.d.data=CP.d.data||{};CP.d.data.ctasks=value;pushPlan(CP.cid);
 }
@@ -3533,9 +3545,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1725';
+const APP_VER='19nov-1732';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1725')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1732')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
