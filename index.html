@@ -2430,6 +2430,10 @@ function coachRender(keepInput){
         <div class="chips">${['basic','complete','elite'].map(k=>`<button class="chip${p.plan===k?' on':''}" data-act="cpplan" data-v="${k}">${PNAME[k]}</button>`).join('')}</div>
         <div class="note">Cambiar el plan cambia lo que ve el cliente en su app.</div></section>
        <section class="sec"><div class="sec-h"><b>Pruebas</b></div><div class="note" style="margin-bottom:8px">Borra los registros de este cliente (peso, pasos, entrenamientos, feedback, hitos y niveles) para volver a probar desde cero. No borra su perfil, rutina, fotos ni chat.</div><button class="btn" data-act="cpreset" style="width:100%">Reiniciar registros y hitos</button></section>
+       <section class="sec"><div class="sec-h"><b>Hitos celebrados</b></div><div class="note" style="margin-bottom:8px">Reinicia la celebración de un hito para que el cliente la vuelva a ver (y pueda compartirla). No borra sus registros.</div>
+        ${(()=>{const bl=(CP.d.blobs||[]).find(x=>x.key==='msSeen'),L=Array.isArray(bl&&bl.value)?bl.value:[];return L.length?`<div class="chips">${L.map(t=>`<button class="chip" data-act="cphreset" data-t="${esc(t)}">↺ ${esc(t)}</button>`).join('')}</div>`:'<div class="note">Aún no tiene hitos celebrados.</div>';})()}
+        <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input type="checkbox" id="cphok"> Entiendo que se volverá a celebrar</label>
+        <button class="btn" data-act="cphreset" data-t="*" style="width:100%;margin-top:8px">Reiniciar todos los hitos</button></section>
        <section class="sec"><div class="sec-h"><b>Fidelidad</b><em>${fidSpan(fidMonths(fidSince(p)))}</em></div>
         <div class="note" style="margin-bottom:8px">Miembro desde. Para clientes de la app anterior, pon la fecha real en que empezaron contigo y el cliente verá sus hitos de fidelidad.</div>
         <input class="fld" type="date" id="cpSince" value="${fidSince(p)||''}"><button class="btn solid" data-act="cpsince" style="width:100%;margin-top:8px;padding:11px">Guardar fecha</button>
@@ -2788,6 +2792,7 @@ document.addEventListener('click',async e=>{
   else if(a==='cppf'){CP.pf=t.dataset.v;coachRender();}
   else if(a==='cpback'){clearInterval(CP.poll);CP.err='';CP.sec='clientes';coachHome();}
   else if(a==='cptab'){CP.tab=t.dataset.v;coachRender();}
+  else if(a==='cphreset'){const ok=document.getElementById('cphok');if(!ok||!ok.checked){toast('Marca "Entiendo" primero');return;}const tt=t.dataset.t,bl=(CP.d.blobs||[]).find(x=>x.key==='msSeen'),L=Array.isArray(bl&&bl.value)?bl.value:[];if(!confirm(tt==='*'?'¿Reiniciar TODOS los hitos de este cliente?':'¿Reiniciar el hito "'+tt+'"?'))return;const nx=tt==='*'?[]:L.filter(x=>x!==tt);try{await DB.upsert('client_data',[{client_id:CP.cid,key:'msSeen',value:nx,updated_at:new Date().toISOString()}],'client_id,key');if(tt==='*')await DB.upsert('client_data',[{client_id:CP.cid,key:'lvSeen',value:0,updated_at:new Date().toISOString()}],'client_id,key');if(bl)bl.value=nx;else CP.d.blobs.push({key:'msSeen',value:nx});CP.err='';coachRender();toast('Hito reiniciado ✓');}catch(x){CP.err='No se pudo reiniciar el hito.';coachRender();}}
   else if(a==='cpmod'){const cur=CP.d.profile.modules||[],v=t.dataset.v,nx=cur.includes(v)?cur.filter(x=>x!==v):cur.concat(v);try{await DB.updateClient(CP.cid,{modules:nx});CP.d.profile.modules=nx;CP.err='';coachRender();toast('Módulos actualizados ✓');}catch(x){CP.err='No se pudo actualizar.';coachRender();}}
   else if(a==='cpreset'){if(!confirm('¿Reiniciar registros y hitos de este cliente? No se puede deshacer.'))return;try{await DB.resetClient(CP.cid);CP.d=await DB.clientDetail(CP.cid);CP.err='';coachRender();toast('Registros reiniciados ✓');}catch(x){CP.err='No se pudo reiniciar.';coachRender();}}
   else if(a==='cpactivate'){try{await DB.updateClient(CP.cid,{status:'active'});CP.d.profile.status='active';const c=(CP.clients||[]).find(x=>x.id===CP.cid);if(c)c.status='active';CP.err='';coachRender();toast('Cuenta activada');pushTo&&pushTo(CP.cid,'¡Cuenta activada!','Ya puedes entrar a tu programa en ERRE.');}catch(x){CP.err='No se pudo activar.';coachRender();}}
@@ -2923,7 +2928,7 @@ function showMilestone(list,lv){
 }
 document.addEventListener('click',e=>{
   const t=e.target.closest&&e.target.closest('#msov [data-act]');
-  if(!t){const ov=document.getElementById('msov');if(ov&&e.target===ov){ov.remove();msBusy=false;}return;}
+  if(!t)return;
   const a=t.dataset.act;
   if(a==='msmute'){try{localStorage.setItem('erre_mute',sndOn()?'1':'0');}catch(x){}t.textContent=sndOn()?'🔔 Sonido activado':'🔕 Sonido apagado';if(sndOn())chime('soft');return;}
   const ov=document.getElementById('msov');if(ov){ov.remove();msBusy=false;}
@@ -3550,9 +3555,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1820';
+const APP_VER='19nov-1828';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1820')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1828')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
