@@ -608,7 +608,7 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .cptask{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--card,#fff)}.cptask>span{flex:1}.cptask small{display:block;color:var(--mut,#777)}
 .cptt{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card,#fff)}.cpth2{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:12px;cursor:pointer;text-align:left;color:inherit}.cpth2 b{flex:1;font-size:14px}.cpth2 span{color:var(--mut,#777);font-size:12px}.cpdot{width:10px;height:10px;border-radius:50%;flex:none}.cptb{padding:0 12px 12px}.cptt.soon{opacity:.55}.cptt.soon .cpth2{cursor:default}
 .cxnote{background:#EAF3FB;border:1px solid #BBD6EE;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14px}.cxnote b{display:block;font-size:12px;color:#3B82C4;margin-bottom:2px}
-.cpfull{display:block!important}.cpfull .cpside{display:none}.cpfull .cpc{min-height:100px}.cpfull .cpgrid.cpwk .cpc{min-height:280px}.cpfull .cpc.big{min-height:160px}.cpwb{margin-left:auto;font-size:12px}.cpwb+.cpnew{margin-left:0!important}button.cpk{cursor:pointer;font-family:inherit}button.cpk:hover{filter:brightness(.95)}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
+.cpfull{display:block!important}.cpfull .cpside{display:none}.cpfull .cpc{min-height:100px}.cpfull .cpgrid.cpwk .cpc{min-height:280px}.cpfull .cpc.big{min-height:160px}.cpwb{margin-left:auto;font-size:12px}.cpwb+.cpnew{margin-left:0!important}button.cpk{cursor:pointer;font-family:inherit}button.cpk:hover{filter:brightness(.95)}.cpp.card{background:#E6477A}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
 </style>
 </head>
 <body>
@@ -831,7 +831,7 @@ const restSecs=it=>it.rest||45;
 /* ---------- render ---------- */
 const og=k=>S.open[k]===undefined?(k==='g_fuerza'?1:0):S.open[k];
 function blockCount(d,b,wk){
-  if(b.cardio){return CARDIO[S.goal][wk-1]?{done:(S.cardio[cKey(d)]||{}).done?1:0,total:1}:{done:0,total:0};}
+  if(b.cardio){return cxTier(CARDIO[S.goal][wk-1])?{done:(S.cardio[cKey(d)]||{}).done?1:0,total:1}:{done:0,total:0};}
   if(b.k==='warm'&&(S.wm||'fa')==='fa')return {done:S.warmFA[cKey(d)]?1:0,total:1};
   if(b.k==='warm'||b.k==='calm'){let dn=0,tt=0;itemsOf(d,b).forEach((it,i)=>{if(b.k==='warm'&&!warmVid(d,b,i,it))return;const pr=presc(it),L=S.logs[ikey(d,b.k,i)]||[];tt++;let c=0;for(let q=0;q<pr.sets;q++)if(L[q]&&L[q].done)c++;if(pr.sets>0&&c>=pr.sets)dn++;});return {done:dn,total:tt};}
   let done=0,total=0;
@@ -889,7 +889,7 @@ function openFinish(g){
 function trainView(){
   if(S.raw<1) return calendar()+emptyCard('Tu programa empieza más adelante',`Arranca la semana del ${pd(S.start).toLocaleDateString('es-CO',{day:'numeric',month:'long'})}.`);
   if(S.day<0) return calendar()+mesoLine()+emptyCard('Día de descanso','Hoy toca recuperar. Camina y muévete suave, y cuida tu sueño: el cuerpo se adapta cuando descansas.')+`<div class="grp">Otra actividad física</div>${extrasHTML()}`;
-  const d=DAYS[S.day], P=PERIOD[S.program], wk=Math.min(S.week,P.weeks), tier=CARDIO[S.goal][wk-1];
+  const d=DAYS[S.day], P=PERIOD[S.program], wk=Math.min(S.week,P.weeks), tier=cxTier(CARDIO[S.goal][wk-1]);
   const bl=k=>d.blocks.find(b=>b.k===k);
   const G=[
    {k:'g_fuerza',t:'Entrenamiento de fuerza',s:'Calentamiento · Rutina central · Accesorios',bs:['warm','main','acc']},
@@ -1277,7 +1277,7 @@ function zoneList(set){
 }
 function cardioBlock(b,d){return cardioWrap(cardioBlock0(b,d));}
 function cardioBlock0(b,d){
-  const t=CARDIO[S.goal][Math.min(S.week,PERIOD[S.program].weeks)-1];
+  const t=cxTier(CARDIO[S.goal][Math.min(S.week,PERIOD[S.program].weeks)-1]);
   const lbl={bajar:'Bajar peso',complete:'Complete',aumentar:'Aumentar'}[S.goal];
   const open=S.open[b.k]?' open':'';
   const head=`<section class="block${open}"><button class="bh" data-act="tog" data-b="${b.k}"><span class="title">${b.t}</span><span>${t?t+' · Zona '+TIERZONE[t]:'NEAT · Zona 1–2'}</span></button><div class="bb"><div class="cardio">`;
@@ -1288,7 +1288,7 @@ function cardioBlock0(b,d){
     <div class="note">${meas0==='reloj'?(bp0?`Mantén tu pulso por debajo de <b>${Math.round(m*.7)} lpm</b> (zonas 1 y 2: ${bp0}).`:`Para calcular tus zonas necesitamos tu edad.<div class="wr" style="margin-top:8px"><input id="zAgeC" inputmode="numeric" placeholder="Tu edad"><button class="btn solid" data-act="zagec">Calcular</button></div>`):'Debes poder hablar con total facilidad o con una conversación fluida.'}</div>
     ${zoneList([1,2])}
     <div class="grp" style="margin-top:14px">Otro cardio</div>${extrasHTML()}</div></div></section>`;}
-  const z=TIERZONE[t], Z=ZONES[z-1], c=S.cardio[cKey(d)]||{}, mod=c.mod||d.cardioDefault, m=CMODS[mod], isDef=mod===d.cardioDefault, meas=S.cm||'reloj', bp=bpmRange(Z);
+  const z=TIERZONE[t], Z=ZONES[z-1], c=S.cardio[cKey(d)]||{}, dm=((cxCard()||{}).mod)||d.cardioDefault, mod=c.mod||dm, m=CMODS[mod], isDef=mod===dm, meas=S.cm||'reloj', bp=bpmRange(Z);
   const chips=Object.entries(CMODS).map(([id,x])=>`<button class="chip${id===mod?' on':''}" data-act="cmod" data-v="${id}">${x.n}</button>`).join('');
   const reloj=bp?`Mantén tu pulso entre <b>${bp}</b>. En tu reloj, busca la zona ${z} (el color cambia según la marca).`:`Para calcular tus zonas necesitamos tu edad.<div class="wr" style="margin-top:8px"><input id="zAgeC" inputmode="numeric" placeholder="Tu edad"><button class="btn solid" data-act="zagec">Calcular</button></div>`;
   const tip={2:'Si te falta el aire para hablar con frases completas, baja el ritmo.',3:'Si ya no puedes decir frases cortas, baja un poco el ritmo.'}[z]||'';
@@ -2313,15 +2313,17 @@ function cxSync(){
   for(let i=DAYS.length-1;i>=0;i--)if(DAYS[i].x)DAYS.splice(i,1);
   cxList().forEach(t=>{if(t.type==='workout'&&t.day){const d=JSON.parse(JSON.stringify(t.day));d.id='x'+t.id;d.x=1;d.label=t.title||d.name||'Workout';DAYS.push(d);}});
 }
+function cxCard(){return cxList().filter(t=>t.date===S.sel&&t.type==='cardio').pop()||null;}
+const cxTier=t=>((cxCard()||{}).tier)||t;
 function cxOv(date){const L=cxList().filter(t=>t.date===date);return L.find(t=>t.type==='rest')||L.find(t=>t.type==='workout')||null;}
-function cxNotes(){const L=cxList().filter(t=>t.date===S.sel&&t.type==='note');return L.map(t=>`<div class="cxnote"><b>Nota de tu coach</b>${esc(t.text||'')}</div>`).join('');}
+function cxNotes(){const cc=cxCard(),ch=cc?`<div class="cxnote" style="background:#FDECF1;border-color:#F0BCCB"><b style="color:#D03A68">Cardio asignado por tu coach</b>${esc(((typeof CMODS!=='undefined'&&CMODS[cc.mod])||{n:'Cardio'}).n)}${cc.tier?' · '+esc(cc.tier):''}${cc.min?' · '+cc.min+' min':''}${cc.text?'<br>'+esc(cc.text):''}</div>`:'';const L=cxList().filter(t=>t.date===S.sel&&t.type==='note');return ch+L.map(t=>`<div class="cxnote"><b>Nota de tu coach</b>${esc(t.text||'')}</div>`).join('');}
 async function cpSaveTasks(list){
   const value={tasks:list};
   await DB.upsert('client_data',[{client_id:CP.cid,key:'ctasks',value,updated_at:new Date().toISOString()}],'client_id,key');
   CP.d.data=CP.d.data||{};CP.d.data.ctasks=value;
 }
 const cpTid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-const CPT_SOON=['Cardio','Vídeo','Nutrición','Documento','Registrar evolución','Sesión presencial / online','Programar mensaje','Formulario'];
+const CPT_SOON=['Vídeo','Nutrición','Documento','Registrar evolución','Sesión presencial / online','Programar mensaje','Formulario'];
 function cpTaskModal(){
   const m=CP.tm;if(!m){const o=document.getElementById('cptm');if(o)o.remove();return;}
   let o=document.getElementById('cptm');if(!o){o=document.createElement('div');o.id='cptm';o.className='cpdv';document.body.appendChild(o);}
@@ -2332,6 +2334,7 @@ function cpTaskModal(){
    ${T('workout','Workout','#F0A020',`<select class="fld" id="cptW"><option value="">Elige el entrenamiento…</option>${progDays.length?`<optgroup label="Días del programa del cliente">${progDays.map((d,i)=>`<option value="p:${i}">${esc(d.label||('Día '+(i+1)))} · ${esc(d.name||'')}</option>`).join('')}</optgroup>`:''}${wk.length?`<optgroup label="Workouts guardados">${wk.map(t=>`<option value="w:${t.id}">${esc(t.name)}</option>`).join('')}</optgroup>`:''}</select><div class="note">Reemplaza el entrenamiento que le tocaba ese día. Si no le tocaba ninguno, se suma como un día extra.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Asignar workout</button>`)}
    ${T('rest','Descanso','#8A8F98',`<div class="note">El cliente verá ese día como descanso y no tendrá entrenamiento.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Marcar descanso</button>`)}
    ${T('note','Nota para el cliente','#3B82C4',`<textarea class="fld" id="cptN" rows="3" placeholder="Ej. Hoy prioriza técnica, baja el peso un 10 %."></textarea><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Guardar nota</button>`)}
+   ${T('cardio','Cardio','#E6477A',`<label class="pfl">Qué cardio</label><select class="fld" id="cptCm">${cpModOpts('camin_cam')}</select><label class="pfl">Intensidad</label><select class="fld" id="cptCt"><option value="">Según el plan</option><option value="Base">Base · 20-40 min</option><option value="Moderado">Moderado · 10-25 min</option></select><label class="pfl">Minutos (opcional)</label><input class="fld" id="cptCn" inputmode="numeric" placeholder="Ej. 20"><label class="pfl">Nota (opcional)</label><input class="fld" id="cptCx" placeholder="Ej. Después de pierna"><div class="note">Si ese día ya tiene entrenamiento con cardio, reemplaza el cardio del plan. Si es descanso, el cliente lo ve como cardio asignado.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Asignar cardio</button>`)}
    <div class="cptt"><button class="cpth2" data-act="cptprog"><i class="cpdot" style="background:#777"></i><b>Asignar programa</b><span>›</span></button></div>
    ${CPT_SOON.map(n=>`<div class="cptt soon"><div class="cpth2"><i class="cpdot" style="background:#ccc"></i><b>${n}</b><span>Próximamente</span></div></div>`).join('')}</div>`;
 }
@@ -2371,6 +2374,7 @@ function cpPlanBody(){
       const w=S.weights[dt],stp=S.steps[dt],pct=inf.total?Math.round(inf.done/inf.total*100):0;
       const pills=(inf.d?`<button class="cpp ${st}" data-act="cpday" data-v="${dt}" title="${esc(inf.d.name||'')}"><i>${st==='ok'?'✓':st==='part'?pct+'%':st==='miss'?'!':'•'}</i><span>${inf.d.x?'':'Día '+inf.n+'<em> · '}${esc(inf.d.x?(inf.d.label||inf.d.name||'Workout'):(inf.d.name||''))}${inf.d.x?'':'</em>'}</span></button>`:'')
         +L.filter(t=>t.type==='rest').map(t=>`<button class="cpp rest" data-act="cpday" data-v="${dt}"><i>☾</i><span>Descanso</span></button>`).join('')
+        +L.filter(t=>t.type==='cardio'&&!inf.d).map(t=>`<button class="cpp card" data-act="cpday" data-v="${dt}"><i>🏃</i><span>Cardio${t.min?' · '+t.min+' min':''}</span></button>`).join('')
         +L.filter(t=>t.type==='note').map(t=>`<button class="cpp note" data-act="cpday" data-v="${dt}"><i>✎</i><span>${esc(t.text||'Nota')}</span></button>`).join('');
       return `<div class="cpc${inM?'':' out'}${dt===tdy?' tdy':''}${big?' big':''}" data-act="cptnew" data-v="${dt}"><button class="cpcn" data-act="cptnew" data-v="${dt}">${big?fdate(dt)+' ':''}${+dt.slice(8)}</button>${pills}${cpDefs(dt,big||vw==='sem')}</div>`;
     };
@@ -2404,13 +2408,23 @@ function cpDefs(dt,lab){
   return `<div class="cpks">${out.join('')}</div>`;
 }
 function cpCardioInfo(d,dt){
-  const tier=CARDIO[S.goal]&&CARDIO[S.goal][Math.min(S.week,PERIOD[S.program].weeks)-1];if(!tier)return null;
-  const c=S.cardio[cKey(d)]||{},mod=c.mod||d.cardioDefault,m=(typeof CMODS!=='undefined'&&CMODS[mod])||null;
-  return {tier,done:!!c.done,mod:m?m.n:'',txt:CARDIO_TXT[tier]||'',dur:(typeof DUR!=='undefined'&&DUR[tier])||'',ex:(S.cardioX[dt]||[])};
+  const ov=cxCard(),tier=((ov||{}).tier)||(CARDIO[S.goal]&&CARDIO[S.goal][Math.min(S.week,PERIOD[S.program].weeks)-1]);if(!tier)return null;
+  const c=S.cardio[cKey(d)]||{},mod=c.mod||(ov&&ov.mod)||d.cardioDefault,m=(typeof CMODS!=='undefined'&&CMODS[mod])||null;
+  return {tier,done:!!c.done,mod:m?m.n:'',txt:CARDIO_TXT[tier]||'',dur:(typeof DUR!=='undefined'&&DUR[tier])||'',ex:(S.cardioX[dt]||[]),ov:ov,dmod:(ov&&ov.mod)||d.cardioDefault};
 }
 function cpCardioChip(dt,lab,tdy){
   return withDate(dt,()=>{const c=ctxFor(dt);if(!c.d)return '';const ci=cpCardioInfo(c.d,dt);if(!ci)return '';
     const st=ci.done?'ok':dt<tdy?'miss':'plan';return `<button class="cpk ${st}" data-act="cpchip" data-v="${dt}|cardio" title="Cardio ${ci.tier}${ci.mod?' · '+esc(ci.mod):''}">🏃${lab?' Cardio '+ci.tier:''}</button>`;});
+}
+const cpModOpts=sel=>Object.entries(CMODS).map(([id,x])=>`<option value="${id}"${id===sel?' selected':''}>${esc(x.n)}</option>`).join('');
+function cpCardForm(dt,ci,dy){
+  return `<div class="cptt" style="margin-top:12px"><div class="cptb" style="padding:12px"><b style="font-size:13px">Editar el cardio</b>
+   <label class="pfl">Qué cardio</label><select class="fld" id="cpEm">${cpModOpts(ci.dmod)}</select>
+   <label class="pfl">Intensidad</label><select class="fld" id="cpEt"><option value="">Según el plan (${ci.ov&&ci.ov.tier?'plan':ci.tier})</option><option value="Base"${ci.ov&&ci.ov.tier==='Base'?' selected':''}>Base · 20-40 min</option><option value="Moderado"${ci.ov&&ci.ov.tier==='Moderado'?' selected':''}>Moderado · 10-25 min</option></select>
+   <label class="pfl">Minutos (opcional)</label><input class="fld" id="cpEn" inputmode="numeric" value="${ci.ov&&ci.ov.min||''}" placeholder="Ej. 20">
+   <label class="pfl">Nota para el cliente (opcional)</label><input class="fld" id="cpEx" value="${esc((ci.ov&&ci.ov.text)||'')}" placeholder="Ej. Hazlo después de pierna">
+   <button class="btn solid" data-act="cpcard" data-v="${dt}|day" style="width:100%;margin-top:8px">Guardar solo para este día</button>
+   ${dy&&!dy.x?`<button class="btn" data-act="cpcard" data-v="${dt}|routine" style="width:100%;margin-top:6px">Cambiar el cardio de este día en la rutina</button><div class="note" style="margin-top:6px">Esa opción cambia la modalidad en todas las semanas.</div>`:''}</div></div>`;
 }
 function cpChipHTML(dt,key){
   return cpWith(()=>withDate(dt,()=>{
@@ -2420,7 +2434,7 @@ function cpChipHTML(dt,key){
     else if(key==='sueno'){const n=(d.sleep||{})[dt];title='Sueño';ok=!!(n&&(n.h!=null||n.q));body=ok?row('Horas dormidas',n.h!=null?fmtHM(n.h):'—')+row('Calidad / energía',(n.q?'Calidad '+n.q:'—')+(n.e?' · Energía '+n.e:''))+((n.tags&&n.tags.length)?row('Contexto',n.tags.map(esc).join(' · ')):'')+(n.note?row('Nota','“'+esc(n.note)+'”'):''):row('Sin registro','No registró el sueño este día.');msg='No vi tu registro de sueño del '+f+'. Cuando puedas, cuéntame cómo dormiste.';}
     else if(key==='pasos'){const st=S.steps[dt],g=p.step_goal||8000;title='Pasos';ok=st>=g;body=row('Pasos',st?st.toLocaleString('es-CO')+' de '+g.toLocaleString('es-CO')+' ('+Math.round(st/g*100)+'%)':'Sin registro');msg=st?'Vi que el '+f+' quedaste en '+st.toLocaleString('es-CO')+' pasos. ¡Vamos por la meta!':'No vi tus pasos del '+f+'. Acuérdate de registrarlos.';}
     else if(key==='foto'){const ph=(d.photos||[]).filter(x=>x.taken_at===dt),AN={front:'De frente',side:'De lado',back:'De espalda'};title='Foto de progreso';body=row('Fotos subidas',ph.map(x=>AN[x.angle]||x.angle).join(' · ')||'—')+row('Mes',ph[0]?ph[0].month:'—');}
-    else if(key==='cardio'){const dy=ctxFor(dt).d,ci=dy&&cpCardioInfo(dy,dt);title='Cardio planificado';if(ci){ok=ci.done;body=row('Tipo',ci.tier+(ci.dur?' · '+esc(ci.dur):''))+row('Qué hacer',esc(ci.txt))+(ci.mod?row('Modalidad programada',esc(ci.mod)):'')+row('Estado',ci.done?'Hecho ✓':'Pendiente')+(ci.ex.length?row('Otro cardio registrado',ci.ex.map(x=>esc(x.name)+' '+x.min+' min').join(' · ')):'');msg=ci.done?'¡Muy bien con tu cardio del '+f+'! Sigue así 💪':'No vi tu cardio del '+f+'. Cuando puedas, hazlo y márcalo en la app.';}else body=row('Sin cardio','No hay cardio planificado este día.');}
+    else if(key==='cardio'){const dy=ctxFor(dt).d,ci=dy&&cpCardioInfo(dy,dt);title='Cardio planificado';if(ci){ok=ci.done;body=row('Tipo',ci.tier+(ci.dur?' · '+esc(ci.dur):''))+row('Qué hacer',esc(ci.txt))+(ci.mod?row('Modalidad programada',esc(ci.mod)):'')+row('Estado',ci.done?'Hecho ✓':'Pendiente')+(ci.ov?row('Asignado para este día',(ci.ov.min?ci.ov.min+' min · ':'')+(ci.ov.tier||'')+(ci.ov.text?' · “'+esc(ci.ov.text)+'”':'')):'')+(ci.ex.length?row('Otro cardio registrado',ci.ex.map(x=>esc(x.name)+' '+x.min+' min').join(' · ')):'')+cpCardForm(dt,ci,dy);msg=ci.done?'¡Muy bien con tu cardio del '+f+'! Sigue así 💪':(dt>today()?'Para el '+f+' te dejé cardio en tu plan. Revísalo en tu app.':'No vi tu cardio del '+f+'. Cuando puedas, hazlo y márcalo en la app.');}else body=row('Sin cardio','No hay cardio planificado este día.');}
     else{const T=TASKS[key],t=tk();title=({recovery:'Respiración',habitos:'Hábitos',alim:'Alimentación'})[key]||key;const done=T.items.filter(x=>t[key+'.'+x.id]).length;ok=done>=T.items.length;body=T.items.map(x=>`<div class="pfrow"><span><b>${t[key+'.'+x.id]?'✓':'○'} ${esc(x.t||x.n||x.id)}</b></span></div>`).join('');msg='No vi tus tareas de '+title+' del '+f+'. Ánimo, ¡tú puedes!';}
     if(ok&&key!=='foto'&&key!=='pasos'&&key!=='cardio')msg='¡Muy bien con tu registro de '+title.toLowerCase()+' del '+f+'! Sigue así 💪';
     return `<div class="cpdhd"><div><b>${esc(title)}</b><small>${fmtL(dt)}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div>${body}${key!=='foto'?`<label class="pfl" style="margin-top:12px">Mensaje al cliente</label><textarea class="fld" id="cpRm" rows="3">${esc(msg)}</textarea><button class="btn solid" data-act="cpremind" style="width:100%;margin-top:8px">Enviar por chat</button>`:''}`;
@@ -2431,7 +2445,7 @@ const cpHas=dt=>{const i=cpDayInfo(dt);return !!i.d||cxList().some(t=>t.date===d
 function cpDayHTML(date){
   const d=CP.d;
   return cpWith(()=>withDate(date,()=>{
-    const inf=cpDayInfo(date),TL=cxList().filter(t=>t.date===date),tlh=`<div class="cpdhd"><div><b>${fmtL(date)}</b><small>${inf.d?'Entrenamiento y tareas':'Tareas del día'}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div><button class="btn solid" data-act="cptnew" data-v="${date}" style="width:100%;margin-bottom:10px">+ Tarea</button>${TL.map(t=>`<div class="cptask"><span><b>${t.type==='workout'?'Workout · '+esc(t.title||''):t.type==='rest'?'Descanso':'Nota'}</b>${t.type==='note'?'<small>'+esc(t.text||'')+'</small>':''}</span><button class="cpdx" data-act="cptdel" data-id="${t.id}" aria-label="Quitar">✕</button></div>`).join('')}`;
+    const inf=cpDayInfo(date),TL=cxList().filter(t=>t.date===date),tlh=`<div class="cpdhd"><div><b>${fmtL(date)}</b><small>${inf.d?'Entrenamiento y tareas':'Tareas del día'}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div><button class="btn solid" data-act="cptnew" data-v="${date}" style="width:100%;margin-bottom:10px">+ Tarea</button>${TL.map(t=>`<div class="cptask"><span><b>${t.type==='workout'?'Workout · '+esc(t.title||''):t.type==='rest'?'Descanso':t.type==='cardio'?'Cardio · '+esc(((typeof CMODS!=='undefined'&&CMODS[t.mod])||{n:''}).n)+(t.tier?' · '+t.tier:'')+(t.min?' · '+t.min+' min':''):'Nota'}</b>${t.type==='note'?'<small>'+esc(t.text||'')+'</small>':''}</span><button class="cpdx" data-act="cptdel" data-id="${t.id}" aria-label="Quitar">✕</button></div>`).join('')}`;
     if(!inf.d)return tlh+(TL.length?'':'<p class="lead">Ese día no tiene entrenamiento programado ni tareas.</p>');
     const dy=inf.d,st=cpSt(inf,date),pct=inf.total?Math.round(inf.done/inf.total*100):0,ec=(d.data&&d.data.excom)||d.excom||{};
     let sets=0,vol=0,fe=null;
@@ -2472,6 +2486,12 @@ document.addEventListener('click',async e=>{
     if(dy.x){const tk2=cxListOf(CP.d).find(x=>'x'+x.id===dy.id);if(!tk2)return;rtOpen('client',{cid:CP.cid,name:'Workout asignado',days:[tk2.day]});RT.xt=tk2.id;RT.sel=0;rtShow();}
     else{const ix=((CP.routine&&CP.routine.days)||[]).findIndex(x=>x.id===dy.id);if(ix<0){toast('No se encontró ese día en la rutina');return;}rtOpen('client',{cid:CP.cid,name:CP.routine.name,days:CP.routine.days});RT.sel=ix;rtShow();}
     return;}
+  if(a==='cpcard'){const [date,sc]=t.dataset.v.split('|'),g=id=>((document.getElementById(id)||{}).value||'').trim(),mod=g('cpEm'),tier=g('cpEt'),mn=+g('cpEn')||0,tx=g('cpEx');
+    try{
+      if(sc==='day'){const task={id:cpTid(),date,type:'cardio',title:'Cardio',mod,tier,min:mn,text:tx,by:'coach',at:Date.now()};await cpSaveTasks(cxListOf(CP.d).filter(x=>!(x.date===date&&x.type==='cardio')).concat(task));toast('Cardio asignado para ese día ✓');}
+      else{const dy=cpWith(()=>withDate(date,()=>ctxFor(date).d)),ix=dy?((CP.routine&&CP.routine.days)||[]).findIndex(x=>x.id===dy.id):-1;if(ix<0){toast('No se encontró ese día en la rutina');return;}
+        CP.routine.days[ix].cardioDefault=mod;await DB.saveRoutine(CP.cid,CP.routine.name,CP.routine.days,ME.id);toast('Cardio de la rutina actualizado ✓');}
+      cpDayClose();coachRender();}catch(x){console.warn(x);toast('No se pudo guardar el cardio');}return;}
   if(a==='cpview'){CP.cv=t.dataset.v;coachRender();return;}
   if(a==='cptnew'){CP.tm={date:t.dataset.v||today(),type:'workout'};cpTaskModal();return;}
   if(a==='cptclose'){CP.tm=null;cpTaskModal();return;}
@@ -2485,8 +2505,9 @@ document.addEventListener('click',async e=>{
       if(!day){toast('No se encontró ese entrenamiento');return;}
       task.day=JSON.parse(JSON.stringify(day));task.title=day.name||day.label||'Workout';}
     else if(type==='note'){const tx=((document.getElementById('cptN')||{}).value||'').trim();if(!tx){toast('Escribe la nota');return;}task.text=tx;}
+    else if(type==='cardio'){task.mod=(document.getElementById('cptCm')||{}).value||'camin_cam';task.tier=(document.getElementById('cptCt')||{}).value||'';task.min=+((document.getElementById('cptCn')||{}).value)||0;task.text=(((document.getElementById('cptCx')||{}).value)||'').trim();task.title='Cardio';}
     else if(type!=='rest')return;
-    try{const keep=cxListOf(CP.d).filter(x=>!(x.date===date&&(type==='rest'||type==='workout')&&(x.type==='rest'||x.type==='workout')));await cpSaveTasks(keep.concat(task));CP.tm=null;cpTaskModal();coachRender();cpDayOpen(date);toast('Tarea asignada ✓ El cliente la verá al abrir su app');}catch(x){console.warn(x);toast('No se pudo guardar la tarea');}return;}
+    try{const keep=cxListOf(CP.d).filter(x=>!(x.date===date&&((type==='rest'||type==='workout')&&(x.type==='rest'||x.type==='workout')||(type==='cardio'&&x.type==='cardio'))));await cpSaveTasks(keep.concat(task));CP.tm=null;cpTaskModal();coachRender();cpDayOpen(date);toast('Tarea asignada ✓ El cliente la verá al abrir su app');}catch(x){console.warn(x);toast('No se pudo guardar la tarea');}return;}
   if(a==='cpdclose'){cpDayClose();return;}
   if(a==='cpcal'){const v=+t.dataset.v,vw=CP.cv||'mes',cd=CP.cd||today();
     if(!v)CP.cd=today();else if(vw==='sem')CP.cd=addD(cd,7*v);else if(vw==='dia')CP.cd=addD(cd,v);else{const [y,m]=cd.split('-').map(Number),n=new Date(y,m-1+v,1,12);CP.cd=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-01';}
@@ -2666,7 +2687,7 @@ function preOpen(k){
     title='Vuelta a la calma';sub=`Semana ${wk} de ${P.weeks}`;
     desc=`${nC?nC+' estiramientos':'Estiramientos'} y respiración para bajar el ritmo y empezar a recuperar. Sin prisa: respira profundo en cada posición.`;
   }else{
-    const t=CARDIO[S.goal][wk-1];
+    const t=cxTier(CARDIO[S.goal][wk-1]);
     title='Cardio de hoy';sub=`Semana ${wk} de ${P.weeks} · ${t?DUR[t]:'15–35 min'}`;
     desc=t?`${t} · Zona ${TIERZONE[t]}. Un ritmo en el que puedas mantener el control de tu respiración.`:'Semana de NEAT: movimiento suave en zonas 1–2, sin buscar intensidad.';
   }
