@@ -614,7 +614,7 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .cpfi .cpq{display:block;font-size:13px;margin-top:4px;color:inherit}
 .cpfk{display:inline-block;font-size:10px;font-weight:700;border-radius:6px;padding:1px 6px;margin-right:6px;color:#fff;background:#E88A2A}.cpfk.hito{background:#D4A937}.cpfk.com{background:#3B82C4}.cpfk.mol{background:#C0392B}
 .cpal{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:1px solid var(--line);border-left:4px solid #D4A937;border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--card,#fff);cursor:pointer;color:inherit;font-family:inherit}.cpal.warn{border-left-color:#C0392B}.cpal.info{border-left-color:#3B82C4}.cpal b{display:block;font-size:14px}.cpal small{display:block;color:var(--mut,#777);font-size:12px;margin-top:2px}
-.cprep{display:flex;align-items:center;gap:8px;margin:4px 0 10px;font-size:14px}.cprep span{flex:1}.cprepb{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.cpal{padding:0;gap:0;align-items:stretch}.cpalb{flex:1;display:flex;gap:10px;align-items:flex-start;text-align:left;background:none;border:0;padding:10px 12px;cursor:pointer;color:inherit;font-family:inherit;min-width:0}.cpalb>span{flex:1;min-width:0}.cpalb b{display:block;font-size:14px}.cpalb small{display:block;color:var(--mut,#777);font-size:12px;margin-top:2px}.cpok{flex:none;align-self:center;margin-right:10px;background:none;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:11px;cursor:pointer;color:inherit;font-family:inherit}.cpok:hover{border-color:#2E9D6B;color:#2E9D6B}.cpc.cpdrop{outline:2px dashed #D03A68;outline-offset:-2px;background:#FDECF1}.cpp[draggable=true]{cursor:grab}.cpmvb{padding:4px 2px 2px;color:#1a1a1a}.cpmvb p{margin:0 0 14px;font-size:14px;line-height:1.4;color:#1a1a1a}.cpmvb>div{display:flex;gap:8px;flex-wrap:wrap}.cpmvbt{flex:1;min-width:90px;padding:11px 14px;border-radius:10px;border:1px solid #d5d5d5;background:#fff;color:#1a1a1a;font:600 14px inherit;font-family:inherit;cursor:pointer}.cpmvbt.pri{background:#111;border-color:#111;color:#fff}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
+.cprep{display:flex;align-items:center;gap:8px;margin:4px 0 10px;font-size:14px}.cprep span{flex:1}.cprepb{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.cpal{padding:0;gap:0;align-items:stretch}.cpalb{flex:1;display:flex;gap:10px;align-items:flex-start;text-align:left;background:none;border:0;padding:10px 12px;cursor:pointer;color:inherit;font-family:inherit;min-width:0}.cpalb>span{flex:1;min-width:0}.cpalb b{display:block;font-size:14px}.cpalb small{display:block;color:var(--mut,#777);font-size:12px;margin-top:2px}.cpok{flex:none;align-self:center;margin-right:10px;background:none;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:11px;cursor:pointer;color:inherit;font-family:inherit}.cpok:hover{border-color:#2E9D6B;color:#2E9D6B}.cpc.cpdrop{outline:2px dashed #D03A68;outline-offset:-2px;background:#FDECF1}.cpp[draggable=true]{cursor:grab}.cpmvb{padding:4px 2px 2px;color:#1a1a1a}.cpmvb p{margin:0 0 14px;font-size:14px;line-height:1.4;color:#1a1a1a}.cpmvb>div{display:flex;gap:8px;flex-wrap:wrap}.cpmvbt{flex:1;min-width:90px;padding:11px 14px;border-radius:10px;border:1px solid #d5d5d5;background:#fff;color:#1a1a1a;font:600 14px inherit;font-family:inherit;cursor:pointer}.cpmvbt.pri{background:#111;border-color:#111;color:#fff}.rttabs{display:flex;gap:4px;overflow-x:auto;margin:14px 0 8px;padding-bottom:2px;border-bottom:1px solid var(--line,#e3e3e3);position:sticky;top:0;background:var(--bg,#fff);z-index:3}.rttab{flex:none;padding:10px 12px;border:0;background:none;font:600 14px inherit;font-family:inherit;color:#777;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}.rttab.on{color:#C0392B;border-bottom-color:#C0392B}.rttab em{font-style:normal;font-size:11px;background:#eee;color:#555;border-radius:9px;padding:1px 6px;margin-left:5px}.rttab.on em{background:#FDECF1;color:#C0392B}.cpbt{margin:0 0 10px;display:flex;gap:6px;flex-wrap:wrap}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
 </style>
 </head>
 <body>
@@ -2552,8 +2552,9 @@ function cpDayHTML(date){
     const dy=inf.d,st=cpSt(inf,date),pct=inf.total?Math.round(inf.done/inf.total*100):0,ec=(d.data&&d.data.excom)||d.excom||{};
     let sets=0,vol=0,fe=null;
     const fbs=['g_fuerza','g_cardio','g_calm'].map(g=>({g,f:S.fb[cKey(dy)+'|'+g]})).filter(x=>x.f);
-    const blocks=dy.blocks.map(b=>{
-      if(b.cardio){const ci=cpCardioInfo(dy,date);if(!ci)return '';return `<div class="cpdb">Cardio</div><div class="cpde"><div class="cpdn"><span><b>Cardio ${ci.tier}${ci.mod?' · '+esc(ci.mod):''}</b><small>${esc(ci.dur)}${ci.dur?' · ':''}${esc(ci.txt)}</small></span><span class="cpdt ${ci.done?'ok':'pe'}">${ci.done?'Completado':'Pendiente'}</span></div>${ci.ex.map(x=>`<div class="cpcm" style="background:var(--card,#fff);border-color:var(--line)"><b style="color:inherit">Otro cardio</b>${esc(x.name)} · ${x.min} min${x.hr?' · '+x.hr+' lpm':''}${x.note?'<br>“'+esc(x.note)+'”':''}</div>`).join('')}</div>`;}
+    const BT_N={warm:'Calentamiento',main:'Rutina central',acc:'Accesorios',cardio:'Cardio',calm:'Vuelta a la calma'};
+    const blocksA=dy.blocks.map(b=>{
+      if(b.cardio){const ci=cpCardioInfo(dy,date);if(!ci)return null;return {k:'cardio',h:`<div class="cpdb">Cardio</div><div class="cpde"><div class="cpdn"><span><b>Cardio ${ci.tier}${ci.mod?' · '+esc(ci.mod):''}</b><small>${esc(ci.dur)}${ci.dur?' · ':''}${esc(ci.txt)}</small></span><span class="cpdt ${ci.done?'ok':'pe'}">${ci.done?'Completado':'Pendiente'}</span></div>${ci.ex.map(x=>`<div class="cpcm" style="background:var(--card,#fff);border-color:var(--line)"><b style="color:inherit">Otro cardio</b>${esc(x.name)} · ${x.min} min${x.hr?' · '+x.hr+' lpm':''}${x.note?'<br>“'+esc(x.note)+'”':''}</div>`).join('')}</div>`};}
       const items=itemsOf(dy,b).map((it,i)=>{
         if(b.k==='warm'&&typeof warmVid==='function'&&!warmVid(dy,b,i,it))return '';
         const id=curEx(dy,b.k,i,it),e=E[id]||{},pr=presc(it),L=S.logs[ikey(dy,b.k,i)]||[],sw=id!==it.ex;
@@ -2563,8 +2564,11 @@ function cpDayHTML(date){
         const cm=(ec[id]||[]).filter(c=>c.d===date);
         return `<div class="cpde"><div class="cpdn"><span class="cpth">${typeof thumb==='function'?thumb(id,'sm'):''}</span><span><b>${esc(e.n||id)}</b>${sw?'<small class="cpsw">Sustituido</small>':''}<small>${pr.sets} series × ${esc(String(pr.reps))}${pr.rest&&pr.rest!=='—'?' · descanso '+esc(String(pr.rest)):''}</small></span><span class="cpdt ${stt}">${stt==='ok'?'Completado':stt==='pa'?'Parcial':'Pendiente'}</span></div>
           <div class="cpsrs">${rows.join('')}</div>${cm.map(c=>`<div class="cpcm"><b>💬 Comentario del cliente</b>${esc(c.t)}</div>`).join('')}</div>`;}).join('');
-      return items?`<div class="cpdb">${SUBT[b.k]||b.t||b.k}</div>${items}`:'';
-    }).join('');
+      return items?{k:b.k,h:`<div class="cpdb">${SUBT[b.k]||b.t||b.k}</div>${items}`}:null;
+    }).filter(Boolean);
+    const bsel=CP.bt&&blocksA.some(x=>x.k===CP.bt)?CP.bt:'all';
+    const btabs=blocksA.length>1?`<div class="chips cpbt"><button class="chip${bsel==='all'?' on':''}" data-act="cpbt" data-v="all">Todo</button>${blocksA.map(x=>`<button class="chip${bsel===x.k?' on':''}" data-act="cpbt" data-v="${x.k}">${BT_N[x.k]||x.k}</button>`).join('')}</div>`:'';
+    const blocks=btabs+blocksA.filter(x=>bsel==='all'||x.k===bsel).map(x=>x.h).join('');
     const feel=fbs.map(x=>x.f.feel).filter(Boolean)[0],notes=fbs.filter(x=>x.f.note);
     const edb=`<button class="btn" data-act="cpedit" data-v="${date}" style="width:100%;margin:0 0 6px">✎ Editar este entrenamiento</button><div class="note" style="margin:0 0 10px">${dy.x?'Edita solo este workout asignado.':'Se abre en el editor de rutinas. El cambio aplica a este día de la rutina en todas las semanas.'}</div>`;
     return tlh+edb+`<div class="cpdb" style="background:#C0392B">${dy.x?esc(dy.label||dy.name||'Workout'):'Día '+inf.n+' · '+esc(dy.name||'')}</div>
@@ -2574,9 +2578,9 @@ function cpDayHTML(date){
   }));
 }
 function cpDayOpen(date){
-  cpDayClose();const o=document.createElement('div');o.id='cpdv';o.className='cpdv';o.innerHTML=`<div class="cpdc">${cpDayHTML(date)}</div>`;document.body.appendChild(o);document.body.style.overflow='hidden';
+  cpDayClose();CP.dayOpen=date;const o=document.createElement('div');o.id='cpdv';o.className='cpdv';o.innerHTML=`<div class="cpdc">${cpDayHTML(date)}</div>`;document.body.appendChild(o);document.body.style.overflow='hidden';
 }
-function cpDayClose(){const o=document.getElementById('cpdv');if(o)o.remove();document.body.style.overflow='';}
+function cpDayClose(){CP.dayOpen=null;const o=document.getElementById('cpdv');if(o)o.remove();document.body.style.overflow='';}
 document.addEventListener('click',e=>{if(e.target.id==='cpdv')cpDayClose();});
 document.addEventListener('click',async e=>{
   const t=e.target.closest('[data-act]');if(!t||!PROFILE||PROFILE.role!=='coach')return;const a=t.dataset.act;
@@ -2599,6 +2603,7 @@ document.addEventListener('click',async e=>{
   if(a==='cpview'){CP.cv=t.dataset.v;coachRender();return;}
   if(a==='cptnew'){CP.tm={date:t.dataset.v||today(),type:'workout'};cpTaskModal();return;}
   if(a==='cptclose'){CP.tm=null;cpTaskModal();return;}
+  if(a==='cpbt'){CP.bt=t.dataset.v;const dc=document.querySelector('#cpdv .cpdc');if(dc&&CP.dayOpen)dc.innerHTML=cpDayHTML(CP.dayOpen);return;}
   if(a==='cpmvno'){CP.mv=null;cpMvModal();return;}
   if(a==='cpmvdo'){await cpMvDo(t.dataset.m);return;}
   if(a==='cprep'){cpTmSync();CP.tm.rep=t.dataset.v==='1';if(CP.tm.rep&&!(CP.tm.rd||[]).length)CP.tm.rd=[wdOf(CP.tm.date)];cpTaskModal();return;}
@@ -3514,14 +3519,20 @@ function rtEditorHTML(){
   if(!d)return hdr+'<div class="note">Aún no hay días. Pulsa "+ Día".</div>';
   const warn=rtWarn(d);
   let num=0;
-  const blocks=['warm','main','acc','calm'].map(bk=>{const b=rtBlock(d,bk);if(!b)return '';
-    return `<section class="sec"><div class="sec-h"><b>${RT_BT[bk]}</b><em>${b.items.length}</em></div>${b.items.map((it,ii)=>rtItemHTML(RT.sel,bk,ii,it,++num)).join('')}
-     <button class="btn" data-act="rtadd" data-bk="${bk}" style="width:100%;margin-top:8px">+ Añadir ejercicio</button></section>`;}).join('');
   const cardioOpts=Object.keys(typeof CMODS!=='undefined'?CMODS:{}).map(k=>`<option value="${k}"${d.cardioDefault===k?' selected':''}>${esc((CMODS[k]&&CMODS[k].n)||k)}</option>`).join('');
+  const TABS=[['warm','Calentamiento'],['main','Central'],['acc','Accesorios'],['cardio','Cardio'],['calm','Calma']];
+  const bt=RT.bt&&TABS.some(x=>x[0]===RT.bt)?RT.bt:'warm';
+  const cnt=k=>{if(k==='cardio')return '';const b=rtBlock(d,k);return b?b.items.length:'';};
+  const tabs=`<div class="rttabs">${TABS.map(([k,n])=>`<button class="rttab${bt===k?' on':''}" data-act="rttab" data-v="${k}">${n}${cnt(k)!==''?`<em>${cnt(k)}</em>`:''}</button>`).join('')}</div>`;
+  let blocks='';
+  {let n0=0;['warm','main','acc','calm'].forEach(k=>{if(k===bt)return;const b=rtBlock(d,k);if(b&&TABS.findIndex(x=>x[0]===k)<TABS.findIndex(x=>x[0]===bt))n0+=b.items.length;});num=n0;}
+  if(bt==='cardio'){blocks=`<section class="sec"><div class="sec-h"><b>Cardio</b></div><div class="note">El tipo de cardio (Base / Moderado) y los minutos salen solos de la tabla según la semana del mesociclo y la prioridad del cliente. Aquí eliges la modalidad por defecto de este día. Para un cardio puntual de un día, asígnalo desde el calendario con + Tarea → Cardio.</div>${cardioOpts?`<label class="pfl" style="margin-top:8px">Modalidad por defecto</label><select class="fld" data-rt="dcardio">${cardioOpts}</select>`:'<div class="note">No hay modalidades de cardio disponibles.</div>'}</section>`;}
+  else{const b=rtBlock(d,bt);blocks=b?`<section class="sec"><div class="sec-h"><b>${RT_BT[bt]}</b><em>${b.items.length}</em></div>${b.items.map((it,ii)=>rtItemHTML(RT.sel,bt,ii,it,++num)).join('')||'<div class="note">Aún no hay ejercicios en este bloque.</div>'}
+     <button class="btn" data-act="rtadd" data-bk="${bt}" style="width:100%;margin-top:8px">+ Añadir ejercicio</button></section>`:'<div class="note">Este día no tiene este bloque.</div>';}
+  blocks=tabs+blocks;
   return hdr+`<section class="sec"><div class="sec-h"><b>${esc(d.label)}</b></div>
     <label class="pfl">Nombre del día</label><input class="fld" data-rt="dname" value="${esc(d.name)}">
     ${(()=>{const L=typeof faList==='function'?faList():[];return L.length?`<label class="pfl" style="margin-top:8px">Calentamiento follow along recomendado</label><select class="fld" data-rt="dfa"><option value="">Automático según el día</option>${L.map(k=>`<option value="${k}"${d.fa===k?' selected':''}>${esc(faName(k))}</option>`).join('')}</select>`:'';})()}
-    ${cardioOpts?`<label class="pfl" style="margin-top:8px">Cardio por defecto</label><select class="fld" data-rt="dcardio">${cardioOpts}</select>`:''}
     ${RT.kind==='template'&&RT.tkind==='workout'?'':`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-act="rtdup" style="flex:1">Duplicar día</button><button class="btn" data-act="rtdelday" style="flex:1">Eliminar día</button></div>`}</section>
     ${warn.length?`<div class="note" style="border-color:var(--red)"><b>Avisos del método</b><br>${warn.map(esc).join('<br>')}</div>`:''}
     ${blocks}
@@ -3639,6 +3650,7 @@ document.addEventListener('click',async e=>{
       rtOpen('client',{cid:CP.cid,name:tp.name,days:tp.days});RT.dirty=true;}}
   else if(a==='rtback'){if(RT.dirty&&!confirm('Tus cambios quedan guardados como borrador y podrás continuar después. ¿Salir del editor?'))return;rtClose();if(RT.kind==='template'){coachHome();}else{coachRender();}}
   else if(a==='rtday'){RT.sel=+t.dataset.i;rtShow();}
+  else if(a==='rttab'){RT.bt=t.dataset.v;if(['warm','main','acc','calm'].includes(RT.bt))RT.lib.bk=RT.bt;rtShow();}
   else if(a==='rtaddday'){RT.days.push(RD.torsoC(RT.days.length+1));RT.days[RT.days.length-1].name='Nuevo día';rtFixIds();RT.sel=RT.days.length-1;RT.dirty=true;rtShow();}
   else if(a==='rtdup'){const c=rtClone(RT.days[RT.sel]);RT.days.splice(RT.sel+1,0,c);rtFixIds();RT.sel++;RT.dirty=true;rtShow();}
   else if(a==='rtdelday'){if(RT.days.length<2){toast('Debe quedar al menos un día');return;}if(!confirm('¿Eliminar este día?'))return;RT.days.splice(RT.sel,1);rtFixIds();RT.sel=Math.max(0,RT.sel-1);RT.dirty=true;rtShow();}
