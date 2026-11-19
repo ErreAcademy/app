@@ -2379,10 +2379,17 @@ function cpMvAsk(from,dg,to){if(!from||!to||from===to)return;CP.mv={from,dg,to};
 function cpMvModal(){const m=CP.mv;if(!m){const o=document.getElementById('cpmv');if(o)o.remove();return;}
   let o=document.getElementById('cpmv');if(!o){o=document.createElement('div');o.id='cpmv';o.className='cpdv';document.body.appendChild(o);}
   const L=cxListOf(CP.d),tk=m.dg==='workout'?null:L.find(x=>x.id===m.dg),nm=m.dg==='workout'?'el entrenamiento':tk?({rest:'el descanso',cardio:'el cardio',note:'la nota'}[tk.type]||'la tarea'):'la tarea';
-  const clash=m.dg==='workout'||(tk&&(tk.type==='rest'||tk.type==='workout'))?L.some(x=>x.date===m.to&&(x.type==='rest'||x.type==='workout'))||cpWith(()=>!!cpDayInfo(m.to).d):(tk&&tk.type==='cardio'?L.some(x=>x.date===m.to&&x.type==='cardio'):false);
-  o.innerHTML=`<div class="cpdc" style="max-width:420px"><div class="cpdhd"><div><b>¿Qué quieres hacer?</b><small>${fmtL(m.from)} → ${fmtL(m.to)}</small></div><button class="cpdx" data-act="cpmvno" aria-label="Cerrar">✕</button></div><div class="cpmvb"><p>Vas a pasar ${nm} del ${fdate(m.from)} al ${fdate(m.to)}.${clash?' <b>Reemplaza lo que haya ese día.</b>':''}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="cpmvbt pri" data-act="cpmvdo" data-m="move">Mover</button><button class="cpmvbt" data-act="cpmvdo" data-m="copy">Duplicar</button><button class="cpmvbt" data-act="cpmvno">Cancelar</button></div></div></div>`;}
-async function cpMvDo(copy){const m=CP.mv;if(!m)return;CP.mv=null;cpMvModal();const from=m.from,to=m.to;
+  const wk=m.dg==='workout'||(tk&&(tk.type==='rest'||tk.type==='workout')),occ=wk?cpWith(()=>!!cpDayInfo(m.to).d):(tk&&tk.type==='cardio'?L.some(x=>x.date===m.to&&x.type==='cardio'):false);
+  const canSwap=m.dg==='workout'&&occ,msg=occ?`El ${fdate(m.to)} ya tiene ${tk&&tk.type==='cardio'?'un cardio':'un entrenamiento'}. No se reemplaza.${canSwap?' Puedes intercambiar los dos días.':' Elige otro día.'}`:`Vas a pasar ${nm} del ${fdate(m.from)} al ${fdate(m.to)}.`;
+  const btns=occ?(canSwap?'<button class="cpmvbt pri" data-act="cpmvdo" data-m="swap">Intercambiar</button>':'')+'<button class="cpmvbt" data-act="cpmvno">Cancelar</button>':'<button class="cpmvbt pri" data-act="cpmvdo" data-m="move">Mover</button><button class="cpmvbt" data-act="cpmvdo" data-m="copy">Duplicar</button><button class="cpmvbt" data-act="cpmvno">Cancelar</button>';
+  o.innerHTML=`<div class="cpdc" style="max-width:420px"><div class="cpdhd"><div><b>¿Qué quieres hacer?</b><small>${fmtL(m.from)} → ${fmtL(m.to)}</small></div><button class="cpdx" data-act="cpmvno" aria-label="Cerrar">✕</button></div><div class="cpmvb"><p>${msg}</p><div>${btns}</div></div></div>`;}
+async function cpMvDo(mode){const copy=mode===true||mode==='copy',swap=mode==='swap',m=CP.mv;if(!m)return;CP.mv=null;cpMvModal();const from=m.from,to=m.to;
   try{let L=cxListOf(CP.d).slice();const now=new Date().toISOString();
+    const dayOf=dt=>{const tk=L.find(x=>x.date===dt&&x.type==='workout');const d=tk?(tk.day||((L.find(q=>q.id===tk.ref)||{}).day)):cpWith(()=>{const d=cpDayInfo(dt).d;return d&&!d.x?d:null;});return d?JSON.parse(JSON.stringify(d)):null;};
+    if(swap&&m.dg==='workout'){const a=dayOf(from),b=dayOf(to);if(!a||!b){toast('No se pudo intercambiar');return;}
+      [from,to].forEach(dt=>L.filter(x=>x.date===dt&&(x.type==='rest'||x.type==='workout')).forEach(x=>{L=cxDropT(L,x.id);}));
+      L.push({id:cpTid(),date:to,type:'workout',title:a.name||a.label||'Workout',day:a,by:ME.id,at:now},{id:cpTid(),date:from,type:'workout',title:b.name||b.label||'Workout',day:b,by:ME.id,at:now});
+      await cpSaveTasks(L);CP.cd=to;coachRender();toast('Días intercambiados ✓');return;}
     if(m.dg==='workout'){
       const tk=L.find(x=>x.date===from&&x.type==='workout');
       let day=tk?(tk.day||((L.find(q=>q.id===tk.ref)||{}).day)):cpWith(()=>{const d=cpDayInfo(from).d;return d&&!d.x?d:null;});
@@ -2585,7 +2592,7 @@ document.addEventListener('click',async e=>{
   if(a==='cptnew'){CP.tm={date:t.dataset.v||today(),type:'workout'};cpTaskModal();return;}
   if(a==='cptclose'){CP.tm=null;cpTaskModal();return;}
   if(a==='cpmvno'){CP.mv=null;cpMvModal();return;}
-  if(a==='cpmvdo'){await cpMvDo(t.dataset.m==='copy');return;}
+  if(a==='cpmvdo'){await cpMvDo(t.dataset.m);return;}
   if(a==='cprep'){cpTmSync();CP.tm.rep=t.dataset.v==='1';if(CP.tm.rep&&!(CP.tm.rd||[]).length)CP.tm.rd=[wdOf(CP.tm.date)];cpTaskModal();return;}
   if(a==='cprd'){cpTmSync();const v=+t.dataset.v,r=CP.tm.rd||[];CP.tm.rd=r.includes(v)?r.filter(x=>x!==v):r.concat(v);cpTaskModal();return;}
   if(a==='cptype'){cpTmSync();CP.tm.type=CP.tm.type===t.dataset.v?'':t.dataset.v;cpTaskModal();return;}
