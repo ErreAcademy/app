@@ -910,10 +910,11 @@ function openFinish(g){
 }
 const LOWM={sets:['Menos series','Una serie menos por ejercicio. Mantienes el peso.'],weight:['Menos peso','Baja el peso entre un 10 y un 15 %. Mantienes las series.'],both:['Menos series y menos peso','Una serie menos y un 10 a 15 % menos de peso.']};
 function lowFem(){return !S.user||S.user.sex!=='Hombre';}
-function lowCard(gd){
-  if(S.sel!==today())return '';const f=gd.find(q=>q.k==='g_fuerza');if(!f||!f.ct||S.fb[fbKey('g_fuerza')]||f.cx>=f.ct)return '';
+function lowSleepLow(){const sl=(S.sleep||{})[S.sel];return !!(sl&&(sl.e==='baja'||(sl.h!=null&&sl.h<6)));}
+function lowCard(){
+  if(S.sel!==today()||S.raw<1||S.day<0)return '';if(S.fb[fbKey('g_fuerza')]&&!S.lowTest)return '';
   const w=lowFem(),c=w?'#E6477A':'#3B82C4',tint=w?'#FDE7EF':'#E3EEF9',m=(S.lowE||{})[S.sel];
-  const ttl=w?'¿Estás en tu semana de ciclo o con poca energía?':'¿Poca energía o poco tiempo hoy?';
+  const ttl=lowSleepLow()?'Tu sueño o energía va bajo hoy. ¿Entrenas en modo suave?':(w?'¿Estás en tu semana de ciclo o con poca energía?':'¿Poca energía o poco tiempo hoy?');
   if(m)return `<div class="lowc" style="--c:${c};--t:${tint}"><span class="lowi">${w?'🌸':'⚡'}</span><span class="lowb"><b>Hoy vas en modo suave</b><small>${LOWM[m][0]}. Cumplir un día difícil también es disciplina.</small></span><button class="lowx" data-act="lowopen">Cambiar</button></div>`;
   return `<button class="lowc" data-act="lowopen" style="--c:${c};--t:${tint}"><span class="lowi">${w?'🌸':'⚡'}</span><span class="lowb"><b>${ttl}</b><small>Ajusta tu entrenamiento de hoy sin perder la constancia.</small></span><i class="chev">›</i></button>`;
 }
@@ -951,7 +952,7 @@ function trainView(){
   return `
    ${calendar()}
    ${mesoLine()}
-   ${lowCard(gd)}
+   ${lowCard()}
    <h2 class="h2" style="margin:4px 0 10px">Día ${S.pos+1} · ${d.name}</h2>
    <div class="progress"><i style="width:${pct}%"></i></div>
    ${gd.map(g=>{const ok=!!S.fb[fbKey(g.k)]||(g.ct&&g.cx>=g.ct);const gcol={g_fuerza:['#C0392B','fuerza'],g_cardio:['#E39A1C','cardio'],g_calm:['#3F6B86','calma']}[g.k];return `<button class="gcard${ok?' gdone':''}" data-act="gopen" data-b="${g.k}" style="--gc:${gcol[0]}"><span class="gic">${ok?'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':ICON(gcol[1],22)}</span><span class="gt"><b>${g.t}</b><small>${ok?'Completado'+((S.fb[fbKey(g.k)]||{}).dur?' · '+S.fb[fbKey(g.k)].dur+' min':''):g.s}</small></span><i class="chev">›</i></button>`;}).join('')}
@@ -1099,7 +1100,7 @@ function profileView(){
    <section class="sec"><div class="sec-h"><b>Privacidad y ayuda</b></div>
     <div class="pfrow"><span><b>Tus fotos</b><small>${c?'Solo las ves tú y, si quieres, tu coach':'Solo las ves tú'}</small></span></div>
     <div class="pfrow"><span><b>Ayuda y soporte</b><small>Escríbenos si algo no funciona</small></span><button class="btn" data-act="support" style="flex:none;padding:7px 12px">Escribir</button></div></section>
-   <button class="btn" data-act="acct" style="width:100%;margin-bottom:8px">Mi cuenta: contraseña y correo</button><button class="btn" data-act="newuser" style="width:100%;margin-bottom:8px">Cerrar sesión</button><small style="display:block;text-align:center;color:var(--gray);margin:6px 0 14px">ERRE Complete · versión ${APP_VER}</small>`;
+   <button class="btn" data-act="acct" style="width:100%;margin-bottom:8px">Mi cuenta: contraseña y correo</button><button class="btn" data-act="lowtest" style="width:100%;margin-bottom:8px">${S.lowTest?"Quitar prueba del modo suave":"Probar modo suave (aunque ya entrenaste)"}</button><button class="btn" data-act="newuser" style="width:100%;margin-bottom:8px">Cerrar sesión</button><small style="display:block;text-align:center;color:var(--gray);margin:6px 0 14px">ERRE Complete · versión ${APP_VER}</small>`;
 }
 function chatLocked(){
   const R=(t,d)=>`<div class="scard"><b>${t}</b>${d}</div>`;
@@ -1139,7 +1140,7 @@ function protoPanel(){
     <label>Semana de prueba (de hoy)<select id="selWeek">${Array.from({length:P.weeks},(_,i)=>`<option value="${i+1}"${ctxFor(today()).wk===i+1&&ctxFor(today()).mes===1?' selected':''}>Semana ${i+1}</option>`).join('')}</select></label>
    </div>
    <div style="margin-top:8px">Cambia la semana de prueba y mira cómo se ajustan series, reps y cardio según el Documento Maestro.
-    <button class="pill" data-act="ascoach" style="margin:6px 4px 0 0">Ver como coach</button><button class="pill" data-act="reset" style="margin:6px 4px 0 0">Borrar registros</button><button class="pill" data-act="demo" style="margin:6px 4px 0 0">Cargar datos de ejemplo</button><button class="pill" data-act="newuser" style="margin-top:6px">Probar otro usuario</button></div>
+    <button class="pill" data-act="ascoach" style="margin:6px 4px 0 0">Ver como coach</button><button class="pill" data-act="lowtest" style="margin:6px 4px 0 0">${S.lowTest?'Quitar prueba modo suave':'Probar modo suave'}</button><button class="pill" data-act="reset" style="margin:6px 4px 0 0">Borrar registros</button><button class="pill" data-act="demo" style="margin:6px 4px 0 0">Cargar datos de ejemplo</button><button class="pill" data-act="newuser" style="margin-top:6px">Probar otro usuario</button></div>
   </details>`;
 }
 function logo(c){return `<svg viewBox="250 250 620 580" aria-label="ERRE"><polygon fill="#1C1B19" points="283,280 722,280 845,402 650,583 448,583 672,395 411,395 411,676 283,795"/><polygon fill="${c}" points="445,598 641,598 838,795 637,795"/></svg>`}
@@ -1205,7 +1206,7 @@ function homeView0(){
   rows.push({p:'pasos',t:sv?`${sv.toLocaleString('es-CO')} pasos`:'Registra tus pasos',s:sv?(sv>=S.stepGoal?'Meta cumplida. Excelente.':`Te faltan ${(S.stepGoal-sv).toLocaleString('es-CO')} para tu meta`):`Meta: ${S.stepGoal.toLocaleString('es-CO')} · a mano o desde tu reloj (pronto)`,done:sv>=S.stepGoal?1:0,total:1});
   const act=rows.filter(r=>!r.rest&&r.p!=='peso'&&r.p!=='pasos'), full=act.filter(r=>r.total&&r.done>=r.total).length, isT=S.sel===today();
   return `${calendar()}${S.raw>=1?mesoLine():emptyCard('Tu programa empieza más adelante',`Arranca la semana del ${pd(S.start).toLocaleDateString('es-CO',{day:'numeric',month:'long'})}. Mientras, puedes ir con tu respiración, hábitos y alimentación.`)}
-   <div class="segbar">${act.map(r=>`<i style="background:${r.total&&r.done>=r.total?PIL[r.p].c:'var(--line)'}"></i>`).join('')}</div>
+   ${lowCard()}<div class="segbar">${act.map(r=>`<i style="background:${r.total&&r.done>=r.total?PIL[r.p].c:'var(--line)'}"></i>`).join('')}</div>
    <div class="sub2">${full===act.length?(isT?'Día completo. Buen trabajo.':'Día completo.'):`${isT?'Llevas':'Completaste'} ${full} de ${act.length} ${act.length===1?'tarea':'tareas'}${isT?' hoy':''}.`}</div>
    <h2 class="h2">${isT?'Tareas de hoy':'Tareas del '+fmtL(S.sel).split(',')[0].toLowerCase()+' '+pd(S.sel).getDate()}</h2>
    ${rows.filter(r=>r.p!=='peso'&&r.p!=='pasos').map(r=>{const ok=r.total&&r.done>=r.total;return `<button class="tcard" data-act="${r.p==='peso'?'wopen':r.p==='pasos'?'sopen':'tab'}" data-v="${r.p}" style="--c:${PIL[r.p].c}"><span class="bar"></span><span class="tb"><small style="color:${PIL[r.p].c}">${PIL[r.p].n}</small><b>${r.t}</b><em>${r.s}</em></span><span class="st${ok?' ok':''}" style="${ok?`background:${PIL[r.p].c};border-color:${PIL[r.p].c}`:''}">${ok?'✓':r.rest?'–':'›'}</span></button>`;}).join('')}
@@ -1450,6 +1451,7 @@ document.addEventListener('click',e=>{
   else if(a==='wfa'){const k=cKey(DAYS[S.day]);S.warmFA[k]=!S.warmFA[k];save();render();;chk(b4);}
   else if(a==='tog'){S.open[t.dataset.b]=S.open[t.dataset.b]?0:1;save();render();}
   else if(a==='lowopen'){lowOpen();}
+  else if(a==='lowtest'){S.lowTest=!S.lowTest;save();render();toast(S.lowTest?'Prueba activa: el modo suave se muestra aunque ya entrenaste':'Prueba desactivada');}
   else if(a==='lowset'){S.lowE=S.lowE||{};if(t.dataset.v)S.lowE[S.sel]=t.dataset.v;else delete S.lowE[S.sel];save();closeSheet&&closeSheet();render();toast(t.dataset.v?'Listo, hoy vas en modo suave 💪':'Entrenamiento normal');}
   else if(a==='week'){S.week=+t.dataset.v;save();render();}
   else if(a==='day'){S.day=+t.dataset.v;save();render();}
@@ -3331,7 +3333,7 @@ document.addEventListener('click',e=>{
   else if(a==='sldel'){if(S.sleep)delete S.sleep[S.sel];save();closeSheet();render();toast('Registro de sueño borrado');}
   else if(a==='slsave'){
     const note=SL.note.trim();if(SL.h==null&&!SL.q&&!SL.e&&!SL.tags.length&&!note){toast('Agrega al menos un dato');return;}
-    S.sleep=S.sleep||{};S.sleep[S.sel]={h:SL.h,q:SL.q,e:SL.e,tags:SL.tags.slice(),note};save();closeSheet();render();toast('Sueño guardado ✓');}
+    S.sleep=S.sleep||{};S.sleep[S.sel]={h:SL.h,q:SL.q,e:SL.e,tags:SL.tags.slice(),note};save();closeSheet();render();toast('Sueño guardado ✓');try{if(lowSleepLow()&&!(S.lowE||{})[S.sel]&&lowCard())setTimeout(lowOpen,700);}catch(x){}}
 },true);
 
 /* ---- Fidelidad: antigüedad con ERRE (hitos de 1 mes a 3 años) ---- */
@@ -3531,9 +3533,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1721';
+const APP_VER='19nov-1725';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1721')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1725')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
