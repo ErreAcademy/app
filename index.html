@@ -2390,7 +2390,7 @@ function cpPlanBody(){
   });
 }
 function cpDefs(dt,lab){
-  const d=CP.d,p=d.profile,tdy=today();if(dt>tdy)return '';
+  const d=CP.d,p=d.profile,tdy=today(),cdc=cpCardioChip(dt,lab,tdy);if(dt>tdy)return cdc?`<div class="cpks">${cdc}</div>`:'';
   const wd=(d.weights||[]).map(r=>r.log_date).sort(),cr=p.created_at?bogota(p.created_at).date:null,start=[wd[0],cr].filter(Boolean).sort()[0]||dt;if(dt<start)return '';
   const st=(ok,part)=>ok?'ok':part?'part':dt<tdy?'miss':'plan',out=[];
   const add=(ic,n,s2,tip,key)=>out.push(`<button class="cpk ${s2}" data-act="cpchip" data-v="${dt}|${key}" title="${esc(n+(tip?' · '+tip:''))}">${ic}${lab?' '+n:''}</button>`);
@@ -2400,7 +2400,17 @@ function cpDefs(dt,lab){
   if((d.photos||[]).some(x=>x.taken_at===dt))add('📷','Foto','ok','foto de progreso','foto');
   const MN={recovery:['🫁','Respiración'],habitos:['✔','Hábitos'],alim:['🍽','Alimentación']};
   (p.modules||[]).forEach(k=>{if(!MN[k]||!TASKS[k])return;const c=withDate(dt,()=>tcount(k));add(MN[k][0],MN[k][1],st(c.total>0&&c.done>=c.total,c.done>0),c.done+' de '+c.total,k);});
+  if(cdc)out.unshift(cdc);
   return `<div class="cpks">${out.join('')}</div>`;
+}
+function cpCardioInfo(d,dt){
+  const tier=CARDIO[S.goal]&&CARDIO[S.goal][Math.min(S.week,PERIOD[S.program].weeks)-1];if(!tier)return null;
+  const c=S.cardio[cKey(d)]||{},mod=c.mod||d.cardioDefault,m=(typeof CMODS!=='undefined'&&CMODS[mod])||null;
+  return {tier,done:!!c.done,mod:m?m.n:'',txt:CARDIO_TXT[tier]||'',dur:(typeof DUR!=='undefined'&&DUR[tier])||'',ex:(S.cardioX[dt]||[])};
+}
+function cpCardioChip(dt,lab,tdy){
+  return withDate(dt,()=>{const c=ctxFor(dt);if(!c.d)return '';const ci=cpCardioInfo(c.d,dt);if(!ci)return '';
+    const st=ci.done?'ok':dt<tdy?'miss':'plan';return `<button class="cpk ${st}" data-act="cpchip" data-v="${dt}|cardio" title="Cardio ${ci.tier}${ci.mod?' · '+esc(ci.mod):''}">🏃${lab?' Cardio '+ci.tier:''}</button>`;});
 }
 function cpChipHTML(dt,key){
   return cpWith(()=>withDate(dt,()=>{
@@ -2410,8 +2420,9 @@ function cpChipHTML(dt,key){
     else if(key==='sueno'){const n=(d.sleep||{})[dt];title='Sueño';ok=!!(n&&(n.h!=null||n.q));body=ok?row('Horas dormidas',n.h!=null?fmtHM(n.h):'—')+row('Calidad / energía',(n.q?'Calidad '+n.q:'—')+(n.e?' · Energía '+n.e:''))+((n.tags&&n.tags.length)?row('Contexto',n.tags.map(esc).join(' · ')):'')+(n.note?row('Nota','“'+esc(n.note)+'”'):''):row('Sin registro','No registró el sueño este día.');msg='No vi tu registro de sueño del '+f+'. Cuando puedas, cuéntame cómo dormiste.';}
     else if(key==='pasos'){const st=S.steps[dt],g=p.step_goal||8000;title='Pasos';ok=st>=g;body=row('Pasos',st?st.toLocaleString('es-CO')+' de '+g.toLocaleString('es-CO')+' ('+Math.round(st/g*100)+'%)':'Sin registro');msg=st?'Vi que el '+f+' quedaste en '+st.toLocaleString('es-CO')+' pasos. ¡Vamos por la meta!':'No vi tus pasos del '+f+'. Acuérdate de registrarlos.';}
     else if(key==='foto'){const ph=(d.photos||[]).filter(x=>x.taken_at===dt),AN={front:'De frente',side:'De lado',back:'De espalda'};title='Foto de progreso';body=row('Fotos subidas',ph.map(x=>AN[x.angle]||x.angle).join(' · ')||'—')+row('Mes',ph[0]?ph[0].month:'—');}
+    else if(key==='cardio'){const dy=ctxFor(dt).d,ci=dy&&cpCardioInfo(dy,dt);title='Cardio planificado';if(ci){ok=ci.done;body=row('Tipo',ci.tier+(ci.dur?' · '+esc(ci.dur):''))+row('Qué hacer',esc(ci.txt))+(ci.mod?row('Modalidad programada',esc(ci.mod)):'')+row('Estado',ci.done?'Hecho ✓':'Pendiente')+(ci.ex.length?row('Otro cardio registrado',ci.ex.map(x=>esc(x.name)+' '+x.min+' min').join(' · ')):'');msg=ci.done?'¡Muy bien con tu cardio del '+f+'! Sigue así 💪':'No vi tu cardio del '+f+'. Cuando puedas, hazlo y márcalo en la app.';}else body=row('Sin cardio','No hay cardio planificado este día.');}
     else{const T=TASKS[key],t=tk();title=({recovery:'Respiración',habitos:'Hábitos',alim:'Alimentación'})[key]||key;const done=T.items.filter(x=>t[key+'.'+x.id]).length;ok=done>=T.items.length;body=T.items.map(x=>`<div class="pfrow"><span><b>${t[key+'.'+x.id]?'✓':'○'} ${esc(x.t||x.n||x.id)}</b></span></div>`).join('');msg='No vi tus tareas de '+title+' del '+f+'. Ánimo, ¡tú puedes!';}
-    if(ok&&key!=='foto'&&key!=='pasos')msg='¡Muy bien con tu registro de '+title.toLowerCase()+' del '+f+'! Sigue así 💪';
+    if(ok&&key!=='foto'&&key!=='pasos'&&key!=='cardio')msg='¡Muy bien con tu registro de '+title.toLowerCase()+' del '+f+'! Sigue así 💪';
     return `<div class="cpdhd"><div><b>${esc(title)}</b><small>${fmtL(dt)}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div>${body}${key!=='foto'?`<label class="pfl" style="margin-top:12px">Mensaje al cliente</label><textarea class="fld" id="cpRm" rows="3">${esc(msg)}</textarea><button class="btn solid" data-act="cpremind" style="width:100%;margin-top:8px">Enviar por chat</button>`:''}`;
   }));
 }
@@ -2426,7 +2437,7 @@ function cpDayHTML(date){
     let sets=0,vol=0,fe=null;
     const fbs=['g_fuerza','g_cardio','g_calm'].map(g=>({g,f:S.fb[cKey(dy)+'|'+g]})).filter(x=>x.f);
     const blocks=dy.blocks.map(b=>{
-      if(b.cardio){const cx=S.cardio[cKey(dy)]||{};return `<div class="cpdb">Cardio</div><div class="cpde"><div class="cpdn"><b>Cardio de la sesión</b></div><span class="cpdt ${cx.done?'ok':'pe'}">${cx.done?'Completado':'Pendiente'}</span></div>`;}
+      if(b.cardio){const ci=cpCardioInfo(dy,date);if(!ci)return '';return `<div class="cpdb">Cardio</div><div class="cpde"><div class="cpdn"><span><b>Cardio ${ci.tier}${ci.mod?' · '+esc(ci.mod):''}</b><small>${esc(ci.dur)}${ci.dur?' · ':''}${esc(ci.txt)}</small></span><span class="cpdt ${ci.done?'ok':'pe'}">${ci.done?'Completado':'Pendiente'}</span></div>${ci.ex.map(x=>`<div class="cpcm" style="background:var(--card,#fff);border-color:var(--line)"><b style="color:inherit">Otro cardio</b>${esc(x.name)} · ${x.min} min${x.hr?' · '+x.hr+' lpm':''}${x.note?'<br>“'+esc(x.note)+'”':''}</div>`).join('')}</div>`;}
       const items=itemsOf(dy,b).map((it,i)=>{
         if(b.k==='warm'&&typeof warmVid==='function'&&!warmVid(dy,b,i,it))return '';
         const id=curEx(dy,b.k,i,it),e=E[id]||{},pr=presc(it),L=S.logs[ikey(dy,b.k,i)]||[],sw=id!==it.ex;
@@ -2439,7 +2450,8 @@ function cpDayHTML(date){
       return items?`<div class="cpdb">${SUBT[b.k]||b.t||b.k}</div>${items}`:'';
     }).join('');
     const feel=fbs.map(x=>x.f.feel).filter(Boolean)[0],notes=fbs.filter(x=>x.f.note);
-    return tlh+`<div class="cpdb" style="background:#C0392B">${dy.x?esc(dy.label||dy.name||'Workout'):'Día '+inf.n+' · '+esc(dy.name||'')}</div>
+    const edb=`<button class="btn" data-act="cpedit" data-v="${date}" style="width:100%;margin:0 0 6px">✎ Editar este entrenamiento</button><div class="note" style="margin:0 0 10px">${dy.x?'Edita solo este workout asignado.':'Se abre en el editor de rutinas. El cambio aplica a este día de la rutina en todas las semanas.'}</div>`;
+    return tlh+edb+`<div class="cpdb" style="background:#C0392B">${dy.x?esc(dy.label||dy.name||'Workout'):'Día '+inf.n+' · '+esc(dy.name||'')}</div>
       <div class="cpdk"><span><b>${pct}%</b><small>Cumplimiento</small></span><span><b>${sets}</b><small>Series</small></span><span><b>${Math.round(vol).toLocaleString('es-CO')}</b><small>Volumen kg</small></span><span><b>${inf.rpe!=null?inf.rpe+'/10':'—'}</b><small>${inf.rpe!=null?INT(inf.rpe):'Esfuerzo'}</small></span></div>
       ${feel?`<div class="cpfeel">Sensación: <b>${esc(feel)}</b>${feel==='Con molestia'?' ⚠':''}</div>`:''}${notes.map(x=>`<div class="cpcm"><b>📝 Nota al terminar</b>${esc(x.f.note)}</div>`).join('')}
       ${blocks}`;
@@ -2456,6 +2468,10 @@ document.addEventListener('click',async e=>{
   if(a==='cpchip'){const [dt,k]=t.dataset.v.split('|');cpDayClose();const o=document.createElement('div');o.id='cpdv';o.className='cpdv';o.innerHTML='<div class="cpdc" style="max-width:520px">'+cpChipHTML(dt,k)+'</div>';document.body.appendChild(o);document.body.style.overflow='hidden';return;}
   if(a==='cpremind'){const v=((document.getElementById('cpRm')||{}).value||'').trim();if(!v)return;try{await DB.sendCoach(CP.cid,ME.id,v);CP.d=await DB.clientDetail(CP.cid);cpDayClose();toast('Mensaje enviado ✓');}catch(x){toast('No se pudo enviar');}return;}
   if(a==='cpwide'){CP.wide=!CP.wide;coachRender();return;}
+  if(a==='cpedit'){const date=t.dataset.v,dy=cpWith(()=>withDate(date,()=>ctxFor(date).d));if(!dy)return;cpDayClose();
+    if(dy.x){const tk2=cxListOf(CP.d).find(x=>'x'+x.id===dy.id);if(!tk2)return;rtOpen('client',{cid:CP.cid,name:'Workout asignado',days:[tk2.day]});RT.xt=tk2.id;RT.sel=0;rtShow();}
+    else{const ix=((CP.routine&&CP.routine.days)||[]).findIndex(x=>x.id===dy.id);if(ix<0){toast('No se encontró ese día en la rutina');return;}rtOpen('client',{cid:CP.cid,name:CP.routine.name,days:CP.routine.days});RT.sel=ix;rtShow();}
+    return;}
   if(a==='cpview'){CP.cv=t.dataset.v;coachRender();return;}
   if(a==='cptnew'){CP.tm={date:t.dataset.v||today(),type:'workout'};cpTaskModal();return;}
   if(a==='cptclose'){CP.tm=null;cpTaskModal();return;}
@@ -2712,7 +2728,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 const DRAFT_K='erre_rt_draft';
 const draftGet=()=>{try{return JSON.parse(localStorage.getItem(DRAFT_K)||'null');}catch(e){return null;}};
 const draftClear=()=>{try{localStorage.removeItem(DRAFT_K);}catch(e){}};
-setInterval(()=>{try{if(typeof RT!=='undefined'&&RT.open&&RT.dirty&&PROFILE&&PROFILE.role==='coach'){localStorage.setItem(DRAFT_K,JSON.stringify({kind:RT.kind,id:RT.id,cid:RT.cid,tkind:RT.tkind,folder:RT.folder,name:RT.name,days:RT.days,sel:RT.sel,at:Date.now(),me:ME&&ME.id}));}}catch(e){}},2500);
+setInterval(()=>{try{if(typeof RT!=='undefined'&&RT.open&&RT.dirty&&!RT.xt&&PROFILE&&PROFILE.role==='coach'){localStorage.setItem(DRAFT_K,JSON.stringify({kind:RT.kind,id:RT.id,cid:RT.cid,tkind:RT.tkind,folder:RT.folder,name:RT.name,days:RT.days,sel:RT.sel,at:Date.now(),me:ME&&ME.id}));}}catch(e){}},2500);
 function draftBanner(){
   if(typeof RT!=='undefined'&&RT.open)return '';
   const d=draftGet();if(!d||!d.days||(ME&&d.me&&d.me!==ME.id))return '';
@@ -3469,7 +3485,7 @@ document.addEventListener('input',rtInput,true);
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.rt==='ex')rtInput(e);},true);
 async function rtLoadTpls(){try{RT.tpls=await DB.templates();}catch(e){console.warn(e);}try{RT.fo=await DB.folders();}catch(e){console.warn(e);}}
 function rtOpen(kind,opt){
-  Object.assign(RT,{tkind:opt.tkind||'program',folder:opt.folder||null,pend:null,open:true,kind,id:opt.id||null,cid:opt.cid||null,name:opt.name||'',days:rtClone(opt.days||[]),dirty:false,sel:0,err:'',busy:false});
+  Object.assign(RT,{tkind:opt.tkind||'program',folder:opt.folder||null,pend:null,open:true,kind,id:opt.id||null,cid:opt.cid||null,name:opt.name||'',xt:null,days:rtClone(opt.days||[]),dirty:false,sel:0,err:'',busy:false});
   if(!RT.days.length)RT.days.push(RD.torsoC(1));rtFixIds();rtShow();window.scrollTo(0,0);
 }
 function rtClose(){RT.open=false;const a=document.getElementById('app');if(a)a.classList.remove('wide');}
@@ -3534,6 +3550,7 @@ document.addEventListener('click',async e=>{
     if(!RT.name.trim()){RT.err='Ponle un nombre.';rtShow();return;}
     RT.busy=true;RT.err='';rtShow();
     try{
+      if(RT.xt){const nd=rtClone(RT.days[0]);await cpSaveTasks(cxListOf(CP.d).map(x=>x.id===RT.xt?Object.assign({},x,{day:nd,title:nd.name||x.title}):x));RT.dirty=false;RT.busy=false;RT.xt=null;toast('Workout actualizado ✓');rtClose();coachRender();return;}
       if(RT.kind==='client'){await DB.saveRoutine(RT.cid,RT.name.trim(),RT.days,ME.id);CP.routine={name:RT.name.trim(),days:rtClone(RT.days)};
         try{await DB.sendCoach(RT.cid,ME.id,'Actualicé tu rutina. Revísala en la pestaña Entrenar de tu app.');}catch(x){}}
       else{const r=await DB.saveTemplate(RT.id,RT.name.trim(),RT.days,ME.id,RT.tkind,RT.folder||null);RT.id=r&&r.id||RT.id;await rtLoadTpls();}
