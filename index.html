@@ -2045,8 +2045,8 @@ function realDB(){
   return {
     async session(){const {data}=await sb.auth.getSession();return data.session;},
     async signIn(email,pw){const r=await sb.auth.signInWithPassword({email,password:pw});if(r.error)throw r.error;return r.data.session;},
-    async signUp(email,pw,name){const r=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name}}});if(r.error)throw r.error;return r.data;},
-    async sendCode(email){const r=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false}});if(r.error)throw r.error;},
+    async signUp(email,pw,name){const r=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name},emailRedirectTo:APPURL()}});if(r.error)throw r.error;return r.data;},
+    async sendCode(email){const r=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:APPURL()}});if(r.error)throw r.error;},
     async verify(email,token){const r=await sb.auth.verifyOtp({email,token,type:'email'});if(r.error)throw r.error;return r.data.session;},
     async push(body){try{const r=await sb.functions.invoke('push',{body});return r.data||null;}catch(e){return null;}},
     async aiWorkout(body){const r=await sb.functions.invoke('ai-workout',{body});if(r.error){let c=null;try{c=await r.error.context.json();}catch(e){}throw Object.assign(new Error('ai'),{code:(c&&c.error)||'error'});}return r.data;},
@@ -2133,6 +2133,7 @@ if(DB.scheduleCall){const _sc=DB.scheduleCall.bind(DB);DB.scheduleCall=async(cid
 if(DB.updateClient){const _uc=DB.updateClient.bind(DB);DB.updateClient=async(cid,f)=>{const r=await _uc(cid,f);try{DB.logAct(cid,'cli',f.status==='active'?'Activó la cuenta y asignó el plan':f.plan?'Cambió el plan a '+f.plan:f.modules?'Cambió los módulos del cliente':'Editó datos del cliente');}catch(e){}return r;};}
 if(DB.saveRoutine){const _sr=DB.saveRoutine.bind(DB);DB.saveRoutine=async(cid,n,d,uid)=>{const r=await _sr(cid,n,d,uid);try{if(uid&&cid!==uid){pushPlan(cid);DB.logAct(cid,'prog','Actualizó el programa «'+(n||'Programa')+'» ('+(d||[]).length+' workouts)');}}catch(e){}return r;};}
 let ME=null,PROFILE=null,LG={step:'email',email:'',err:'',busy:false},CHATT=null;
+const APPURL=()=>{try{const u=location.origin+location.pathname.replace(/[^/]*$/,'');return /^https?:/.test(u)?u:undefined;}catch(e){return undefined;}};
 const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom','ctasks','circuits','lowE'];
 const LAST={weights:{},steps:{},slices:{},prefs:'',fb:{},profile:'',chatKey:{},photos:{},upl:{}};
 let needs=false,syncing=false,pend=false,tmr=null;
@@ -3545,9 +3546,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='19nov-1745';
+const APP_VER='19nov-1808';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1745')pwaBanner();}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='19nov-1808')pwaBanner();}catch(e){}}
 setTimeout(pwaCheck,4000);setInterval(pwaCheck,30*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
