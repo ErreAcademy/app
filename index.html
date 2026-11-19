@@ -516,6 +516,38 @@ header.top .who small{display:block;color:var(--gray);font-size:12px}
 .rtitem{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 0;display:flex;justify-content:space-between;align-items:center}
 .rtitem b{display:block;font-size:14px}.rtitem small{display:block;font-size:12px;color:var(--gray)}
 .exo .thm{width:40px;height:40px;flex:0 0 40px;margin-right:10px}
+.cpshell{display:block}
+.cpside{display:none}
+.cpnav{display:flex;gap:6px;margin:10px 0}.cpn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-weight:600;font-size:14px}.cpn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cpfoot{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.cphead{display:flex;align-items:center;gap:12px;margin:6px 0 10px}.cphead small{color:var(--gray)}.cpcount{font-style:normal;background:var(--line);border-radius:99px;padding:2px 10px;font-size:13px}
+.cpav{width:40px;height:40px;border-radius:50%;background:var(--ink);color:#fff;font-style:normal;font-weight:700;font-size:14px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px}
+.cpcrumb{font-size:13px;color:var(--gray);margin:8px 0}.cpcrumb .lblbtn{font-size:13px;color:var(--gray)}
+.cptabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:4px 0 12px;overflow-x:auto}
+.cptab{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font-weight:600;font-size:14px;color:var(--gray);white-space:nowrap}.cptab.on{color:var(--ink);border-bottom-color:var(--red,#C0392B)}.cptab em{font-style:normal;font-size:12px;opacity:.7}
+.cptable{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.cptr{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:10px;align-items:center;width:100%;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font-size:14px}
+.cptr.head{font-size:12px;color:var(--gray);text-transform:uppercase;letter-spacing:.04em;background:var(--bg);cursor:default}
+button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
+.cpcl{display:flex;align-items:center;gap:10px;min-width:0}.cpcl b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cpcl .cpav{width:32px;height:32px;flex-basis:32px;font-size:12px}
+.cpbadge{font-style:normal;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--line)}.cpbadge.complete{background:#1C1B19;color:#fff}.cpbadge.elite{background:#C0392B;color:#fff}
+.cpwarn{font-style:normal;color:#C0392B;font-weight:600}
+.cpdays{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.cpday{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg)}.cpdh b{display:block}.cpdh small{color:var(--gray)}
+.cpday ul{list-style:none;margin:8px 0;padding:0}.cpday li{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}.cpday li.more{color:var(--gray);font-size:12px}
+.cpday li span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cpdf{display:flex;justify-content:space-between;font-size:12px;color:var(--gray)}
+.thm.sm{width:26px;height:26px;flex:0 0 26px;border-radius:6px;font-size:11px}
+.cpasg{font-size:12px;font-weight:600;background:var(--ink);color:#fff;padding:5px 12px;border-radius:99px}
+.cpcols{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+@media(min-width:1000px){
+.app.cpwide{max-width:1320px}
+.cpshell{display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px;align-items:start}
+.cpside{display:block;position:sticky;top:12px;border-right:1px solid var(--line);padding-right:18px;min-height:calc(100vh - 40px)}
+.cpside .top{margin-bottom:18px}
+.cpnav{flex-direction:column;margin:0}.cpn{text-align:left;padding:11px 14px}
+.cpfoot{position:absolute;bottom:0;left:0;right:18px;flex-direction:column;align-items:flex-start;gap:4px}
+}
+@media(max-width:999px){.cpside .top{display:none}.cptr{grid-template-columns:2fr 1fr 1fr}.cptr>span:nth-child(n+4){display:none}.cpcols{grid-template-columns:1fr}.cpside{display:block}}
 </style>
 </head>
 <body>
@@ -1917,6 +1949,7 @@ function realDB(){
     async updateClient(cid,f){ok(await sb.from('profiles').update(f).eq('id',cid));},
     async sendCoach(cid,uid,body){return ok(await sb.from('chat_messages').insert({client_id:cid,sender_id:uid,kind:'msg',body}).select('id,created_at').single());},
     async scheduleCall(cid,uid,iso){ok(await sb.from('calls').delete().eq('client_id',cid).gte('starts_at',new Date().toISOString()));ok(await sb.from('calls').insert({client_id:cid,starts_at:iso,created_by:uid}));},
+    async clientsMeta(){const r=await sb.from('routines').select('client_id,name,days,updated_at').eq('is_template',false);const f=await sb.from('session_feedback').select('client_id,log_date').order('log_date',{ascending:false}).limit(800);const m={rt:{},last:{}};(r.data||[]).forEach(x=>{if(x.client_id)m.rt[x.client_id]={name:x.name,n:(x.days||[]).length,at:x.updated_at};});(f.data||[]).forEach(x=>{if(!m.last[x.client_id])m.last[x.client_id]=x.log_date;});return m;},
     async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level').eq('role','client').order('full_name'));}
   };
 }
@@ -2060,7 +2093,7 @@ function consentView(){
 }
 
 /* ---------- Panel del coach ---------- */
-const CP={view:'list',cid:null,tab:'resumen',d:null,clients:[],err:'',poll:null};
+const CP={view:'list',sec:'clientes',q:'',pf:'todos',meta:{rt:{},last:{}},cid:null,tab:'rutina',d:null,clients:[],err:'',poll:null};
 const PNAME={basic:'Basic',complete:'Complete',elite:'Elite'};
 const GRN={fuerza:'Fuerza',cardio:'Cardio',calma:'Vuelta a la calma'};
 function sparkOf(L,W=260,H=44){
@@ -2069,9 +2102,24 @@ function sparkOf(L,W=260,H=44){
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" aria-hidden="true"><path d="${pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ')}" fill="none" stroke="#1C1B19" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${lp[0]}" cy="${lp[1]}" r="5" fill="#C0392B"/></svg>`;
 }
 const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
-async function coachHome(){CP.view='list';coachRender();try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{await rtLoadTpls();}catch(e){}coachRender();}
+const cpW=()=>window.innerWidth>=1000;
+function cpShell(inner){
+  const nav=[['clientes','Clientes'],['editor','Editor de rutinas']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
+  return `<div class="cpshell"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
+}
+const dAgo=s=>{if(!s)return '—';const n=Math.floor((Date.now()-new Date(s+'T12:00:00'))/864e5);return n<=0?'Hoy':n===1?'Ayer':'hace '+n+' d';};
+function cpClientsPage(){
+  const q=nrm(CP.q),m=CP.meta,all=CP.clients;
+  const cl=all.filter(c=>(CP.pf==='todos'||c.plan===CP.pf)&&(!q||nrm((c.full_name||'')+' '+(c.level||'')).includes(q)));
+  const cnt=k=>k==='todos'?all.length:all.filter(c=>c.plan===k).length;
+  return `<div class="cphead"><h2 class="h2" style="margin:0">Clientes</h2><em class="cpcount">${all.length}</em></div>
+   <div class="cptabs">${['todos','basic','complete','elite'].map(k=>`<button class="cptab${CP.pf===k?' on':''}" data-act="cppf" data-v="${k}">${k==='todos'?'Todos':PNAME[k]} <em>${cnt(k)}</em></button>`).join('')}</div>
+   <input class="fld" id="cpQ" placeholder="Buscar cliente…" value="${esc(CP.q)}" autocomplete="off" style="margin:10px 0">
+   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Rutina</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><b>${esc(c.full_name||'Sin nombre')}</b></span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em></span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin rutina</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
+}
+async function coachHome(){CP.view='list';coachRender();try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
-  CP.view='client';CP.cid=id;CP.tab=tab||'resumen';CP.d=null;CP.routine=null;coachRender();
+  CP.view='client';CP.cid=id;CP.tab=tab||'rutina';CP.d=null;CP.routine=null;coachRender();
   try{await rtLoadTpls();CP.routine=await DB.routine(id);}catch(e){console.warn(e);}
   try{CP.d=await DB.clientDetail(id);}catch(e){console.warn(e);CP.err='No pudimos cargar al cliente.';}
   coachRender();clearInterval(CP.poll);CP.poll=setInterval(async()=>{if(CP.view==='client'&&CP.tab==='chat'&&document.visibilityState==='visible'){try{CP.d=await DB.clientDetail(CP.cid);coachRender(true);}catch(e){}}},20000);
@@ -2079,12 +2127,10 @@ async function coachOpen(id,tab){
 function coachRender(keepInput){
   const el=document.getElementById('app'),keep=keepInput&&document.getElementById('cpIn')?document.getElementById('cpIn').value:'';
   if(CP.view==='list'){
-    const cl=CP.clients;
-    el.innerHTML=authHead()+`<h2 class="h2" style="margin-top:14px">Panel del coach</h2><p class="lead">Hola, ${esc((PROFILE.full_name||'coach').split(' ')[0])}. Estos son tus clientes.</p>${CP.err?`<div class="note">${CP.err}</div>`:''}
-     <section class="sec"><div class="sec-h"><b>Mis clientes</b><em>${cl.length}</em></div>${cl.length?cl.map(c=>`<button class="pfrow" data-act="cpopen" data-id="${c.id}" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line)"><span><b>${esc(c.full_name||'Sin nombre')}</b><small>${PNAME[c.plan]||c.plan} · ${esc(c.level||'—')}</small></span><span style="color:var(--gray)">›</span></button>`).join(''):'<div class="pfrow"><small>Aún no tienes clientes.</small></div>'}</section>
-     ${rtTplList()}<button class="btn" data-act="newuser" style="width:100%;margin-top:10px">Cerrar sesión</button>`;return;
+    const body=CP.sec==='editor'?rtTplList():cpClientsPage();
+    el.innerHTML=cpShell(body);el.classList.toggle('cpwide',cpW());const qi=document.getElementById('cpQ');if(qi&&CP.sec==='clientes'&&keepInput){qi.focus();qi.setSelectionRange(qi.value.length,qi.value.length);}return;
   }
-  const d=CP.d,tabs=['resumen','rutina','chat','llamada'],TL={resumen:'Resumen',rutina:'Rutina',chat:'Chat',llamada:'Llamada 1:1'};
+  const d=CP.d,tabs=['rutina','resumen','chat','llamada'],TL={rutina:'Planificación',resumen:'Información',chat:'Chat',llamada:'Llamada 1:1'};
   const nm=d?esc(d.profile.full_name||'Cliente'):'Cargando…';
   let body='<p class="lead">Cargando…</p>';
   if(d){
@@ -2118,13 +2164,17 @@ function coachRender(keepInput){
         <div class="note">El cliente ve la llamada en su Inicio y su Perfil y recibe un mensaje en el chat.</div>`;
     }
   }
-  el.innerHTML=authHead()+`<button class="lblbtn" data-act="cpback" style="color:var(--gray);margin:10px 0 4px">‹ Mis clientes</button><h2 class="h2" style="margin-top:4px">${nm}</h2>
-    <div class="chips" style="margin:8px 0">${tabs.map(t=>`<button class="chip${CP.tab===t?' on':''}" data-act="cptab" data-v="${t}">${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}${body}`;
+  const pp=d?d.profile:{},ini=(pp.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
+  el.innerHTML=cpShell(`<div class="cpcrumb"><button class="lblbtn" data-act="cpback">Clientes</button> / <b>${nm}</b></div>
+    <div class="cphead"><span class="cpav">${esc(ini)}</span><div><h2 class="h2" style="margin:0">${nm}</h2><small>${d?(PNAME[pp.plan]||'')+' · '+(GN[pp.goal]||pp.goal||'Sin objetivo'):''}</small></div></div>
+    <div class="cptabs">${tabs.map(t=>`<button class="cptab${CP.tab===t?' on':''}" data-act="cptab" data-v="${t}">${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}${body}`);el.classList.toggle('cpwide',cpW());
 }
 document.addEventListener('click',async e=>{
   const t=e.target.closest('[data-act]');if(!t||!PROFILE||PROFILE.role!=='coach')return;const a=t.dataset.act;
   if(a==='cpopen'){CP.err='';coachOpen(t.dataset.id);}
-  else if(a==='cpback'){clearInterval(CP.poll);CP.err='';coachHome();}
+  else if(a==='cpnav'){CP.sec=t.dataset.v;clearInterval(CP.poll);if(CP.view!=='list'){CP.view='list';}coachRender();}
+  else if(a==='cppf'){CP.pf=t.dataset.v;coachRender();}
+  else if(a==='cpback'){clearInterval(CP.poll);CP.err='';CP.sec='clientes';coachHome();}
   else if(a==='cptab'){CP.tab=t.dataset.v;coachRender();}
   else if(a==='cpplan'){try{await DB.updateClient(CP.cid,{plan:t.dataset.v});CP.d.profile.plan=t.dataset.v;CP.err='';coachRender();toast('Plan actualizado');}catch(x){CP.err='No se pudo cambiar el plan.';coachRender();}}
   else if(a==='cpsend'){const i=document.getElementById('cpIn'),v=(i.value||'').trim();if(!v)return;i.value='';
@@ -2170,6 +2220,8 @@ document.addEventListener('click',async e=>{
     try{const ts=new Date().toISOString();await DB.saveProfile(ME.id,{consent_at:ts});PROFILE.consent_at=ts;await startClient();}catch(x){toast('No pudimos guardar. Intenta de nuevo.');}}
   else if(a==='chat'){pullChat();}
 },true);
+
+document.addEventListener('input',e=>{if(e.target.id==='cpQ'&&PROFILE&&PROFILE.role==='coach'&&CP.view==='list'){CP.q=e.target.value;coachRender(true);}});
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
@@ -2372,15 +2424,32 @@ function rtAddItem(di,bk,id){const b=rtBlock(RT.days[di],bk),w=bk==='warm'||bk==
   b.items.push(w?{ex:id,kind:bk,fixed:{sets:'2',reps:bk==='calm'?'30 s':'10-12'},note:''}:{ex:id,kind:bk==='main'?'basic':'acc',ref:0,tempo:bk==='main'?'3-0-1-0':RDEF.tempo,rir:RDEF.rir,rest:bk==='main'?120:RDEF.rest,note:''});RT.dirty=true;}
 function rtFixIds(){RT.days.forEach((d,i)=>{d.id='d'+(i+1);d.label='Día '+(i+1);});}
 /* tarjeta "Rutina" dentro de la ficha del cliente */
+RT.as={kind:'program',folder:null};
+function dayCard(d,i){
+  const ex=k=>{const b=rtBlock(d,k);return b?b.items:[];};
+  const main=ex('main'),acc=ex('acc'),n=ex('warm').length+main.length+acc.length+ex('calm').length;
+  const nm=it=>(E[it.ex]||{}).n||it.ex;
+  return `<div class="cpday"><div class="cpdh"><b>${esc(d.label||('Día '+(i+1)))}</b><small>${esc(d.name||'')}</small></div>
+   <ul>${main.slice(0,4).map(it=>`<li>${thumb(it.ex,'sm')}<span>${esc(nm(it))}</span></li>`).join('')}${main.length>4?`<li class="more">+ ${main.length-4} más en central</li>`:''}</ul>
+   <div class="cpdf"><span>${n} ejercicios</span><span>${acc.length} accesorios</span></div></div>`;
+}
 function rtClientTab(){
-  const has=CP.routine&&CP.routine.days&&CP.routine.days.length;
-  const row=(t,lbl)=>`<button class="pfrow rtitem" data-act="rtapply" data-id="${t.id}"><span><b>${esc(t.name)}</b><small>${t.days.length} ${t.days.length===1?'día':'días'}${t.folder_id?' · '+esc(fpath(t.folder_id)):''} · ${lbl}</small></span><span>›</span></button>`;
-  const P=RT.tpls.filter(t=>(t.tkind||'program')==='program'),W=RT.tpls.filter(t=>t.tkind==='workout');
-  return `<section class="sec"><div class="sec-h"><b>Rutina actual</b><em>${has?CP.routine.days.length+' días':'Sin rutina'}</em></div>
-    ${has?`<div class="note"><b>${esc(CP.routine.name||'Rutina')}</b> · ${CP.routine.days.map(x=>esc(x.name)).join(' · ')}</div><button class="btn solid" data-act="rtedit" style="width:100%;margin-top:8px;padding:12px">Editar rutina</button>`:'<div class="note">Esta persona aún no tiene rutina. Aplica un programa o empieza en blanco.</div>'}
-    <button class="btn" data-act="rtblank" style="width:100%;margin-top:8px">Empezar en blanco</button></section>
-   <section class="sec"><div class="sec-h"><b>Aplicar un programa</b><em>${P.length}</em></div>${P.map(t=>row(t,'reemplaza la rutina')).join('')||'<div class="note">Aún no tienes programas. Créalos en el Editor de rutinas del inicio.</div>'}</section>
-   <section class="sec"><div class="sec-h"><b>Sumar un workout</b><em>${W.length}</em></div>${W.map(t=>row(t,'se suma como un día nuevo')).join('')||'<div class="note">Aún no tienes workouts. Guarda un día como workout desde el editor.</div>'}</section>`;
+  const has=CP.routine&&CP.routine.days&&CP.routine.days.length,A=RT.as,k=A.kind,cur=A.folder;
+  const crumbs=[];let f=RT.fo.find(x=>x.id===cur);while(f){crumbs.unshift(f);f=RT.fo.find(x=>x.id===f.parent_id);}
+  const subs=RT.fo.filter(x=>x.kind===k&&(x.parent_id||null)===(cur||null)).sort((a,b)=>a.name.localeCompare(b.name));
+  const items=RT.tpls.filter(x=>(x.tkind||'program')===k&&(x.folder_id||null)===(cur||null));
+  const left=`<section class="sec"><div class="sec-h"><b>Rutina actual</b><em>${has?CP.routine.days.length+' días':'Sin rutina'}</em></div>
+    ${has?`<div class="note" style="margin-bottom:10px"><b>${esc(CP.routine.name||'Rutina')}</b></div><div class="cpdays">${CP.routine.days.map(dayCard).join('')}</div>
+     <button class="btn solid" data-act="rtedit" style="width:100%;margin-top:12px;padding:12px">Editar rutina</button>`:'<div class="note">Esta persona aún no tiene rutina. Asígnale un programa de la derecha, o empieza en blanco.</div>'}
+    <button class="btn" data-act="rtblank" style="width:100%;margin-top:8px">Empezar en blanco</button></section>`;
+  const right=`<section class="sec"><div class="sec-h"><b>Asignar</b></div>
+    <div class="chips">${['program','workout'].map(x=>`<button class="chip${k===x?' on':''}" data-act="rtasel" data-v="${x}">${tkLbl(x)}</button>`).join('')}</div>
+    <div class="note" style="margin:8px 0">${k==='workout'?'Un workout se suma como un día nuevo a la rutina.':'Un programa reemplaza la rutina completa del cliente.'}</div>
+    <div class="crumbs"><button class="lblbtn" data-act="rtasopen" data-id="">${tkLbl(k)}</button>${crumbs.map(c=>` › <button class="lblbtn" data-act="rtasopen" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>
+    ${subs.map(x=>`<button class="pfrow rtitem" data-act="rtasopen" data-id="${x.id}"><span><b>📁 ${esc(x.name)}</b></span><span>›</span></button>`).join('')}
+    ${items.map(t=>`<button class="pfrow rtitem" data-act="rtapply" data-id="${t.id}"><span><b>${esc(t.name)}</b><small>${t.days.length} ${t.days.length===1?'día':'días'}</small></span><span class="cpasg">Asignar</span></button>`).join('')}
+    ${(!subs.length&&!items.length)?'<div class="note">Esta carpeta está vacía. Créalos en el Editor de rutinas.</div>':''}</section>`;
+  return cpW()?`<div class="cpcols"><div>${left}</div><div>${right}</div></div>`:left+right;
 }
 const fpath=id=>{const o=[];let f=RT.fo.find(x=>x.id===id);while(f){o.unshift(f.name);f=RT.fo.find(x=>x.id===f.parent_id);}return o.join(' › ');};
 const fOpts=(kind,sel)=>`<option value="">(Sin carpeta)</option>`+RT.fo.filter(f=>f.kind===kind).map(f=>({id:f.id,p:fpath(f.id)})).sort((a,b)=>a.p.localeCompare(b.p)).map(f=>`<option value="${f.id}"${f.id===sel?' selected':''}>${esc(f.p)}</option>`).join('');
@@ -2477,6 +2546,8 @@ document.addEventListener('click',async e=>{
     try{await DB.saveTemplate(null,n.trim(),RT.days,ME.id,'program',null);await rtLoadTpls();toast('Guardado en Programas ✓');}catch(x){RT.err='No se pudo guardar.';rtShow();}}
   else if(a==='rtasday'){const d=RT.days[RT.sel],n=prompt('Nombre del workout',d.name||'');if(!n)return;
     try{await DB.saveTemplate(null,n.trim(),[rtClone(d)],ME.id,'workout',null);await rtLoadTpls();toast('Guardado en Workouts ✓');}catch(x){RT.err='No se pudo guardar.';rtShow();}}
+  else if(a==='rtasel'){RT.as={kind:t.dataset.v,folder:null};coachRender();}
+  else if(a==='rtasopen'){RT.as.folder=t.dataset.id||null;coachRender();}
   else if(a==='rtlbkind'){RT.lb={kind:t.dataset.v,folder:null};coachRender();}
   else if(a==='rtlbopen'){RT.lb.folder=t.dataset.id||null;coachRender();}
   else if(a==='rtlbnewf'){const n=prompt('Nombre de la carpeta');if(!n||!n.trim())return;try{await DB.addFolder(RT.lb.kind,RT.lb.folder||null,n.trim(),ME.id);await rtLoadTpls();coachRender();}catch(x){toast('No se pudo crear la carpeta');}}
