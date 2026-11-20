@@ -2080,6 +2080,7 @@ function realDB(){
     async assignBasic(focus,days,level){const r=await sb.rpc('assign_basic_program',{p_focus:focus,p_days:days,p_level:level});if(r.error)throw r.error;return r.data;},
     async accessMine(email){const r=await sb.from('client_access').select('*').eq('email',String(email||'').toLowerCase()).maybeSingle();return r.error?null:r.data;},
     async cancelSub(action){const r=await sb.functions.invoke('whop-cancel',{body:{action}});if(r.error)throw r.error;return r.data;},
+    async accessAll(){const r=await sb.from('client_access').select('*');return r.error?[]:(r.data||[]);},
     async accessOf(cid){const r=await sb.from('client_access').select('*').eq('client_id',cid).maybeSingle();return r.error?null:r.data;},
     async accessSave(row,cid){let email=row.email;if(!email){const q=await sb.rpc('client_email',{p_id:cid});email=q&&q.data;}if(!email)throw new Error('sin correo');
       const full=Object.assign({},row,{email,client_id:cid});const u=await sb.from('client_access').upsert(full,{onConflict:'email'});if(u.error)throw u.error;return full;},
@@ -2373,7 +2374,7 @@ function cardioWrap(h,d){
 const cpW=()=>window.innerWidth>=1000;
 function cpWideCls(el){el.classList.toggle('cpwide',cpW());el.style.maxWidth=(CP.wide&&CP.view==='client'&&cpW())?'none':'';}
 function cpShell(inner){
-  const nav=[['inicio','Inicio'],['clientes','Clientes'],['chat','Chat'],['lecc','Lecciones'],['editor','Programas y workouts']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
+  const nav=[['inicio','Inicio'],['clientes','Clientes'],['chat','Chat'],['lecc','Lecciones'],['editor','Programas y workouts'],['pagos','Suscripciones']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
   return `<div class="cpshell${CP.wide&&CP.view==='client'?' cpfull':''}"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small>${pushCoachBtn()}<button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
 }
 const dAgo=s=>{if(!s)return '—';const n=Math.floor((Date.now()-new Date(s+'T12:00:00'))/864e5);return n<=0?'Hoy':n===1?'Ayer':'hace '+n+' d';};
@@ -2459,7 +2460,7 @@ function coachRender(keepInput){
   if(keepInput&&typeof RT!=='undefined'&&RT.open)return;
   const el=document.getElementById('app'),keep=keepInput&&document.getElementById('cpIn')?document.getElementById('cpIn').value:'';
   if(CP.view==='list'){
-    const body=CP.sec==='lecc'?cpLessonsPage():CP.sec==='editor'?rtTplList():CP.sec==='inicio'?cpHomePage():CP.sec==='chat'?cpChatPage():cpClientsPage();
+    const body=CP.sec==='lecc'?cpLessonsPage():CP.sec==='editor'?rtTplList():CP.sec==='inicio'?cpHomePage():CP.sec==='chat'?cpChatPage():CP.sec==='pagos'?cpPagosPage():cpClientsPage();
     el.innerHTML=cpShell(body);cpWideCls(el);const qi=document.getElementById('cpQ');if(qi&&CP.sec==='clientes'&&keepInput){qi.focus();qi.setSelectionRange(qi.value.length,qi.value.length);}return;
   }
   const d=CP.d,SB=[['plan','Planificación','Organiza entrenamientos, tareas y objetivos'],['rutina','Programa','Asigna y edita su programa'],['resumen','Información','Perfil, plan, módulos y fidelidad'],['alim','Nutrición','Planes y seguimiento nutricional'],['arch','Archivos','Documentos compartidos'],['evol','Evolución','Peso, pasos, sueño y sesiones'],['chat','Chat','Habla directo con tu cliente'],['llamada','Llamada 1:1','Agenda y avisa a tu cliente']],tabs=SB.map(x=>x[0]),TL=Object.fromEntries(SB.map(x=>[x[0],x[1]]));
@@ -3610,12 +3611,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1707';
+const APP_VER='20nov-1709';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1707'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1709'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4518,6 +4519,33 @@ function subHTML(){
 /* soporte: abre WhatsApp con el coach */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="support"]');if(!t||!ME)return;e.stopPropagation();
   const msg='Hola Juanjo, necesito ayuda con mi cuenta ('+(ME.email||'')+').';try{closeSheet();}catch(x){}window.open('https://wa.me/'+COACH_WA+'?text='+encodeURIComponent(msg),'_blank','noopener');},true);
+
+
+/* ---------- PANEL DEL COACH: SUSCRIPCIONES ---------- */
+function pagoInfo(r){const st=accState(r),now=Date.now(),u=r.paid_until?new Date(r.paid_until).getTime():null,d=u?Math.ceil((u-now)/864e5):null;
+  if(st==='expired')return {k:0,t:'Vencido',c:'#E5484D',n:'Venció el '+accFmt(r.paid_until)};
+  if(st==='grace')return {k:1,t:'En gracia',c:'#E8A317',n:'Venció el '+accFmt(r.paid_until)+' · '+Math.max(0,GRACE_D+d)+' d de gracia'};
+  if(r.cancel_at_period_end)return {k:2,t:'Cancelada',c:'#6B6B6B',n:'Acceso hasta el '+accFmt(r.paid_until)+(d!=null?' ('+d+' d)':'')};
+  if(u!==null&&d<=7)return {k:3,t:r.whop_status==='trialing'?'Prueba por terminar':'Por vencer',c:'#E8A317',n:(r.whop_status==='trialing'?'Primer cobro ':'Vence ')+accFmt(r.paid_until)+' ('+d+' d)'};
+  if(r.whop_status==='trialing')return {k:4,t:'En prueba',c:'#3B82C4',n:'Termina el '+accFmt(r.paid_until)+' ('+d+' d)'};
+  if(u===null)return {k:6,t:'Sin vencimiento',c:'#2E9E5B',n:r.source==='whop'?'':'Manual'};
+  return {k:5,t:'Activa',c:'#2E9E5B',n:'Próximo cobro '+accFmt(r.paid_until)+' ('+d+' d)'};}
+function cpPagosPage(){
+  if(!CP.pagos){DB.accessAll().then(r=>{CP.pagos=r;try{if(CP.view==='list'&&CP.sec==='pagos')coachRender(true);}catch(e){}});
+    return '<div class="cphead"><h2 class="h2" style="margin:0">Suscripciones</h2></div><div class="note">Cargando…</div>';}
+  const nm={};(CP.clients||[]).forEach(c=>nm[c.id]=c);
+  const L=CP.pagos.map(r=>({r,c:nm[r.client_id],i:pagoInfo(r)})).sort((a,b)=>a.i.k-b.i.k||(new Date(a.r.paid_until||'2999-01-01')-new Date(b.r.paid_until||'2999-01-01')));
+  const cnt=f=>L.filter(f).length,box=(n,l,col)=>`<div style="flex:1;min-width:84px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px"><b style="font-size:22px;color:${col}">${n}</b><small style="display:block;color:var(--gray)">${l}</small></div>`;
+  const rows=L.map(({r,c,i})=>{const nmx=c?esc(c.full_name||'Sin nombre'):esc(r.email);
+    return `<${c?'button':'div'} class="cptr" ${c?`data-act="cpopen" data-id="${c.id}"`:''} style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 4px;border-bottom:1px solid var(--line)"><span style="flex:1;min-width:0"><b>${nmx}</b><small style="display:block;color:var(--gray)">${esc(r.tier||'')}${r.period&&r.period!=='manual'?' · '+esc(r.period):''} · ${r.source==='whop'?'Whop':'Manual'}${c?'':' · sin cuenta aún'}</small></span><span style="text-align:right"><em style="font-style:normal;font-weight:700;font-size:12px;color:#fff;background:${i.c};padding:3px 9px;border-radius:99px">${i.t}</em><small style="display:block;color:var(--gray);margin-top:3px">${i.n}</small></span></${c?'button':'div'}>`;}).join('');
+  return `<div class="cphead"><h2 class="h2" style="margin:0">Suscripciones</h2><em class="cpcount">${L.length}</em></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">${box(cnt(x=>x.i.k===5||x.i.k===6),'Activas','#2E9E5B')}${box(cnt(x=>x.i.k===4||(x.i.k===3&&x.r.whop_status==='trialing')),'En prueba','#3B82C4')}${box(cnt(x=>x.i.k===3),'Por vencer (7 d)','#E8A317')}${box(cnt(x=>x.i.k<=1),'Vencidas / gracia','#E5484D')}${box(cnt(x=>x.i.k===2),'Canceladas','#6B6B6B')}</div>
+   <div class="note" style="margin-bottom:8px">Primero los casos que piden atención: vencidos, en gracia, cancelados y por vencer. Toca un cliente para abrir su ficha y ajustar su acceso.</div>
+   ${L.length?rows:'<div class="note">Aún no hay registros de acceso.</div>'}
+   <button class="btn" data-act="pagosref" style="width:100%;margin-top:12px">Actualizar</button>`;}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="cpnav"],[data-act="pagosref"]');if(!t||!PROFILE||PROFILE.role!=='coach')return;
+  if(t.dataset.act==='pagosref'){e.stopPropagation();CP.pagos=null;coachRender(true);}
+  else if(t.dataset.v==='pagos'){CP.pagos=null;}},true);
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
