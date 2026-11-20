@@ -2076,6 +2076,10 @@ function realDB(){
     async saveCustomEx(id,data,uid){ok(await sb.from('custom_exercises').upsert({id,data,created_by:uid},{onConflict:'id'}));},
     async delRoutine(cid){ok(await sb.from('routines').delete().eq('client_id',cid).eq('is_template',false));},
     async signOut(){await sb.auth.signOut();},
+    async accessMine(email){const r=await sb.from('client_access').select('*').eq('email',String(email||'').toLowerCase()).maybeSingle();return r.error?null:r.data;},
+    async accessOf(cid){const r=await sb.from('client_access').select('*').eq('client_id',cid).maybeSingle();return r.error?null:r.data;},
+    async accessSave(row,cid){let email=row.email;if(!email){const q=await sb.rpc('client_email',{p_id:cid});email=q&&q.data;}if(!email)throw new Error('sin correo');
+      const full=Object.assign({},row,{email,client_id:cid});const u=await sb.from('client_access').upsert(full,{onConflict:'email'});if(u.error)throw u.error;return full;},
     async setPassword(pw){const r=await sb.auth.updateUser({password:pw});if(r.error)throw r.error;},
     async setEmail(em){const r=await sb.auth.updateUser({email:em});if(r.error)throw r.error;},
     async profile(uid){return ok(await sb.from('profiles').select('*').eq('id',uid).single());},
@@ -3600,12 +3604,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1518';
+const APP_VER='20nov-1551';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1518'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1551'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4263,7 +4267,7 @@ const GRACE_D=3,RENEW_URL=WHOP_BASIC;
 let ACC={row:null,state:'ok'};
 function accState(r){if(!r||!r.paid_until)return 'ok';const e=new Date(r.paid_until).getTime(),n=Date.now();if(n<=e)return 'ok';if(n<=e+GRACE_D*86400000)return 'grace';return 'expired';}
 const accFmt=d=>d?new Date(d).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric',timeZone:'America/Bogota'}):'';
-async function accessFetch(){try{const em=String((ME&&ME.email)||'').toLowerCase();if(!em)return null;const r=await sb.from('client_access').select('*').eq('email',em).maybeSingle();return r.error?null:r.data;}catch(e){return null;}}
+async function accessFetch(){try{const em=String((ME&&ME.email)||'').toLowerCase();if(!em||!DB.accessMine)return null;return await DB.accessMine(em);}catch(e){return null;}}
 async function accessGate(){ // si falla, NUNCA bloquea
   try{ACC.row=await accessFetch();ACC.state=accState(ACC.row);}catch(e){ACC.state='ok';}
   if(ACC.state==='expired'){$('#app').innerHTML=accessView();return true;}
@@ -4287,7 +4291,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
 function accSec(){try{
   const cid=CP.cid;if(!cid)return '';
   if(!CP.acc||CP.acc.cid!==cid){CP.acc={cid,row:undefined};
-    sb.from('client_access').select('*').eq('client_id',cid).maybeSingle().then(r=>{CP.acc={cid,row:(r&&r.data)||null};try{coachRender(true);}catch(x){}}).catch(()=>{CP.acc={cid,row:null};});
+    (DB.accessOf?DB.accessOf(cid):Promise.resolve(null)).then(r=>{CP.acc={cid,row:r||null};try{coachRender(true);}catch(x){}}).catch(()=>{CP.acc={cid,row:null};});
     return '<section class="sec"><div class="sec-h"><b>Acceso y pago</b></div><div class="note">Cargando…</div></section>';}
   const r=CP.acc.row,st=accState(r),lab={ok:r&&r.paid_until?'Activo':'Activo · sin vencimiento',grace:'En días de gracia',expired:'Vencido'}[st],col={ok:'#2E9E5B',grace:'#E8A317',expired:'#E5484D'}[st];
   const v=r&&r.paid_until?new Date(r.paid_until).toLocaleDateString('en-CA',{timeZone:'America/Bogota'}):'';
@@ -4300,12 +4304,10 @@ function accSec(){try{
    <button class="btn solid" data-act="accsave" style="width:100%;margin-top:8px">Guardar acceso</button></section>`;}catch(e){return '';}}
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act="accsave"]');if(!t)return;e.stopPropagation();
   try{const d=(document.getElementById('accD')||{}).value||'',p=(document.getElementById('accP')||{}).value||null;
-    const r=CP.acc&&CP.acc.row;let email=r&&r.email;
-    if(!email){const q=await sb.rpc('client_email',{p_id:CP.cid});email=q&&q.data;}
-    if(!email){toast('No encontré el correo del cliente');return;}
-    const row={email,client_id:CP.cid,tier:(CP.d.profile&&CP.d.profile.plan)||'basic',period:p||'manual',paid_until:d?new Date(d+'T23:59:00-05:00').toISOString():null,source:'manual'};
-    const u=await sb.from('client_access').upsert(row,{onConflict:'email'});if(u.error)throw u.error;
-    CP.acc={cid:CP.cid,row:Object.assign({},r||{},row)};coachRender(true);toast('Acceso guardado');}catch(x){console.warn(x);toast('No se pudo guardar');}},true);
+    const r=CP.acc&&CP.acc.row;
+    const row={email:r&&r.email,tier:(CP.d.profile&&CP.d.profile.plan)||'basic',period:p||'manual',paid_until:d?new Date(d+'T23:59:00-05:00').toISOString():null,source:'manual'};
+    const full=await DB.accessSave(row,CP.cid);
+    CP.acc={cid:CP.cid,row:Object.assign({},r||{},full)};coachRender(true);toast('Acceso guardado');}catch(x){console.warn(x);toast('No se pudo guardar');}},true);
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
