@@ -2085,6 +2085,7 @@ function realDB(){
         sb.from('calls').select('starts_at').eq('client_id',uid).gte('starts_at',new Date(Date.now()-36e5).toISOString()).order('starts_at').limit(1).then(ok)]);
       return {weights,steps,blobs,chat,photos,call:calls[0]||null};
     },
+    onChat(cb){try{if(window._chRT)return;window._chRT=sb.channel('erre-chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_messages'},p=>{try{cb(p.new||{});}catch(e){}}).subscribe();}catch(e){console.warn('rt',e);}},
     async chat(uid){return ok(await sb.from('chat_messages').select('id,sender_id,kind,body,created_at').eq('client_id',uid).order('created_at'));},
     async upsert(table,rows,onConflict){ok(await sb.from(table).upsert(rows,{onConflict}));},
     async circuits(){return ok(await sb.from('circuits').select('id,name,cfg').order('name'));},
@@ -2415,7 +2416,8 @@ function cpClientsPage(){
    <input class="fld" id="cpQ" placeholder="Buscar cliente…" value="${esc(CP.q)}" autocomplete="off" style="margin:10px 0">
    ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Programa</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><b>${esc(c.full_name||'Sin nombre')}</b>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em>${c.status==='pending'?' <em class="cpwarn">Pendiente</em>':''}</span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin programa</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
 }
-async function coachHome(){CP.view='list';coachRender();try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{CP.home=await DB.homeData();}catch(e){console.warn('home',e);}try{await rtLoadTpls();}catch(e){}coachRender();}
+async function coachLive(m){try{if(CP.sec==='chat'&&CP.view==='list'){cpInboxLoad();}else if(CP.view==='client'&&CP.tab==='chat'&&m&&m.client_id===CP.cid&&!(typeof RT!=='undefined'&&RT.open)){CP.d=await DB.clientDetail(CP.cid);coachRender(true);}}catch(e){}}
+async function coachHome(){try{if(DB.onChat)DB.onChat(coachLive);}catch(e){}CP.view='list';coachRender();try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{CP.home=await DB.homeData();}catch(e){console.warn('home',e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
   CP.view='client';CP.cid=id;CP.tab=tab||'plan';CP.cd=null;CP.d=null;CP.routine=null;coachRender();
   try{await rtLoadTpls();CP.routine=await DB.routine(id);}catch(e){console.warn(e);}
@@ -2838,6 +2840,7 @@ async function startClient(){
   S.sel=today();store.set('erre_state',S);
   render();
   clearInterval(CHATT);CHATT=setInterval(()=>{if(document.visibilityState==='visible'){pullChat();if(needs)SYNC.dirty();}},30000);
+  try{if(DB.onChat)DB.onChat(()=>{if(document.visibilityState==='visible')pullChat();});}catch(e){}
 }
 async function boot(){
   try{const ses=await DB.session();if(!ses){showLogin();return;}await enter(ses);}
@@ -3568,9 +3571,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1103';
+const APP_VER='20nov-1104';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1103'){if(performance.now()<25000&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}location.reload();return;}pwaBanner();}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1104'){if(performance.now()<25000&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}location.reload();return;}pwaBanner();}}catch(e){}}
 setTimeout(pwaCheck,1500);setInterval(pwaCheck,3*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
