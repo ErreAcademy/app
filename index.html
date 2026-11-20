@@ -3607,12 +3607,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1613';
+const APP_VER='20nov-1628';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1613'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1628'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4326,6 +4326,96 @@ async function basicAssign(){
 (function(){const os0=obSubmit;obSubmit=function(){
   try{if(S.ob&&S.ob.plan==='basic'&&S.ob.form&&!S.ob.form.focus)S.ob.form.focus=FOCD(S.ob.form.sex);}catch(e){}
   const r=os0.apply(this,arguments);if(r!==false&&S.ob&&S.ob.step==='done')basicAssign();return r;};})();
+
+
+/* ---------- REGISTRO PASO A PASO + MI PERFIL DESPLEGABLE + CAMBIAR PROGRAMA ---------- */
+(function(){const st=document.createElement('style');st.textContent=`
+.wzp{display:flex;align-items:center;gap:10px;margin:6px 0 14px}.wzp small{color:var(--gray);font-size:12px;white-space:nowrap}.wzb{flex:1;height:6px;border-radius:99px;background:var(--line);overflow:hidden}.wzb i{display:block;height:100%;background:var(--red-strong,#C0392B);border-radius:99px;transition:width .25s}
+.wzq{font-size:22px;line-height:1.2;margin:4px 0 6px}.wzs{color:var(--gray);font-size:14px;margin:0 0 14px}
+.wzn{display:flex;gap:10px;margin-top:18px}.wzn .btn{flex:1;padding:14px}
+details.sec.acc{padding:0}details.acc>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding:16px 14px;cursor:pointer;font-family:'Archivo';font-stretch:125%;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:13px;-webkit-user-select:none;user-select:none}
+details.acc>summary::-webkit-details-marker{display:none}details.acc>summary::after{content:'›';font-size:20px;line-height:1;color:var(--gray);transform:rotate(90deg);transition:transform .2s}details.acc[open]>summary::after{transform:rotate(-90deg)}
+details.acc>summary small{display:block;font-family:inherit;font-stretch:100%;font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray);font-size:12px;margin-top:2px}
+.accbody{padding:0 14px 14px;border-top:1px solid var(--line)}
+#acct details.acc{border:1px solid var(--line);border-radius:14px;margin-bottom:10px;background:var(--card)}`;document.head.appendChild(st);})();
+
+/* --- registro por pasos --- */
+(function(){
+  const rend0=renderOnboarding;
+  function steps(o){
+    const f=o.form||{},full=o.type==='full',L=[];
+    const err=()=>'';
+    L.push({t:'¿Cómo te llamas?',s:'Empecemos por lo básico.',b:()=>lab('Tu nombre')+inp('name',f.name,'Nombre')+lab('Sexo')+chipsH('sex',['Mujer','Hombre'],f.sex),
+      ok:()=>!(f.name||'').trim()?'Escribe tu nombre.':!f.sex?'Elige tu sexo.':''});
+    if(full){
+      L.push({t:'¿Cuándo naciste?',s:'Con tu edad ajustamos mejor tu plan.',b:()=>`<div class="dob"><input class="fld" inputmode="numeric" maxlength="2" data-ob="dd" value="${f.dd??''}" placeholder="dd"><input class="fld" inputmode="numeric" maxlength="2" data-ob="mm" value="${f.mm??''}" placeholder="mm"><input class="fld" inputmode="numeric" maxlength="4" data-ob="yy" value="${f.yy??''}" placeholder="aaaa"></div>`,
+        ok:()=>{if(f.dd||f.mm||f.yy){const dd=+f.dd,mm=+f.mm,yy=+f.yy,t=new Date(yy,mm-1,dd);if(!(dd&&mm&&yy)||t.getDate()!==dd||t.getMonth()!==mm-1||t.getFullYear()!==yy||yy<1920||yy>new Date().getFullYear()-10)return 'Revisa tu fecha de nacimiento (dd/mm/aaaa).';}return '';}});
+      L.push({t:'Tus medidas',s:'Peso y estatura actuales.',b:()=>lab('Peso (kg)')+inp('weight',f.weight,'kg','number')+lab('Estatura (cm)')+inp('height',f.height,'cm','number'),ok:err});
+    }
+    L.push({t:'¿Cuál es tu objetivo?',s:'Puedes elegir más de uno.',b:()=>{const gl=f.goals||[];return GOALS.map(g=>`<button class="pcard sm${gl.includes(g[0])?' on':''}" data-act="obgoal" data-v="${g[0]}"><b>${g[1]}</b><small>${g[2]}</small></button>`).join('')+(gl.length>1?lab('¿Cuál es tu prioridad principal?')+chipsH('main',gl.map(x=>[x,GN[x]]),f.main):'');},ok:err});
+    if(o.plan==='basic') L.push({t:'¿En qué te quieres enfocar?',s:'Siempre trabajas todo el cuerpo; esto cambia el énfasis. Lo puedes cambiar después en tu perfil.',b:()=>{const fk=f.focus||(f.sex==='Mujer'?'gluteo':'balanceado');return [['balanceado','Cuerpo balanceado','Fuerza completa, sin énfasis'],['gluteo','Glúteo y pierna','Más volumen de pierna y glúteo'],['torso','Torso','Más espalda, pecho, hombros y brazos']].map(g=>`<button class="pcard sm${fk===g[0]?' on':''}" data-act="obset" data-f="focus" data-v="${g[0]}"><b>${g[1]}</b><small>${g[2]}</small></button>`).join('');},ok:err});
+    L.push({t:o.plan==='complete'?'Tu experiencia entrenando':'¿Cuál es tu nivel?',s:'',b:()=>chipsH('level',['Principiante','Intermedio','Avanzado'],f.level)+`<p class="hint">${LV[f.level]||''}</p><button class="lblbtn" data-act="oblv" style="color:var(--red-strong)">${o.lvl?'Ocultar ▴':'¿No sabes cuál elegir? ▾'}</button>${o.lvl?`<div class="note">${Object.entries(LV).map(([k,v])=>`<b>${k}:</b> ${v}`).join('<br>')}</div>`:''}`,ok:err});
+    L.push({t:'¿Qué días puedes entrenar?',s:'',b:()=>`<div class="chips">${DNL.map((n,i)=>`<button class="chip${(f.wd||[]).includes(i)?' on':''}" data-act="obwd" data-v="${i}">${n}</button>`).join('')}</div>`+(o.plan==='basic'?'<p class="hint">En Basic entrenas hasta 5 días de fuerza; los demás son descanso activo.</p>':''),ok:()=>(f.wd||[]).length<1?'Elige al menos un día para entrenar.':''});
+    if(full) L.push({t:'Tu horario',s:'',b:()=>lab('Tiempo por sesión')+chipsH('session',[['45','45 min'],['60','60 min'],['90','90 min']],f.session)+lab('¿Cuándo prefieres entrenar?')+chipsH('time',['Mañana','Tarde','Noche'],f.time),ok:err});
+    L.push({t:'Tu salud',s:'Tu coach lo revisa antes de asignarte ejercicios.',b:()=>lab('¿Tienes alguna molestia o lesión?')+chipsH('pain',['No','Sí'],f.pain)+(f.pain==='Sí'?inp('painTxt',f.painTxt,'¿Dónde y desde cuándo?'):'')+(full?lab('Cirugías o condiciones médicas')+area('medical',f.medical,'Si no tienes, déjalo en blanco'):''),ok:err});
+    if(full) L.push({t:'Tu día a día',s:'',b:()=>lab('Sueño promedio')+chipsH('sleep',['Menos de 6 h','6-7 h','7-8 h','Más de 8 h'],f.sleep)+lab('Estrés')+chipsH('stress',['Bajo','Medio','Alto'],f.stress)+lab('Comidas al día')+chipsH('meals',['2','3','4','5 o más'],f.meals)+lab('Restricciones o alergias alimentarias')+area('diet',f.diet,'Si no tienes, déjalo en blanco'),ok:err});
+    return L;
+  }
+  renderOnboarding=function(){
+    const o=S.ob;if(!o||o.step!=='form')return rend0.apply(this,arguments);
+    const L=steps(o),n=L.length;o.fi=Math.max(0,Math.min(o.fi||0,n-1));const s=L[o.fi],last=o.fi===n-1;
+    const head=`<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Academy</h1><small>Método Complete</small></div></header>`;
+    $('#app').innerHTML=head+`<button class="lblbtn" data-act="obprev" style="color:var(--gray);margin:6px 0 0">‹ Atrás</button>
+     <div class="wzp"><div class="wzb"><i style="width:${Math.round((o.fi+1)/n*100)}%"></i></div><small>Paso ${o.fi+1} de ${n}</small></div>
+     <h2 class="h2 wzq">${s.t}</h2>${s.s?`<p class="wzs">${s.s}</p>`:''}${s.b()}
+     ${o.err?`<div class="note" style="background:var(--red-tint);color:var(--red-strong);margin-top:12px">${o.err}</div>`:''}
+     <div class="wzn"><button class="btn solid" data-act="${last?'obsubmit':'obnext'}">${last?'Crear mi plan':'Siguiente'}</button></div>`;
+  };
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="obnext"],[data-act="obprev"]');if(!t||!S.ob||S.ob.step!=='form')return;e.stopPropagation();
+    const o=S.ob,L=steps(o);
+    if(t.dataset.act==='obprev'){o.err='';if((o.fi||0)>0)o.fi--;else o.step='type';}
+    else{const m=L[o.fi||0].ok();if(m){o.err=m;}else{o.err='';o.fi=Math.min((o.fi||0)+1,L.length-1);}}
+    save();render();window.scrollTo(0,0);},true);
+})();
+
+/* --- perfil desplegable + cambiar programa Basic --- */
+(function(){
+  const pv0=profileView;
+  const SUB={'Datos personales':'Nombre, sexo, estatura, peso','Lo que incluye':'Tu plan y sus beneficios','Entrenamiento':'Objetivo, nivel, días y molestias','Mi programa':'Enfoque de tu rutina Basic','Mis metas':'Pasos y frecuencia cardíaca','Recordatorios':'Avisos de entrenar y pesarte','Privacidad y ayuda':'Fotos y soporte'};
+  S.pfOpen=S.pfOpen||{};
+  function progSec(){
+    try{const u=S.user||{};if(typeof tier==='function'&&tier()!=='basic')return '';if(isC())return '';
+      const cur=(u.data&&u.data.focus)||FOCD(u.sex),at=u.data&&u.data.focusAt;
+      let wait='';if(at){const d=Math.floor((new Date(today())-new Date(at))/864e5);if(d<7)wait=`<div class="note">Ya cambiaste tu enfoque hace ${d} día${d===1?'':'s'}. Podrás volver a cambiarlo en ${7-d} día${7-d===1?'':'s'}.</div>`;}
+      return `<section class="sec"><div class="sec-h"><b>Mi programa</b></div>
+       <p class="hint" style="margin-top:10px">Siempre trabajas todo el cuerpo; el enfoque cambia el énfasis. Si cambias, <b>sigues en la misma semana</b> de tu mesociclo.</p>
+       ${Object.keys(FOCN).map(k=>`<button class="pcard sm${cur===k?' on':''}" data-act="pgfocus" data-v="${k}"><b>${FOCN[k]}</b><small>${k==='balanceado'?'Fuerza completa, sin énfasis':k==='gluteo'?'Más volumen de pierna y glúteo':'Más espalda, pecho, hombros y brazos'}${cur===k?' · Tu enfoque actual':''}</small></button>`).join('')}${wait}</section>`;}catch(e){return '';}
+  }
+  profileView=function(){
+    let h=pv0.apply(this,arguments);
+    const ps=progSec();if(ps)h=h.replace('<section class="sec"><div class="sec-h"><b>Entrenamiento</b>',ps+'<section class="sec"><div class="sec-h"><b>Entrenamiento</b>');
+    return h.replace(/<section class="sec"><div class="sec-h"><b>([^<]*)<\/b><\/div>([\s\S]*?)<\/section>/g,(m,t,b)=>`<details class="sec acc" data-pk="${t}"${S.pfOpen[t]?' open':''}><summary><span>${t}${SUB[t]?`<small>${SUB[t]}</small>`:''}</span></summary><div class="accbody">${b}</div></details>`);
+  };
+  document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details.acc[data-pk]')){S.pfOpen[d.dataset.pk]=d.open;}},true);
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pgfocus"],[data-act="pgok"]');if(!t)return;e.stopPropagation();
+    const u=S.user||{};u.data=u.data||{};
+    if(t.dataset.act==='pgfocus'){const k=t.dataset.v,cur=u.data.focus||FOCD(u.sex);
+      if(k===cur){toast('Ese ya es tu enfoque');return;}
+      const at=u.data.focusAt;if(at&&Math.floor((new Date(today())-new Date(at))/864e5)<7){toast('Solo puedes cambiar el enfoque una vez por semana');return;}
+      S.pgNew=k;sheet(`<h3>Cambiar a ${FOCN[k]}</h3><div class="sub">Tu rutina pasa a enfocarse en <b>${FOCN[k]}</b>. Sigues en la misma semana del mesociclo y conservas tu historial. Solo puedes cambiarlo una vez por semana.</div><button class="btn solid" data-act="pgok" style="width:100%;margin-top:10px;padding:14px">Sí, cambiar mi programa</button><button class="btn" data-act="close" style="width:100%;margin-top:8px">Cancelar</button>`);return;}
+    const k=S.pgNew;if(!k)return;closeSheet();
+    (async()=>{try{await DB.assignBasic(k,u.days||4,u.level||'Principiante');u.data.focus=k;u.data.focusAt=today();S.swaps={};save();try{await loadClientRoutine(ME&&ME.id);}catch(y){console.warn(y);}save();render();toast('Programa actualizado: '+FOCN[k]);}
+      catch(x){console.warn(x);toast('No se pudo cambiar el programa');}})();
+  },true);
+})();
+
+/* --- Mi cuenta (modal) desplegable --- */
+(function(){const ao0=acctOpen;acctOpen=function(){ao0.apply(this,arguments);
+  const b=document.querySelector('#acct .acbox');if(!b||b.querySelector('details'))return;
+  const kids=[...b.children],hd=kids[0],msg=kids[1],rest=kids.slice(2);
+  const groups=[['Nombre','Cómo te ves en la app',0,3],['Correo','Tu correo de acceso',3,7],['Contraseña','Cambiar tu contraseña',7,rest.length]];
+  groups.forEach(([t,s,a,z])=>{const d=document.createElement('details');d.className='acc';d.innerHTML=`<summary><span>${t}<small>${s}</small></span></summary>`;const bd=document.createElement('div');bd.className='accbody';bd.style.paddingTop='4px';rest.slice(a,z).forEach(n=>bd.appendChild(n));d.appendChild(bd);b.appendChild(d);});
+};})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
