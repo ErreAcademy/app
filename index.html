@@ -3595,9 +3595,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1336';
+const APP_VER='20nov-1338';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1336'){if(performance.now()<25000&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}location.reload();return;}pwaBanner();}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1338'){if(performance.now()<25000&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}location.reload();return;}pwaBanner();}}catch(e){}}
 setTimeout(pwaCheck,1500);setInterval(pwaCheck,3*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
@@ -4036,10 +4036,14 @@ function nvSnap(){try{if(typeof PROFILE==='undefined'||!PROFILE)return null;cons
   return {r:0,t:S.tab,p:S.profile||false,c:!!S.chatOpen,g:S.tg||null,s:(S.prog&&S.prog.seg)||null,sh:so};}catch(e){return null;}}
 const nvSig=s=>JSON.stringify(s);
 function nvSync(){if(_nvBusy)return;const s=nvSnap();if(!s)return;const sg=nvSig(s);
-  if(_nvLast===null){_nvLast=sg;try{history.replaceState({erre:1,snap:s},'');}catch(e){}return;}
+  if(_nvLast===null){_nvLast=sg;try{history.replaceState({erre:1,guard:1},'');history.pushState({erre:1,snap:s},'');}catch(e){}return;}
   if(sg!==_nvLast){_nvLast=sg;try{history.pushState({erre:1,snap:s},'');}catch(e){}}}
 document.addEventListener('click',()=>setTimeout(nvSync,80),true);setInterval(nvSync,500);
-window.addEventListener('popstate',e=>{const st=e.state;if(!st||!st.erre||!st.snap)return;const s=st.snap,cur=nvSnap();if(!cur||cur.r!==s.r)return;_nvBusy=true;
+let _nvArm=false;
+window.addEventListener('popstate',e=>{const st=e.state;if(st&&st.erre&&st.guard){const cs=nvSnap();if(!cs)return;try{history.pushState({erre:1,snap:cs},'');}catch(x){}_nvLast=nvSig(cs);
+    if(_nvArm){_nvArm=false;sheet(`<h3>¿Salir de la app?</h3><div class="sub">Tu progreso está guardado.</div><button class="btn solid" data-act="nvstay" style="width:100%;margin-top:8px">Quedarme</button><button class="btn" data-act="nvexit" style="width:100%;margin-top:8px">Salir</button>`);}
+    else{_nvArm=true;toast('Toca atrás otra vez para salir');setTimeout(()=>{_nvArm=false;},3000);}return;}
+  if(!st||!st.erre||!st.snap)return;const s=st.snap,cur=nvSnap();if(!cur||cur.r!==s.r)return;_nvBusy=true;
   try{
     const sh=document.getElementById('sheet');if(sh&&sh.classList.contains('on')&&!s.sh)closeSheet();
     if(s.r===1){
@@ -4053,6 +4057,10 @@ window.addEventListener('popstate',e=>{const st=e.state;if(!st||!st.erre||!st.sn
     }
   }catch(x){}
   setTimeout(()=>{_nvLast=nvSig(nvSnap());_nvBusy=false;},150);});
+
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="nvstay"],[data-act="nvexit"]');if(!t)return;e.stopPropagation();
+  if(t.dataset.act==='nvstay'){closeSheet();return;}
+  _nvBusy=true;closeSheet();try{history.go(-2);}catch(x){}setTimeout(()=>{_nvBusy=false;try{window.close();}catch(x){}},400);},true);
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
