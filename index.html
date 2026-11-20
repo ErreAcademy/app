@@ -2080,6 +2080,8 @@ function realDB(){
     async assignBasic(focus,days,level){const r=await sb.rpc('assign_basic_program',{p_focus:focus,p_days:days,p_level:level});if(r.error)throw r.error;return r.data;},
     async accessMine(email){const r=await sb.from('client_access').select('*').eq('email',String(email||'').toLowerCase()).maybeSingle();return r.error?null:r.data;},
     async cancelSub(action){const r=await sb.functions.invoke('whop-cancel',{body:{action}});if(r.error)throw r.error;return r.data;},
+    async feedback(kind,reason,comment){const r=await sb.from('client_feedback').insert({kind,reason:reason||null,comment:(comment||'').trim()||null});if(r.error)throw r.error;},
+    async feedbackAll(){const r=await sb.from('client_feedback').select('*').order('created_at',{ascending:false}).limit(200);return r.error?[]:(r.data||[]);},
     async accessAll(){const r=await sb.from('client_access').select('*');return r.error?[]:(r.data||[]);},
     async accessOf(cid){const r=await sb.from('client_access').select('*').eq('client_id',cid).maybeSingle();return r.error?null:r.data;},
     async accessSave(row,cid){let email=row.email;if(!email){const q=await sb.rpc('client_email',{p_id:cid});email=q&&q.data;}if(!email)throw new Error('sin correo');
@@ -3611,12 +3613,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1717';
+const APP_VER='20nov-1725';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1717'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1725'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4365,6 +4367,7 @@ details.acc>summary small{display:block;font-family:inherit;font-stretch:100%;fo
     L.push({t:o.plan==='complete'?'Tu experiencia entrenando':'¿Cuál es tu nivel?',s:'',b:()=>chipsH('level',['Principiante','Intermedio','Avanzado'],f.level)+`<p class="hint">${LV[f.level]||''}</p><button class="lblbtn" data-act="oblv" style="color:var(--red-strong)">${o.lvl?'Ocultar ▴':'¿No sabes cuál elegir? ▾'}</button>${o.lvl?`<div class="note">${Object.entries(LV).map(([k,v])=>`<b>${k}:</b> ${v}`).join('<br>')}</div>`:''}`,ok:err});
     L.push({t:'¿Qué días puedes entrenar?',s:'',b:()=>`<div class="chips">${DNL.map((n,i)=>`<button class="chip${(f.wd||[]).includes(i)?' on':''}" data-act="obwd" data-v="${i}">${n}</button>`).join('')}</div>`+(o.plan==='basic'?'<p class="hint">En Basic entrenas hasta 5 días de fuerza; los demás son descanso activo.</p>':''),ok:()=>(f.wd||[]).length<1?'Elige al menos un día para entrenar.':''});
     if(full) L.push({t:'Tu horario',s:'',b:()=>lab('Tiempo por sesión')+chipsH('session',[['45','45 min'],['60','60 min'],['90','90 min']],f.session)+lab('¿Cuándo prefieres entrenar?')+chipsH('time',['Mañana','Tarde','Noche'],f.time),ok:err});
+    L.push({t:'¿Cómo nos conociste?',s:'Opcional. Nos ayuda a saber dónde encontrarte. Puedes saltar este paso.',b:()=>chipsH('src',['Instagram','YouTube','TikTok','WhatsApp','Un amigo o conocido','Juanjo Herrera (coach)','Una IA (ChatGPT, Claude…)','Otro'],f.src)+(f.src==='Otro'?inp('srcTxt',f.srcTxt,'¿Cuál?'):''),ok:()=>''});
     L.push({t:'Tu salud',s:'Tu coach lo revisa antes de asignarte ejercicios.',b:()=>lab('¿Tienes alguna molestia o lesión?')+chipsH('pain',['No','Sí'],f.pain)+(f.pain==='Sí'?inp('painTxt',f.painTxt,'¿Dónde y desde cuándo?'):'')+(full?lab('Cirugías o condiciones médicas')+area('medical',f.medical,'Si no tienes, déjalo en blanco'):''),ok:err});
     if(full) L.push({t:'Tu día a día',s:'',b:()=>lab('Sueño promedio')+chipsH('sleep',['Menos de 6 h','6-7 h','7-8 h','Más de 8 h'],f.sleep)+lab('Estrés')+chipsH('stress',['Bajo','Medio','Alto'],f.stress)+lab('Comidas al día')+chipsH('meals',['2','3','4','5 o más'],f.meals)+lab('Restricciones o alergias alimentarias')+area('diet',f.diet,'Si no tienes, déjalo en blanco'),ok:err});
     return L;
@@ -4509,11 +4512,11 @@ function subHTML(){
   if(Date.now()-SUB.t>60000){SUB.t=Date.now();accessFetch().then(r=>{if(r){ACC.row=r;ACC.state=accState(r);}try{if(S.profile)render();}catch(e){}});}
   return h.replace(/(<details class="sec acc" data-pk="Mi plan"[\s\S]*?<\/details>)/,m=>m+subHTML());};
   document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="subcancel"],[data-act="subresume"],[data-act="subok"],[data-act="subrok"]');if(!t)return;e.stopPropagation();const a=t.dataset.act,r=ACC.row||{};
-    if(a==='subcancel'){sheet(`<h3>¿Cancelar tu suscripción?</h3><div class="sub">${r.whop_status==='trialing'?'Estás en tu prueba gratis: si cancelas ahora <b>no se te cobra nada</b>. ':''}Mantienes tu acceso hasta el <b>${subD(r.paid_until)}</b> y después no se vuelve a cobrar. Puedes reactivarla antes de esa fecha.</div><button class="btn solid" data-act="subok" style="width:100%;margin-top:10px;padding:14px;background:#B3261E">Sí, cancelar suscripción</button><button class="btn" data-act="close" style="width:100%;margin-top:8px">Mejor no</button>`);return;}
+    if(a==='subcancel'){sheet(`<h3>¿Cancelar tu suscripción?</h3><div class="sub">${r.whop_status==='trialing'?'Estás en tu prueba gratis: si cancelas ahora <b>no se te cobra nada</b>. ':''}Mantienes tu acceso hasta el <b>${subD(r.paid_until)}</b> y después no se vuelve a cobrar. Puedes reactivarla antes de esa fecha.</div>${CXL_FORM}<button class="btn solid" data-act="subok" style="width:100%;margin-top:10px;padding:14px;background:#B3261E">Sí, cancelar suscripción</button><button class="btn" data-act="close" style="width:100%;margin-top:8px">Mejor no</button>`);return;}
     if(a==='subresume'){sheet(`<h3>¿Reactivar tu suscripción?</h3><div class="sub">Se retoma el cobro de 29 USD el <b>${subD(r.paid_until)}</b> y sigue cada mes.</div><button class="btn solid" data-act="subrok" style="width:100%;margin-top:10px;padding:14px">Sí, reactivar</button><button class="btn" data-act="close" style="width:100%;margin-top:8px">Cancelar</button>`);return;}
-    const act=a==='subok'?'cancel':'resume';closeSheet();toast(act==='cancel'?'Cancelando…':'Reactivando…');
+    const act=a==='subok'?'cancel':'resume';const cxf=act==='cancel'?cxlRead():null;closeSheet();toast(act==='cancel'?'Cancelando…':'Reactivando…');
     (async()=>{try{const x=await DB.cancelSub(act);
-      if(x&&x.ok){ACC.row=Object.assign({},ACC.row,{cancel_at_period_end:act==='cancel'});S.pfOpen['Mi suscripción']=true;render();toast(act==='cancel'?'Suscripción cancelada. Acceso hasta el '+subD(ACC.row.paid_until):'Suscripción reactivada ✓');}
+      if(x&&x.ok){if(cxf&&(cxf.r||cxf.c)){DB.feedback('cancel',cxf.r,cxf.c).catch(()=>{});}ACC.row=Object.assign({},ACC.row,{cancel_at_period_end:act==='cancel'});S.pfOpen['Mi suscripción']=true;render();toast(act==='cancel'?'Suscripción cancelada. Acceso hasta el '+subD(ACC.row.paid_until):'Suscripción reactivada ✓');}
       else{sheet(`<h3>No pudimos hacerlo desde aquí</h3><div class="sub">${act==='cancel'?'No se canceló nada y tu suscripción sigue igual. ':''}Escríbenos y lo resolvemos por ti de inmediato.</div><button class="btn solid" data-act="support" style="width:100%;margin-top:10px;padding:14px">Escribir a soporte</button><button class="btn" data-act="close" style="width:100%;margin-top:8px">Cerrar</button>`);}
     }catch(x){console.warn(x);sheet(`<h3>Sin conexión</h3><div class="sub">No pudimos comunicarnos. Revisa tu internet e inténtalo de nuevo.</div><button class="btn" data-act="close" style="width:100%;margin-top:10px">Cerrar</button>`);}})();
   },true);
@@ -4550,6 +4553,29 @@ function cpPagosPage(){
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="cpnav"],[data-act="pagosref"]');if(!t||!PROFILE||PROFILE.role!=='coach')return;
   if(t.dataset.act==='pagosref'){e.stopPropagation();CP.pagos=null;coachRender(true);}
   else if(t.dataset.v==='pagos'){CP.pagos=null;}},true);
+
+
+/* --- feedback opcional: motivo al cancelar, origen en registro, vista coach --- */
+var CXL_REASONS=['Falta de tiempo','Es muy costoso','No veo resultados','Prefiero otro método o app','Ya logré mi objetivo','Problemas con la app','Otro'];
+var CXL_FORM='<div style="margin-top:14px;text-align:left"><b style="font-size:14px">¿Nos cuentas por qué? <span style="color:var(--gray);font-weight:400">(opcional)</span></b><div class="chips" style="margin-top:8px">'+CXL_REASONS.map(x=>'<button type="button" class="chip" data-act="cxr" data-v="'+x+'">'+x+'</button>').join('')+'</div><textarea id="cxc" class="fld" rows="2" maxlength="500" placeholder="Algo que quieras decirnos para mejorar (opcional)" style="width:100%;margin-top:8px"></textarea></div>';
+function cxlRead(){const on=document.querySelector('[data-act="cxr"].on'),c=document.getElementById('cxc');return {r:on?on.dataset.v:'',c:c?c.value:''};}
+(function(){
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="cxr"]');if(!t)return;e.stopPropagation();const was=t.classList.contains('on');document.querySelectorAll('[data-act="cxr"]').forEach(b=>b.classList.remove('on'));if(!was)t.classList.add('on');},true);
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="obsubmit"]');if(!t||!S.ob)return;const f=S.ob.form||{};if(!f.src||localStorage.getItem('erre_src_sent'))return;
+    try{localStorage.setItem('erre_src_sent','1');}catch(x){}
+    DB.feedback('source',f.src,f.src==='Otro'?f.srcTxt:'').catch(()=>{try{localStorage.removeItem('erre_src_sent');}catch(x){}});},true);
+})();
+function cpFeedbackBlock(){
+  if(!CP.fbk){DB.feedbackAll().then(r=>{CP.fbk=r;try{if(CP.view==='list'&&CP.sec==='pagos')coachRender(true);}catch(e){}});return '<div class="note" style="margin-top:16px">Cargando feedback…</div>';}
+  const nm={};(CP.clients||[]).forEach(c=>nm[c.id]=c);
+  const grp=k=>{const m={};CP.fbk.filter(x=>x.kind===k).forEach(x=>{m[x.reason||'—']=(m[x.reason||'—']||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
+  const bars=(arr)=>arr.length?arr.map(([k,n])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span>${esc(k)}</span><b>${n}</b></div>`).join(''):'<div class="hint">Aún sin respuestas.</div>';
+  const cm=CP.fbk.filter(x=>x.comment).slice(0,15).map(x=>{const c=nm[x.client_id];return `<div style="padding:8px 0;border-bottom:1px solid var(--line)"><small style="color:var(--gray)">${c?esc(c.full_name||'Cliente'):'Cliente'} · ${x.kind==='cancel'?'Al cancelar':x.kind==='source'?'Cómo nos conoció':'Reseña'}${x.reason?' · '+esc(x.reason):''} · ${new Date(x.created_at).toLocaleDateString('es')}</small><div>${esc(x.comment)}</div></div>`;}).join('');
+  return `<h3 class="h2" style="margin:22px 0 4px;font-size:17px">Feedback de clientes</h3><div class="note" style="margin-bottom:8px">Respuestas opcionales: por qué cancelan y cómo te conocieron.</div>
+   <b>Motivos de cancelación</b>${bars(grp('cancel'))}<b style="display:block;margin-top:14px">Cómo nos conocieron</b>${bars(grp('source'))}${cm?'<b style="display:block;margin-top:14px">Comentarios</b>'+cm:''}`;
+}
+(function(){const p0=cpPagosPage;cpPagosPage=function(){const h=p0.apply(this,arguments);return CP.pagos?h+cpFeedbackBlock():h;};
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pagosref"]');if(t)CP.fbk=null;},true);})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
