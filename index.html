@@ -3592,9 +3592,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1313';
+const APP_VER='20nov-1319';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1313'){if(performance.now()<25000&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}location.reload();return;}pwaBanner();}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1319'){if(performance.now()<25000&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}location.reload();return;}pwaBanner();}}catch(e){}}
 setTimeout(pwaCheck,1500);setInterval(pwaCheck,3*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
@@ -3972,6 +3972,17 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="cpcopy"]');if(!t)return;e.stopPropagation();const v=t.dataset.v;try{navigator.clipboard.writeText(v).then(()=>toast('Correo copiado ✓'),()=>toast(v));}catch(x){toast(v);}},true);
 function tzSync(){try{if(!ME||!PROFILE||PROFILE.role!=='client')return;const z=Intl.DateTimeFormat().resolvedOptions().timeZone;if(z&&S.tz!==z){S.tz=z;save();}}catch(e){}}
 setTimeout(tzSync,4000);setInterval(tzSync,60000);
+
+/* PostHog (opcional): se activa solo si config.js trae ph:"phc_..." */
+(function(){const c=window.ERRE_CFG||{};if(!c.ph)return;let ready=false;const q=[],ph=()=>window.posthog;
+  const cap=(n,p)=>{if(ready){try{ph().capture(n,p);}catch(e){}}else if(q.length<50)q.push([n,p]);};window.phCap=cap;
+  setTimeout(()=>{const s=document.createElement('script');s.async=true;s.src=(c.phAssets||'https://us-assets.i.posthog.com')+'/static/array.js';
+    s.onload=()=>{try{ph().init(c.ph,{api_host:c.phHost||'https://us.i.posthog.com',person_profiles:'identified_only',autocapture:false,capture_pageview:false,disable_session_recording:true,persistence:'localStorage'});ph().register({app_ver:(typeof verTag==='function'?verTag():'')});ready=true;q.splice(0).forEach(a=>ph().capture(a[0],a[1]));cap('app_open');}catch(e){}};document.head.appendChild(s);},2500);
+  let idd=false;setInterval(()=>{if(idd||!ready||typeof ME==='undefined'||!ME||!PROFILE)return;try{ph().identify(ME.id,{role:PROFILE.role,plan:PROFILE.plan});idd=true;}catch(e){}},4000);
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act]');if(t&&t.dataset.act)cap('ui_'+t.dataset.act);},true);
+  window.addEventListener('error',e=>cap('app_error',{msg:String(e.message||'').slice(0,200),src:String(e.filename||'').split('/').pop(),line:e.lineno}));
+  window.addEventListener('unhandledrejection',e=>cap('app_error',{msg:String((e.reason&&e.reason.message)||e.reason||'').slice(0,200),kind:'promise'}));
+})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
