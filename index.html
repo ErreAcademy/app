@@ -3611,12 +3611,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1709';
+const APP_VER='20nov-1717';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1709'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1717'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4272,7 +4272,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 /* ---------- ACCESO / VENCIMIENTO (Whop) ---------- */
 const GRACE_D=3,RENEW_URL=WHOP_RENEW;
 let ACC={row:null,state:'ok'};
-function accState(r){if(!r||!r.paid_until)return 'ok';const e=new Date(r.paid_until).getTime(),n=Date.now();if(n<=e)return 'ok';if(n<=e+GRACE_D*86400000)return 'grace';return 'expired';}
+function accState(r){if(!r||!r.paid_until)return 'ok';const e=new Date(r.paid_until).getTime(),n=Date.now();if(n<=e)return 'ok';if(n<=e+GRACE_D*86400000)return 'grace';if(r.whop_status==='past_due'&&r.payment_failed_at&&n<new Date(r.payment_failed_at).getTime()+5*86400000)return 'grace';return 'expired';}
 const accFmt=d=>d?new Date(d).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric',timeZone:'America/Bogota'}):'';
 async function accessFetch(){try{const em=String((ME&&ME.email)||'').toLowerCase();if(!em||!DB.accessMine)return null;return await DB.accessMine(em);}catch(e){return null;}}
 async function accessGate(){ // si falla, NUNCA bloquea
@@ -4291,9 +4291,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
   t.disabled=true;try{ACC.row=await accessFetch();ACC.state=accState(ACC.row);if(ACC.state==='expired'){toast('Aún no vemos tu pago. Puede tardar unos minutos.');t.disabled=false;}else{await startClient();}}catch(x){t.disabled=false;toast('No pudimos revisar. Intenta de nuevo.');}},true);
 // aviso en Inicio durante los días de gracia
 (function(){const hv1=homeView;homeView=function(){const h=hv1.apply(this,arguments);
-  if(ACC.state!=='grace')return h;
-  const left=Math.max(0,Math.ceil((new Date(ACC.row.paid_until).getTime()+GRACE_D*86400000-Date.now())/86400000));
-  return `<div class="accb"><b>Tu plan venció el ${accFmt(ACC.row.paid_until)}</b><span>Te quedan ${left} día${left===1?'':'s'} de gracia. Renueva para no perder el acceso.</span></div>`+h;};})();
+  const r=ACC.row||{},fail=!!(r.payment_failed_at&&r.whop_status==='past_due');
+  if(ACC.state!=='grace'&&!fail)return h;
+  const MANAGE='https://whop.com/@me/settings/memberships';
+  if(fail){return `<div class="accb"><b>No pudimos procesar tu pago</b><span>Actualiza tu tarjeta para no perder el acceso.</span><a href="${MANAGE}" target="_blank" rel="noopener" style="font-weight:700;color:inherit;text-decoration:underline;white-space:nowrap">Actualizar tarjeta</a></div>`+h;}
+  const left=Math.max(0,Math.ceil((new Date(r.paid_until).getTime()+GRACE_D*86400000-Date.now())/86400000));
+  return `<div class="accb"><b>Tu plan venció el ${accFmt(r.paid_until)}</b><span>Te quedan ${left} día${left===1?'':'s'} de gracia. Renueva para no perder el acceso.</span></div>`+h;};})();
 // coach: ficha del cliente → Acceso
 function accSec(){try{
   const cid=CP.cid;if(!cid)return '';
@@ -4523,6 +4526,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 
 /* ---------- PANEL DEL COACH: SUSCRIPCIONES ---------- */
 function pagoInfo(r){const st=accState(r),now=Date.now(),u=r.paid_until?new Date(r.paid_until).getTime():null,d=u?Math.ceil((u-now)/864e5):null;
+  if(r.payment_failed_at&&r.whop_status==='past_due')return {k:0,t:'Cobro fallido',c:'#E5484D',n:'Falló el '+accFmt(r.payment_failed_at)+' · Whop reintenta unos 5 días'};
   if(st==='expired')return {k:0,t:'Vencido',c:'#E5484D',n:'Venció el '+accFmt(r.paid_until)};
   if(st==='grace')return {k:1,t:'En gracia',c:'#E8A317',n:'Venció el '+accFmt(r.paid_until)+' · '+Math.max(0,GRACE_D+d)+' d de gracia'};
   if(r.cancel_at_period_end)return {k:2,t:'Cancelada',c:'#6B6B6B',n:'Acceso hasta el '+accFmt(r.paid_until)+(d!=null?' ('+d+' d)':'')};
