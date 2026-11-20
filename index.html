@@ -2079,6 +2079,7 @@ function realDB(){
     async signOut(){await sb.auth.signOut();},
     async assignBasic(focus,days,level){const r=await sb.rpc('assign_basic_program',{p_focus:focus,p_days:days,p_level:level});if(r.error)throw r.error;return r.data;},
     async accessMine(email){const r=await sb.from('client_access').select('*').eq('email',String(email||'').toLowerCase()).maybeSingle();return r.error?null:r.data;},
+    async cancelSub(action){const r=await sb.functions.invoke('whop-cancel',{body:{action}});if(r.error)throw r.error;return r.data;},
     async accessOf(cid){const r=await sb.from('client_access').select('*').eq('client_id',cid).maybeSingle();return r.error?null:r.data;},
     async accessSave(row,cid){let email=row.email;if(!email){const q=await sb.rpc('client_email',{p_id:cid});email=q&&q.data;}if(!email)throw new Error('sin correo');
       const full=Object.assign({},row,{email,client_id:cid});const u=await sb.from('client_access').upsert(full,{onConflict:'email'});if(u.error)throw u.error;return full;},
@@ -3609,12 +3610,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1638';
+const APP_VER='20nov-1647';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1638'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1647'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4302,7 +4303,7 @@ function accSec(){try{
   const v=r&&r.paid_until?new Date(r.paid_until).toLocaleDateString('en-CA',{timeZone:'America/Bogota'}):'';
   const per=(r&&r.period)||'';
   return `<section class="sec"><div class="sec-h"><b>Acceso y pago</b></div>
-   <div class="pfrow"><span><b style="color:${col}">${lab}</b><small>${r?`${r.source==='whop'?'Whop':'Manual'} · ${r.tier||''}${per&&per!=='manual'?' · '+per:''}${r.paid_until?' · vence '+accFmt(r.paid_until):''}`:'Sin registro de pago todavía'}</small></span></div>
+   <div class="pfrow"><span><b style="color:${col}">${lab}</b><small>${r?`${r.source==='whop'?'Whop':'Manual'} · ${r.tier||''}${per&&per!=='manual'?' · '+per:''}${r.paid_until?' · vence '+accFmt(r.paid_until):''}${r.whop_status==='trialing'?' · en prueba':''}${r.cancel_at_period_end?' · CANCELADA (no se renueva)':''}`:'Sin registro de pago todavía'}</small></span></div>
    <label class="pfl">Vence el (hasta las 11:59 pm)</label><input class="fld" type="date" id="accD" value="${v}">
    <label class="pfl">Periodo</label><select class="fld" id="accP">${[['','—'],['mensual','Mensual'],['trimestral','Trimestral'],['anual','Anual']].map(o=>`<option value="${o[0]}"${per===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>
    <div class="note" style="margin-top:6px">Con Whop conectado esto se llena solo en cada pago. Aquí puedes ajustarlo a mano. Dejar la fecha vacía = sin vencimiento. Tras vencer hay ${GRACE_D} días de gracia.</div>
@@ -4470,6 +4471,50 @@ function rlInit(){document.querySelectorAll('.rsc[data-rf]').forEach(sc=>{const 
 (function(){const r0=renderOnboarding;renderOnboarding=function(){const r=r0.apply(this,arguments);try{if(S.ob&&S.ob.step==='form')rlInit();}catch(e){console.warn(e);}return r;};})();
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="rlstep"]');if(!t||!S.ob)return;e.stopPropagation();rlSet(t.dataset.f,(+S.ob.form[t.dataset.f]||0)+(+t.dataset.d),true);},true);
 document.addEventListener('input',e=>{const i=e.target;if(!i||!i.dataset||!i.dataset.rltype||!S.ob)return;const v=parseFloat(String(i.value).replace(',','.'));if(isNaN(v))return;const f=i.dataset.rltype,sc=document.querySelector('.rsc[data-rf="'+f+'"]');if(!sc)return;if(v>=+sc.dataset.lo&&v<=+sc.dataset.hi)rlSet(f,v,true);},true);
+
+
+/* ---------- MI SUSCRIPCIÓN (estado, fechas, cancelar en Whop desde la app) ---------- */
+const SUB={t:0};
+const subD=iso=>iso?new Date(iso).toLocaleDateString('es-CO',{timeZone:'America/Bogota',day:'numeric',month:'long',year:'numeric'}):'';
+const subLeft=iso=>{const d=Math.ceil((new Date(iso)-new Date())/864e5);return d<=0?'hoy':d===1?'mañana':'en '+d+' días';};
+function subHTML(){
+  try{const r=ACC.row,tr=(typeof tier==='function'?tier():'basic'),PN={basic:'Basic',complete:'Complete',elite:'Elite'};
+    const row=(a,b)=>`<div class="pfrow"><span><b>${a}</b><small>${b}</small></span></div>`;
+    const badge=(t,c)=>`<div style="margin:12px 0 4px"><span class="tag" style="background:${c};color:#fff;padding:5px 10px;border-radius:99px;font-size:12px;font-weight:700">${t}</span></div>`;
+    let body='',sub='';
+    const st=ACC.state;
+    if(!r){body=row('Sin información de pago','Si tienes dudas sobre tu plan, escríbenos.')+`<button class="btn" data-act="support" style="width:100%;margin-top:10px">Escribir a soporte</button>`;sub=PN[tr]||'';}
+    else if(r.source==='whop'){
+      const u=r.paid_until,can=!!r.cancel_at_period_end,tri=r.whop_status==='trialing';
+      if(st==='expired'||(u&&new Date(u)<new Date()&&!can)){sub='Vencida';body=badge('Vencida','#B3261E')+row('Tu acceso terminó el',subD(u))+(RENEW_URL?`<a class="btn solid" style="display:block;text-align:center;padding:14px;margin-top:12px;text-decoration:none" href="${RENEW_URL}" target="_blank" rel="noopener">Renovar mi plan</a>`:'');}
+      else if(can){sub='Cancelada · acceso hasta '+subD(u);body=badge('Cancelada','#6B6B6B')+row('No se volverá a cobrar','Tu suscripción no se renovará.')+row('Tienes acceso hasta',subD(u)+' ('+subLeft(u)+')')+`<button class="btn" data-act="subresume" style="width:100%;margin-top:12px">Reactivar mi suscripción</button>`;}
+      else if(tri){sub='Prueba gratis hasta '+subD(u);body=badge('Prueba gratis','#2E7D5B')+row('Tu prueba termina el',subD(u)+' ('+subLeft(u)+')')+row('Primer cobro','29 USD el '+subD(u)+'. Después se renueva cada mes.')+row('¿No quieres continuar?','Cancela antes de esa fecha y no se te cobra nada.')+`<button class="btn" data-act="subcancel" style="width:100%;margin-top:12px">Cancelar suscripción</button>`;}
+      else{sub='Activa · próximo cobro '+subD(u);body=badge('Suscripción activa','#2E7D5B')+row('Próximo cobro','29 USD el '+subD(u)+' ('+subLeft(u)+')')+row('Se renueva','Cada mes, de forma automática.')+`<button class="btn" data-act="subcancel" style="width:100%;margin-top:12px">Cancelar suscripción</button>`;}
+    }else{
+      const u=r.paid_until;sub=u?'Acceso hasta '+subD(u):'Activo';
+      body=badge(u?'Activo':'Activo, sin vencimiento','#2E7D5B')+(u?row('Tu acceso está activo hasta',subD(u)+' ('+subLeft(u)+')'):row('Tu plan está activo','No tiene fecha de vencimiento.'))+row('Pagos y cambios','Los coordinas directamente con tu coach.')+`<button class="btn" data-act="support" style="width:100%;margin-top:10px">Escribir a mi coach</button>`;
+    }
+    return `<details class="sec acc" data-pk="Mi suscripción"${S.pfOpen['Mi suscripción']?' open':''}><summary><span>Mi suscripción<small>${sub}</small></span></summary><div class="accbody">${body}</div></details>`;
+  }catch(e){console.warn('subHTML',e);return '';}
+}
+(function(){const pv1=profileView;profileView=function(){let h=pv1.apply(this,arguments);
+  if(S.role==='coach'||!ME)return h;
+  if(Date.now()-SUB.t>60000){SUB.t=Date.now();accessFetch().then(r=>{if(r){ACC.row=r;ACC.state=accState(r);}try{if(S.profile)render();}catch(e){}});}
+  return h.replace(/(<details class="sec acc" data-pk="Mi plan"[\s\S]*?<\/details>)/,m=>m+subHTML());};
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="subcancel"],[data-act="subresume"],[data-act="subok"],[data-act="subrok"]');if(!t)return;e.stopPropagation();const a=t.dataset.act,r=ACC.row||{};
+    if(a==='subcancel'){sheet(`<h3>¿Cancelar tu suscripción?</h3><div class="sub">${r.whop_status==='trialing'?'Estás en tu prueba gratis: si cancelas ahora <b>no se te cobra nada</b>. ':''}Mantienes tu acceso hasta el <b>${subD(r.paid_until)}</b> y después no se vuelve a cobrar. Puedes reactivarla antes de esa fecha.</div><button class="btn solid" data-act="subok" style="width:100%;margin-top:10px;padding:14px;background:#B3261E">Sí, cancelar suscripción</button><button class="btn" data-act="close" style="width:100%;margin-top:8px">Mejor no</button>`);return;}
+    if(a==='subresume'){sheet(`<h3>¿Reactivar tu suscripción?</h3><div class="sub">Se retoma el cobro de 29 USD el <b>${subD(r.paid_until)}</b> y sigue cada mes.</div><button class="btn solid" data-act="subrok" style="width:100%;margin-top:10px;padding:14px">Sí, reactivar</button><button class="btn" data-act="close" style="width:100%;margin-top:8px">Cancelar</button>`);return;}
+    const act=a==='subok'?'cancel':'resume';closeSheet();toast(act==='cancel'?'Cancelando…':'Reactivando…');
+    (async()=>{try{const x=await DB.cancelSub(act);
+      if(x&&x.ok){ACC.row=Object.assign({},ACC.row,{cancel_at_period_end:act==='cancel'});S.pfOpen['Mi suscripción']=true;render();toast(act==='cancel'?'Suscripción cancelada. Acceso hasta el '+subD(ACC.row.paid_until):'Suscripción reactivada ✓');}
+      else{sheet(`<h3>No pudimos hacerlo desde aquí</h3><div class="sub">${act==='cancel'?'No se canceló nada y tu suscripción sigue igual. ':''}Escríbenos y lo resolvemos por ti de inmediato.</div><button class="btn solid" data-act="support" style="width:100%;margin-top:10px;padding:14px">Escribir a soporte</button><button class="btn" data-act="close" style="width:100%;margin-top:8px">Cerrar</button>`);}
+    }catch(x){console.warn(x);sheet(`<h3>Sin conexión</h3><div class="sub">No pudimos comunicarnos. Revisa tu internet e inténtalo de nuevo.</div><button class="btn" data-act="close" style="width:100%;margin-top:10px">Cerrar</button>`);}})();
+  },true);
+})();
+
+/* soporte: abre WhatsApp con el coach */
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="support"]');if(!t||!ME)return;e.stopPropagation();
+  const msg='Hola Juanjo, necesito ayuda con mi cuenta ('+(ME.email||'')+').';try{closeSheet();}catch(x){}window.open('https://wa.me/'+COACH_WA+'?text='+encodeURIComponent(msg),'_blank','noopener');},true);
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
