@@ -2082,6 +2082,9 @@ function realDB(){
     async cancelSub(action){const r=await sb.functions.invoke('whop-cancel',{body:{action}});if(r.error)throw r.error;return r.data;},
     async feedback(kind,reason,comment){const r=await sb.from('client_feedback').insert({kind,reason:reason||null,comment:(comment||'').trim()||null});if(r.error)throw r.error;},
     async feedbackAll(){const r=await sb.from('client_feedback').select('*').order('created_at',{ascending:false}).limit(200);return r.error?[]:(r.data||[]);},
+    async checkinSave(period,data,comment){const r=await sb.from('client_feedback').insert({kind:'checkin',period,data,comment:(comment||'').trim()||null});if(r.error&&r.error.code!=='23505')throw r.error;},
+    async checkinsMine(){const r=await sb.from('client_feedback').select('period').eq('kind','checkin').eq('client_id',ME.id);return r.error?[]:(r.data||[]);},
+    async checkinsAll(){const r=await sb.from('client_feedback').select('*').eq('kind','checkin').order('created_at',{ascending:false}).limit(120);return r.error?[]:(r.data||[]);},
     async accessAll(){const r=await sb.from('client_access').select('*');return r.error?[]:(r.data||[]);},
     async accessOf(cid){const r=await sb.from('client_access').select('*').eq('client_id',cid).maybeSingle();return r.error?null:r.data;},
     async accessSave(row,cid){let email=row.email;if(!email){const q=await sb.rpc('client_email',{p_id:cid});email=q&&q.data;}if(!email)throw new Error('sin correo');
@@ -2409,7 +2412,7 @@ function cpHomeData(){
   return {feed:feed.slice(0,6),al:al.filter(a=>!dis[a.k]),nm,nh:hid.length};
 }
 function cpHomePage(){
-  const {feed,al,nm,nh}=cpHomeData(),K={ses:'Workout',hito:'Logro',com:'Comentario',mol:'Molestia'};
+  const {feed,al,nm,nh}=cpHomeData(),K={ses:'Workout',hito:'Logro',com:'Comentario',mol:'Molestia',chk:'Chequeo'};
   const AK={prog:'Programa',task:'Tarea',call:'Llamada',cli:'Cliente'},act=((CP.home&&CP.home.act)||[]).slice(0,6);
   const ahist=act.length?act.map(a=>{const c=nm[a.client_id]||{},dt=new Date(a.created_at),b=bogota(a.created_at);return `<button class="cpfi" data-act="cpopen" data-id="${a.client_id||''}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')} <small style="display:inline">${esc(a.text)}</small></b><small><i class="cpfk" style="font-style:normal;background:#EEF3FB;color:#2A5BA8">${AK[a.kind]||'Acción'}</i>${cpRel(b.date)} · ${b.time}</small></span></button>`;}).join(''):'<div class="note" style="padding:10px 4px">Aquí verás lo que vayas haciendo con tus clientes: programas, tareas, llamadas.</div>';
   const fh=feed.length?feed.map(f=>{const c=nm[f.cid]||{};return `<button class="cpfi" data-act="cpopen" data-id="${f.cid}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')} <small style="display:inline">${esc(f.t)}</small></b><small><i class="cpfk ${f.k}" style="font-style:normal">${K[f.k]}</i>${f.rpe?'Esfuerzo '+f.rpe+'/10 · ':''}${f.feel?esc(f.feel):''}</small>${f.q?`<span class="cpq">“${esc(f.q)}”</span>`:''}</span><em>${cpRel(f.d)}</em></button>`;}).join(''):'<div class="note">Aún no hay actividad en los últimos 14 días.</div>';
@@ -2480,7 +2483,7 @@ function coachRender(keepInput){
         <div class="note">Cambiar el plan cambia lo que ve el cliente en su app.</div></section>
        <section class="sec"><div class="sec-h"><b>Pruebas</b></div><div class="note" style="margin-bottom:8px">Borra los registros de este cliente (peso, pasos, entrenamientos, feedback, hitos y niveles) para volver a probar desde cero. No borra su perfil, rutina, fotos ni chat.</div><button class="btn" data-act="cpreset" style="width:100%">Reiniciar registros y hitos</button></section>
        ${(()=>{const bl=(CP.d.blobs||[]).find(x=>x.key==='freeOk'),on=!!(bl&&bl.value===true);return `<section class="sec"><div class="sec-h"><b>Entreno libre</b><em>${on?'Activado':'Desactivado'}</em></div><div class="note" style="margin-bottom:8px">Si lo activas, esta persona ve en Entrenar el botón "Crear mi entreno" y usa el mismo editor que tú para armar sesiones extra. No cambia su programa. Tú ves lo que arma en su calendario.</div><button class="btn${on?'':' solid'}" data-act="cpfreeok" style="width:100%">${on?'Desactivar entreno libre':'Activar entreno libre'}</button></section>`;})()}
-       ${accSec()}
+       ${accSec()}${cpChkSec()}
        ${prioSec()}
        ${cpGripsSec(d)}
        <section class="sec"><div class="sec-h"><b>Hitos celebrados</b></div><div class="note" style="margin-bottom:8px">Reinicia la celebración de un hito para que el cliente la vuelva a ver (y pueda compartirla). No borra sus registros.</div>
@@ -3613,12 +3616,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1725';
+const APP_VER='20nov-1733';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1725'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1733'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4576,6 +4579,113 @@ function cpFeedbackBlock(){
 }
 (function(){const p0=cpPagosPage;cpPagosPage=function(){const h=p0.apply(this,arguments);return CP.pagos?h+cpFeedbackBlock():h;};
   document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pagosref"]');if(t)CP.fbk=null;},true);})();
+
+
+/* --- chequeo quincenal (cada 2 sábados) --- */
+var CHK={done:null,loading:false,s:null};
+var CHK_L={cumple:{todos:'Todos',casi:'Casi todos',pocos:'Pocos',ninguno:'Casi ninguno'},molestia:{no:'Sin molestias',leve:'Molestia leve',si:'Molestia que preocupa'},carga:{liviana:'Carga muy liviana',ok:'Carga adecuada',pesada:'Carga muy pesada'}};
+(function(){const st=document.createElement('style');st.textContent=`
+#chkov{position:fixed;inset:0;z-index:9000;background:#EFEDE8;overflow-y:auto;padding:14px 18px 28px;max-width:520px;margin:0 auto}
+#chkov .chkx{background:none;border:0;color:#5A554E;font:600 14px Archivo,sans-serif;padding:6px 0}
+#chkov .chko{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;background:#FBFAF8;border:2px solid #DCD6CC;border-left:8px solid var(--c);border-radius:14px;padding:14px 16px;margin-bottom:10px;transition:transform .12s,background .12s}
+#chkov .chko b{font-size:16px;color:#1C1B19}#chkov .chko small{color:#5A554E;margin-top:2px}
+#chkov .chko.on{background:var(--c);border-color:var(--c);transform:scale(1.02)}#chkov .chko.on b,#chkov .chko.on small{color:#fff}
+#chkov .chkn{display:flex;gap:6px;margin:6px 0 4px}
+#chkov .chkn button{flex:1;aspect-ratio:1/1.15;border:2px solid var(--c);background:#FBFAF8;border-radius:10px;font:700 16px Archivo,sans-serif;color:var(--c);transition:transform .12s}
+#chkov .chkn button.on{background:var(--c);color:#fff;transform:scale(1.12)}
+#chkov .chkl{display:flex;justify-content:space-between;color:#5A554E;font-size:12px;margin-bottom:12px}
+#chkov .chkr{background:#FBFAF8;border:1px solid #DCD6CC;border-radius:14px;padding:12px 14px;margin-bottom:12px}
+#chkov .chkr b{display:block;margin-bottom:4px}
+#chkov textarea{width:100%;border:1px solid #DCD6CC;border-radius:12px;padding:12px;background:#FBFAF8;font:400 15px Archivo,sans-serif;min-height:96px;box-sizing:border-box}
+#chkov .chkok{width:100%;margin-top:14px;padding:15px;border:0;border-radius:14px;background:#C0392B;color:#fff;font:700 16px Archivo,sans-serif}
+#chkov .chkok[disabled]{opacity:.45}
+#chkov .chkt{background:#FBFAF8;border:1px solid #DCD6CC;border-left:6px solid #C0392B;border-radius:12px;padding:12px 14px;margin:8px 0}
+.chkcard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#1C1B19;color:#fff;border:0;border-left:8px solid #C0392B;border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.chkcard span{flex:1}.chkcard small{display:block;color:#E9A59B;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:11px}.chkcard b{display:block;font-size:16px;margin:2px 0}.chkcard em{font-style:normal;color:#CFCAC2;font-size:13px}.chkcard i{font-style:normal;font-size:24px;color:#C0392B}
+.cpfk.chk{background:#F5E4E0;color:#96271B}`;document.head.appendChild(st);})();
+function chkDue(){try{
+  if(!ME||!S.user||!S.start||(PROFILE&&PROFILE.role==='coach')||ACC.state==='expired')return null;
+  const t=today(),sat=addD(t,-((wdOf(t)-5+7)%7));if(diffD(t,sat)>4)return null;
+  const raw=Math.floor(diffD(monOf(sat),S.start)/7)+1;if(raw<2||raw%2)return null;
+  if(CHK.done===null){if(!CHK.loading){CHK.loading=true;DB.checkinsMine().then(r=>{CHK.done=new Set(r.map(x=>x.period));}).catch(()=>{CHK.done=new Set();}).then(()=>{CHK.loading=false;try{render();}catch(e){}});}return null;}
+  if(CHK.done.has(sat))return null;
+  return {sat,raw,nps:raw===4};}catch(e){return null;}}
+function chkColN(i,n){const h=Math.round(5+(i-1)/(n-1)*135);return 'hsl('+h+',62%,40%)';}
+function chkSteps(s){const a=s.a,L=[];
+  const opt=(k,v,t,sub,c)=>`<button class="chko${a[k]===v?' on':''}" data-chk="pick" data-k="${k}" data-v="${v}" style="--c:${c}"><b>${t}</b>${sub?`<small>${sub}</small>`:''}</button>`;
+  const num=(k,lo,hi,inv)=>{const n=hi-lo+1;return `<div class="chkn">${Array.from({length:n},(_,i)=>{const v=lo+i,c=chkColN(inv?n-i:i+1,n);return `<button class="${a[k]===v?'on':''}" data-chk="pick" data-k="${k}" data-v="${v}" data-n="1" style="--c:${c}">${v}</button>`;}).join('')}</div>`;};
+  L.push({t:'¿Cumpliste tus entrenamientos?',s:'En estos últimos 15 días.',auto:1,k:['cumple'],b:()=>opt('cumple','todos','Todos','No me salté ninguno','#1F8F53')+opt('cumple','casi','Casi todos','Me faltó uno o dos','#5E9B3A')+opt('cumple','pocos','Pocos','Entrené menos de la mitad','#B87400')+opt('cumple','ninguno','Casi ninguno','Fueron dos semanas difíciles','#C0392B')});
+  L.push({t:'¿Dolor o molestia?',s:'En algún ejercicio o día.',k:['molestia'],b:()=>opt('molestia','no','No, todo bien','','#1F8F53')+opt('molestia','leve','Leve y pasajera','Aparece, pero se va','#B87400')+opt('molestia','si','Sí, me preocupa','Tu coach necesita saberlo','#C0392B')+(a.molestia&&a.molestia!=='no'?`<textarea data-chk="txt" data-k="molTxt" placeholder="¿Dónde y en qué ejercicio?">${esc(a.molTxt||'')}</textarea>`:''),auto2:1});
+  L.push({t:'¿Cómo sentiste la carga?',s:'El peso y las series en general.',auto:1,k:['carga'],b:()=>opt('carga','liviana','Muy liviana','Podía con más','#3B82C4')+opt('carga','ok','Adecuada','Exigente pero manejable','#1F8F53')+opt('carga','pesada','Muy pesada','Terminaba agotado/a','#C0392B')});
+  L.push({t:'¿Cómo va tu alimentación?',s:'Del 1 al 10: qué tan bien la seguiste.',k:['alim'],b:()=>num('alim',1,10)+'<div class="chkl"><span>1 · No la seguí</span><span>10 · Perfecta</span></div>'});
+  L.push({t:'Energía, sueño y estrés',s:'Cómo te has sentido en general.',k:['energia','sueno','estres'],b:()=>[['energia','Energía','Baja','Alta',0],['sueno','Sueño','Malo','Muy bueno',0],['estres','Estrés','Bajo','Alto',1]].map(r=>`<div class="chkr"><b>${r[1]}</b>${num(r[0],1,5,r[4])}<div class="chkl" style="margin:0"><span>1 · ${r[2]}</span><span>5 · ${r[3]}</span></div></div>`).join('')});
+  L.push({t:'¿Cómo ves tu progreso?',s:'Qué tan satisfecho/a estás con tus resultados.',auto:1,k:['satisf'],b:()=>num('satisf',1,5)+'<div class="chkl"><span>1 · Nada</span><span>5 · Muy satisfecho/a</span></div>'});
+  if(s.nps)L.push({t:'¿Nos recomendarías?',s:'Opcional. Del 0 al 10, ¿qué tan probable es que recomiendes ERRE a un amigo?',opt:1,k:['nps'],b:()=>num('nps',0,10)+'<div class="chkl"><span>0 · Nada probable</span><span>10 · Seguro</span></div>'});
+  L.push({t:'¿Algo que quieras contarme?',s:'Opcional. Una duda, un logro, algo que cambiarías.',opt:1,k:[],b:()=>`<textarea data-chk="txt" data-k="comment" placeholder="Escribe aquí (opcional)">${esc(a.comment||'')}</textarea>`});
+  return L;}
+function chkOk(st,a){return st.opt||st.k.every(k=>a[k]!=null&&a[k]!=='');}
+function chkTips(a,cx){const t=[];
+  if(a.molestia==='si')t.push(cx?'Anotamos tu molestia. Tu coach la revisa y ajusta tu rutina; mientras, evita el ejercicio que te duele.':'Anotamos tu molestia. Evita el ejercicio que te duele y, si sigue, consúltalo con un profesional de salud.');
+  if(a.carga==='pesada')t.push(cx?'Tu coach ajustará la carga.':'Esta semana baja una serie por ejercicio y cuida la técnica.');
+  else if(a.carga==='liviana')t.push(cx?'Tu coach subirá la carga.':'Sube un poco el peso en los ejercicios básicos, con buena técnica.');
+  if(a.alim<=4)t.push('Esta semana elige un solo hábito de alimentación (proteína en cada comida, o agua) y cúmplelo.');
+  if(a.sueno<=2||a.estres>=4)t.push('Tu recuperación va justa: prioriza dormir y hazte un espacio de respiración al día.');
+  if(!t.length)t.push('Vas muy bien. Sigue con constancia.');
+  return t.slice(0,3);}
+function chkRender(){const s=CHK.s;let ov=document.getElementById('chkov');
+  if(!s){if(ov)ov.remove();document.body.style.overflow='';return;}
+  if(!ov){ov=document.createElement('div');ov.id='chkov';document.body.appendChild(ov);document.body.style.overflow='hidden';}
+  const cx=(typeof isC==='function')&&isC();
+  if(s.fin){ov.innerHTML=`<h2 class="h2" style="margin-top:40px">¡Listo, gracias!</h2><p class="wzs">${cx?'Tu coach lo revisa y te escribe con el ajuste.':'Guardamos tu chequeo. Esto es lo que te recomendamos:'}</p>${chkTips(s.a,cx).map(x=>`<div class="chkt">${esc(x)}</div>`).join('')}<button class="chkok" data-chk="close">Volver al inicio</button>`;return;}
+  const L=chkSteps(s),n=L.length;s.fi=Math.max(0,Math.min(s.fi,n-1));const st=L[s.fi],last=s.fi===n-1,okk=chkOk(st,s.a);
+  ov.innerHTML=`<div style="display:flex;justify-content:space-between"><button class="chkx" data-chk="prev">${s.fi?'‹ Atrás':'‹ Ahora no'}</button><small style="align-self:center;color:#5A554E">Chequeo quincenal</small></div>
+   <div class="wzp"><div class="wzb"><i style="width:${Math.round((s.fi+1)/n*100)}%"></i></div><small>Pregunta ${s.fi+1} de ${n}</small></div>
+   <h2 class="h2 wzq">${st.t}</h2><p class="wzs">${st.s||''}</p>${st.b()}
+   <button class="chkok" data-chk="${last?'send':'next'}" ${okk?'':'disabled'}>${last?(s.busy?'Enviando…':(cx?'Enviar a mi coach':'Guardar mi chequeo')):(st.opt&&!okk?'Omitir':'Siguiente')}</button>`;
+  const b=ov.querySelector('.chkok');if(b&&st.opt&&!okk&&!last){b.disabled=false;}}
+async function chkSend(){const s=CHK.s;if(!s||s.busy)return;s.busy=true;chkRender();
+  const a=s.a,data={cumple:a.cumple,molestia:a.molestia,molTxt:(a.molTxt||'').trim()||undefined,carga:a.carga,alim:a.alim,energia:a.energia,sueno:a.sueno,estres:a.estres,satisf:a.satisf,nps:a.nps,meta:{raw:s.raw,plan:(S.user&&S.user.plan)||'',wk:S.week}};
+  try{await DB.checkinSave(s.sat,data,a.comment);CHK.done=CHK.done||new Set();CHK.done.add(s.sat);
+    try{const flag=a.molestia==='si'?'⚠ ':'';if(PROFILE&&PROFILE.coach_id)pushTo(PROFILE.coach_id,flag+((PROFILE.full_name||'Un cliente')+' envió su chequeo'),[CHK_L.cumple[a.cumple],CHK_L.carga[a.carga],a.alim+'/10 alim.'].join(' · '),'chk-'+ME.id);}catch(e){}
+    s.fin=true;s.busy=false;chkRender();}
+  catch(e){console.warn(e);s.busy=false;chkRender();toast('No se pudo enviar. Revisa tu internet e inténtalo de nuevo.');}}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-chk]');if(!t)return;e.stopPropagation();const act=t.dataset.chk,s=CHK.s;
+  if(act==='open'){const d=chkDue();if(!d)return;CHK.s={sat:d.sat,raw:d.raw,nps:d.nps,fi:0,a:{}};chkRender();return;}
+  if(!s)return;
+  if(act==='close'){CHK.s=null;chkRender();try{render();}catch(x){}return;}
+  if(act==='prev'){if(s.fi>0){s.fi--;chkRender();}else{CHK.s=null;chkRender();}return;}
+  if(act==='next'){s.fi++;chkRender();document.getElementById('chkov').scrollTop=0;return;}
+  if(act==='send'){chkSend();return;}
+  if(act==='pick'){const k=t.dataset.k;s.a[k]=t.dataset.n?+t.dataset.v:t.dataset.v;const st=chkSteps(s)[s.fi];
+    if(k==='molestia'&&s.a.molestia==='no')delete s.a.molTxt;
+    chkRender();if(st.auto&&chkOk(st,s.a)){setTimeout(()=>{if(CHK.s===s){s.fi++;chkRender();}},260);}return;}
+},true);
+document.addEventListener('input',e=>{const t=e.target;if(!t||t.dataset.chk!=='txt'||!CHK.s)return;CHK.s.a[t.dataset.k]=t.value;});
+(function(){const hv=homeView;homeView=function(){const h=hv.apply(this,arguments);
+  try{if(S.sel!==today())return h;const d=chkDue();if(!d)return h;const cx=(typeof isC==='function')&&isC();
+    const card=`<h2 class="h2">Importante</h2><button class="chkcard" data-chk="open"><span><small>Chequeo quincenal</small><b>${cx?'Cuéntale a tu coach cómo vas':'Cuéntanos cómo vas'}</b><em>${d.nps?'8':'7'} preguntas · 1 minuto · solo toques${cx?' · tu coach lo revisa':' · con recomendación al instante'}</em></span><i>›</i></button>`;
+    const m='<h2 class="h2">Tareas de';const i=h.indexOf(m);return i<0?card+h:h.slice(0,i)+card+h.slice(i);}catch(e){return h;}};})();
+/* coach */
+function cpChkLoad(){if(CP._chkL)return;CP._chkL=1;DB.checkinsAll().then(r=>{CP.chk=r;CP._chkL=0;try{coachRender(true);}catch(e){}}).catch(()=>{CP.chk=[];CP._chkL=0;});}
+function chkFlags(d){d=d||{};const f=[];if(d.molestia==='si')f.push('molestia');else if(d.molestia==='leve')f.push('molestia leve');if(d.carga==='pesada')f.push('carga muy pesada');if(d.cumple==='ninguno'||d.cumple==='pocos')f.push('entrenó poco');if(d.satisf!=null&&d.satisf<=2)f.push('poco satisfecho');if(d.estres>=4&&d.sueno<=2)f.push('estrés alto y mal sueño');return f;}
+function chkSum(d){d=d||{};return [CHK_L.cumple[d.cumple],CHK_L.carga[d.carga],d.alim!=null?'Alim. '+d.alim+'/10':''].filter(Boolean).join(' · ');}
+(function(){const h0=cpHomeData;cpHomeData=function(){const r=h0.apply(this,arguments);try{
+  if(!CP.chk){cpChkLoad();return r;}
+  const nm=r.nm,dis=cpDisGet(),tdy=today(),since=addD(tdy,-14),feed=r.feed.slice(),al=r.al.slice();let nh=r.nh;
+  CP.chk.forEach(x=>{if(!nm[x.client_id]||!x.period||x.period<since)return;const d=x.data||{};
+    feed.push({d:bogota(x.created_at).date,cid:x.client_id,k:'chk',t:'envió su chequeo quincenal',feel:chkSum(d),q:x.comment||''});
+    const fl=chkFlags(d);if(fl.length){const k=x.client_id+'|chk|'+x.id;if(dis[k])nh++;else al.push({s:d.molestia==='si'?0:1,k,cid:x.client_id,t:'Chequeo: '+fl.join(' · '),q:'Léelo en su ficha y respóndele.'});}});
+  feed.sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:0);al.sort((a,b)=>a.s-b.s);
+  return {feed:feed.slice(0,8),al,nm,nh};}catch(e){return r;}};
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="cpnav"]');if(t)CP.chk=null;},true);})();
+function cpChkSec(){try{
+  if(!CP.cid)return '';if(!CP.chk){cpChkLoad();return '<section class="sec"><div class="sec-h"><b>Chequeos quincenales</b></div><div class="note">Cargando…</div></section>';}
+  const L=CP.chk.filter(x=>x.client_id===CP.cid).slice(0,6);
+  const chip=(t,c)=>`<span style="display:inline-block;font-size:12px;font-weight:600;color:#fff;background:${c};padding:2px 9px;border-radius:99px;margin:2px 4px 2px 0">${esc(t)}</span>`;
+  const body=L.length?L.map(x=>{const d=x.data||{},fl=chkFlags(d),sc=v=>v==null?'–':v;
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${fdate(x.period)}</b>${fl.length?` <span style="color:#C0392B;font-weight:700">· ${esc(fl.join(' · '))}</span>`:''}<div style="margin-top:4px">${chip('Entrenos: '+(CHK_L.cumple[d.cumple]||'–'),d.cumple==='todos'?'#1F8F53':d.cumple==='casi'?'#5E9B3A':'#B87400')}${chip(CHK_L.molestia[d.molestia]||'–',d.molestia==='no'?'#1F8F53':d.molestia==='leve'?'#B87400':'#C0392B')}${chip(CHK_L.carga[d.carga]||'–',d.carga==='ok'?'#1F8F53':d.carga==='pesada'?'#C0392B':'#3B82C4')}</div>
+     <small style="color:var(--gray)">Alimentación ${sc(d.alim)}/10 · Energía ${sc(d.energia)}/5 · Sueño ${sc(d.sueno)}/5 · Estrés ${sc(d.estres)}/5 · Progreso ${sc(d.satisf)}/5${d.nps!=null?' · Recomendaría '+d.nps+'/10':''}</small>${d.molTxt?`<div class="cpq">Molestia: “${esc(d.molTxt)}”</div>`:''}${x.comment?`<div class="cpq">“${esc(x.comment)}”</div>`:''}</div>`;}).join(''):'<div class="note">Aún no ha respondido ningún chequeo. Le aparece en Inicio cada dos sábados.</div>';
+  return `<section class="sec"><div class="sec-h"><b>Chequeos quincenales</b><em>${L.length}</em></div>${body}</section>`;}catch(e){return '';}}
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
