@@ -2083,6 +2083,8 @@ function realDB(){
     async feedback(kind,reason,comment){const r=await sb.from('client_feedback').insert({kind,reason:reason||null,comment:(comment||'').trim()||null});if(r.error)throw r.error;},
     async feedbackAll(){const r=await sb.from('client_feedback').select('*').order('created_at',{ascending:false}).limit(200);return r.error?[]:(r.data||[]);},
     async checkinSave(period,data,comment){const r=await sb.from('client_feedback').insert({kind:'checkin',period,data,comment:(comment||'').trim()||null});if(r.error&&r.error.code!=='23505')throw r.error;},
+    async chkAskMine(){const r=await sb.from('client_data').select('value').eq('client_id',ME.id).eq('key','chkask').maybeSingle();return r&&r.data?r.data.value:null;},
+    async chkAskGet(cid){const r=await sb.from('client_data').select('value').eq('client_id',cid).eq('key','chkask').maybeSingle();return r&&r.data?r.data.value:null;},
     async checkinsMine(){const r=await sb.from('client_feedback').select('period').eq('kind','checkin').eq('client_id',ME.id);return r.error?[]:(r.data||[]);},
     async checkinsAll(){const r=await sb.from('client_feedback').select('*').eq('kind','checkin').order('created_at',{ascending:false}).limit(120);return r.error?[]:(r.data||[]);},
     async accessAll(){const r=await sb.from('client_access').select('*');return r.error?[]:(r.data||[]);},
@@ -3616,12 +3618,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1733';
+const APP_VER='20nov-1737';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1733'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1737'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4603,11 +4605,16 @@ var CHK_L={cumple:{todos:'Todos',casi:'Casi todos',pocos:'Pocos',ninguno:'Casi n
 .chkcard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#1C1B19;color:#fff;border:0;border-left:8px solid #C0392B;border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .chkcard span{flex:1}.chkcard small{display:block;color:#E9A59B;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:11px}.chkcard b{display:block;font-size:16px;margin:2px 0}.chkcard em{font-style:normal;color:#CFCAC2;font-size:13px}.chkcard i{font-style:normal;font-size:24px;color:#C0392B}
 .cpfk.chk{background:#F5E4E0;color:#96271B}`;document.head.appendChild(st);})();
+function chkLoad(){if(CHK.loading)return;CHK.loading=true;
+  Promise.all([DB.checkinsMine().catch(()=>[]),DB.chkAskMine().catch(()=>null)]).then(([r,a])=>{CHK.done=new Set(r.map(x=>x.period));CHK.ask=a||null;CHK.t=Date.now();}).catch(()=>{if(!CHK.done)CHK.done=new Set();}).then(()=>{CHK.loading=false;try{if(!CHK.s&&!document.getElementById('chkov'))render();}catch(e){}});}
 function chkDue(){try{
-  if(!ME||!S.user||!S.start||(PROFILE&&PROFILE.role==='coach')||ACC.state==='expired')return null;
+  if(!ME||!S.user||(PROFILE&&PROFILE.role==='coach')||ACC.state==='expired')return null;
+  if(CHK.done===null){chkLoad();return null;}
+  if(Date.now()-(CHK.t||0)>45000)chkLoad();
+  if(CHK.ask&&CHK.ask.period&&!CHK.done.has(CHK.ask.period))return {sat:CHK.ask.period,raw:0,nps:!!CHK.ask.nps,manual:true};
+  if(!S.start)return null;
   const t=today(),sat=addD(t,-((wdOf(t)-5+7)%7));if(diffD(t,sat)>4)return null;
   const raw=Math.floor(diffD(monOf(sat),S.start)/7)+1;if(raw<2||raw%2)return null;
-  if(CHK.done===null){if(!CHK.loading){CHK.loading=true;DB.checkinsMine().then(r=>{CHK.done=new Set(r.map(x=>x.period));}).catch(()=>{CHK.done=new Set();}).then(()=>{CHK.loading=false;try{render();}catch(e){}});}return null;}
   if(CHK.done.has(sat))return null;
   return {sat,raw,nps:raw===4};}catch(e){return null;}}
 function chkColN(i,n){const h=Math.round(5+(i-1)/(n-1)*135);return 'hsl('+h+',62%,40%)';}
@@ -4685,7 +4692,14 @@ function cpChkSec(){try{
   const body=L.length?L.map(x=>{const d=x.data||{},fl=chkFlags(d),sc=v=>v==null?'–':v;
     return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${fdate(x.period)}</b>${fl.length?` <span style="color:#C0392B;font-weight:700">· ${esc(fl.join(' · '))}</span>`:''}<div style="margin-top:4px">${chip('Entrenos: '+(CHK_L.cumple[d.cumple]||'–'),d.cumple==='todos'?'#1F8F53':d.cumple==='casi'?'#5E9B3A':'#B87400')}${chip(CHK_L.molestia[d.molestia]||'–',d.molestia==='no'?'#1F8F53':d.molestia==='leve'?'#B87400':'#C0392B')}${chip(CHK_L.carga[d.carga]||'–',d.carga==='ok'?'#1F8F53':d.carga==='pesada'?'#C0392B':'#3B82C4')}</div>
      <small style="color:var(--gray)">Alimentación ${sc(d.alim)}/10 · Energía ${sc(d.energia)}/5 · Sueño ${sc(d.sueno)}/5 · Estrés ${sc(d.estres)}/5 · Progreso ${sc(d.satisf)}/5${d.nps!=null?' · Recomendaría '+d.nps+'/10':''}</small>${d.molTxt?`<div class="cpq">Molestia: “${esc(d.molTxt)}”</div>`:''}${x.comment?`<div class="cpq">“${esc(x.comment)}”</div>`:''}</div>`;}).join(''):'<div class="note">Aún no ha respondido ningún chequeo. Le aparece en Inicio cada dos sábados.</div>';
-  return `<section class="sec"><div class="sec-h"><b>Chequeos quincenales</b><em>${L.length}</em></div>${body}</section>`;}catch(e){return '';}}
+  const pend=CP.chkAsk&&CP.chkAsk.cid===CP.cid&&CP.chkAsk.v&&!L.some(x=>x.period===CP.chkAsk.v.period);
+  if(!CP.chkAsk||CP.chkAsk.cid!==CP.cid){CP.chkAsk={cid:CP.cid,v:null};DB.chkAskGet(CP.cid).then(v=>{CP.chkAsk={cid:CP.cid,v};try{coachRender(true);}catch(e){}}).catch(()=>{});}
+  return `<section class="sec"><div class="sec-h"><b>Chequeos quincenales</b><em>${L.length}</em></div><div class="note" style="margin-bottom:8px">Le aparece solo cada dos sábados. También puedes pedírselo ahora.</div><button class="btn" data-chka="ask" style="width:100%;margin-bottom:6px">${pend?'Volver a avisarle (pendiente de responder)':'Pedir chequeo ahora'}</button>${body}</section>`;}catch(e){return '';}}
+document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-chka="ask"]');if(!t||!CP.cid)return;e.stopPropagation();
+  const cid=CP.cid,v={period:'ask-'+Date.now(),at:new Date().toISOString(),nps:false};
+  try{await DB.upsert('client_data',[{client_id:cid,key:'chkask',value:v,updated_at:v.at}],'client_id,key');CP.chkAsk={cid,v};
+    pushTo(cid,'Tu coach te pidió un chequeo','Respóndelo en 1 minuto desde Inicio','chk-ask');toast('Chequeo enviado ✓ Le aparece en Inicio');coachRender(true);}
+  catch(x){console.warn(x);toast('No se pudo enviar');}},true);
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
