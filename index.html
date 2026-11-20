@@ -1409,8 +1409,8 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-act]'); if(!t) { if(e.target.id==='bg') closeSheet(); return; }
   const a=t.dataset.act, d=DAYS[S.day]; const b4=gDone();
   if(a==='done'||a==='wdone'){S.t0=S.t0||{};if(!S.t0[S.sel])S.t0[S.sel]=Date.now();}
-  if(a==='upsell'||a==='plans'){S.profile='plans';S.chatOpen=false;save();render();window.scrollTo(0,0);}
-  else if(a==='plback'){S.profile=true;save();render();window.scrollTo(0,0);}
+  if(a==='upsell'||a==='plans'){S.planFrom=(S.profile&&S.profile!=='plans')?S.profile:false;S.profile='plans';S.chatOpen=false;save();render();window.scrollTo(0,0);}
+  else if(a==='plback'){S.profile=S.planFrom||false;S.planFrom=null;save();render();window.scrollTo(0,0);}
   else if(a==='profile'){S.profile=true;S.chatOpen=false;save();render();window.scrollTo(0,0);}
   else if(a==='pfback'){S.profile=false;save();render();}
   else if(a==='avdel'){AV=null;store.set('erre_avatar',null);render();}
@@ -3595,9 +3595,9 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1330';
+const APP_VER='20nov-1332';
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>location.reload();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1330'){if(performance.now()<25000&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}location.reload();return;}pwaBanner();}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1332'){if(performance.now()<25000&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}location.reload();return;}pwaBanner();}}catch(e){}}
 setTimeout(pwaCheck,1500);setInterval(pwaCheck,3*60*1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pwaCheck();});
 
 /* ---------- notificaciones push ---------- */
@@ -4028,6 +4028,19 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
     try{await DB.saveLesson({id:f.id,title:f.title.trim(),body:f.body.trim(),tag:f.tag,active:f.active!==false},ME.id);CP.ls=null;await lessonsLoad(true);toast('Lección guardada ✓');}catch(x){f.busy=false;f.err='No se pudo guardar.';}coachRender();return;}
   if(a==='cpltog'){const l=find(t.dataset.id);if(!l)return;try{await DB.saveLesson({id:l.id,title:l.title,body:l.body,tag:l.tag,active:!l.active},ME.id);await lessonsLoad(true);}catch(x){toast('No se pudo cambiar');}coachRender();return;}
   if(a==='cpldel'){if(!confirm('¿Eliminar esta lección? No se puede deshacer.'))return;try{await DB.delLesson(t.dataset.id);await lessonsLoad(true);toast('Eliminada');}catch(x){toast('No se pudo eliminar');}coachRender();}},true);
+
+/* botón atrás (Android): cierra la capa abierta en vez de salir de la app */
+let _ov=false,_ovBack=false;
+const ovOpen=()=>{const sh=document.getElementById('sheet');return !!(S.profile||S.chatOpen||(sh&&sh.classList.contains('on')));};
+function ovSync(){try{if(typeof PROFILE==='undefined'||!PROFILE||PROFILE.role==='coach')return;const o=ovOpen();if(o&&!_ov){_ov=true;history.pushState({erre:1},'');}else if(!o&&_ov){_ov=false;if(history.state&&history.state.erre&&!_ovBack){_ovBack=true;history.back();setTimeout(()=>{_ovBack=false;},400);}}}catch(e){}}
+document.addEventListener('click',()=>setTimeout(ovSync,60),true);setInterval(ovSync,500);
+window.addEventListener('popstate',()=>{if(_ovBack)return;if(!ovOpen()){_ov=false;return;}_ovBack=true;
+  const sh=document.getElementById('sheet');
+  if(sh&&sh.classList.contains('on')){closeSheet();}
+  else if(S.profile==='plans'){S.profile=S.planFrom||false;S.planFrom=null;save();render();}
+  else if(S.profile){S.profile=false;save();render();}
+  else if(S.chatOpen){S.chatOpen=false;save();render();}
+  _ov=false;setTimeout(()=>{_ovBack=false;ovSync();},120);});
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
