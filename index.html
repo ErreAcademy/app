@@ -2397,7 +2397,7 @@ function cpHomePage(){
    <section class="sec"><div class="sec-h"><b>Mi actividad como coach</b><em>${act.length}</em></div>${ahist}</section>
    <section class="sec"><div class="sec-h"><b>Necesitan tu atención</b><em>${al.length}</em></div>${ah}${nh?`<button class="lblbtn" data-act="cprestore" style="margin-top:6px">Mostrar ${nh} atendida${nh>1?'s':''}</button>`:''}</section></div>`;
 }
-async function cpInboxLoad(){try{CP.inbox=await DB.chatInbox();}catch(e){CP.inbox=[];}if(CP.view==='list'&&CP.sec==='chat')coachRender();}
+async function cpInboxLoad(){try{CP.inbox=await DB.chatInbox();}catch(e){CP.inbox=[];}try{badgeCalc();}catch(e){}if(CP.view==='list'&&CP.sec==='chat')coachRender();}
 function cpChatPage(){
   const last={};(CP.inbox||[]).forEach(m=>{if(m.client_id&&!last[m.client_id])last[m.client_id]=m;});
   const rd=id=>{try{return +localStorage.getItem('cpread_'+id)||0;}catch(e){return 0;}};
@@ -2416,8 +2416,11 @@ function cpClientsPage(){
    <input class="fld" id="cpQ" placeholder="Buscar cliente…" value="${esc(CP.q)}" autocomplete="off" style="margin:10px 0">
    ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Programa</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><b>${esc(c.full_name||'Sin nombre')}</b>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em>${c.status==='pending'?' <em class="cpwarn">Pendiente</em>':''}</span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin programa</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
 }
-async function coachLive(m){try{if(CP.sec==='chat'&&CP.view==='list'){cpInboxLoad();}else if(CP.view==='client'&&CP.tab==='chat'&&m&&m.client_id===CP.cid&&!(typeof RT!=='undefined'&&RT.open)){CP.d=await DB.clientDetail(CP.cid);coachRender(true);}}catch(e){}}
-async function coachHome(){try{if(DB.onChat)DB.onChat(coachLive);}catch(e){}CP.view='list';coachRender();try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{CP.home=await DB.homeData();}catch(e){console.warn('home',e);}try{await rtLoadTpls();}catch(e){}coachRender();}
+async function coachLive(m){try{
+  if(CP.sec==='chat'&&CP.view==='list'){cpInboxLoad();}else{DB.chatInbox().then(r=>{CP.inbox=r;badgeCalc();}).catch(()=>{});}
+  if(CP.view==='client'&&CP.tab==='chat'&&m&&m.client_id===CP.cid&&!(typeof RT!=='undefined'&&RT.open)){CP.d=await DB.clientDetail(CP.cid);coachRender(true);}
+}catch(e){}}
+async function coachHome(){try{if(DB.onChat)DB.onChat(coachLive);}catch(e){}CP.view='list';coachRender();try{DB.chatInbox().then(r=>{CP.inbox=r;badgeCalc();}).catch(()=>{});}catch(e){}try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{CP.home=await DB.homeData();}catch(e){console.warn('home',e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
   CP.view='client';CP.cid=id;CP.tab=tab||'plan';CP.cd=null;CP.d=null;CP.routine=null;coachRender();
   try{await rtLoadTpls();CP.routine=await DB.routine(id);}catch(e){console.warn(e);}
@@ -3859,6 +3862,14 @@ document.addEventListener('click',e=>{
     if(cur.kg>best&&cur.kg>seen){S.prs[ex]=cur.kg;save();prShow(ex,cur.kg);}
   }catch(x){console.warn('pr',x);}
 });
+
+/* ---------- insignia en el ícono ---------- */
+function badgeSet(n){try{if(!('setAppBadge' in navigator))return;if(n>0)navigator.setAppBadge(n).catch(()=>{});else navigator.clearAppBadge().catch(()=>{});}catch(e){}}
+function badgeCalc(){try{
+  if(PROFILE&&PROFILE.role==='coach'){const last={};(CP.inbox||[]).forEach(m=>{if(m.client_id&&!last[m.client_id])last[m.client_id]=m;});let n=0;Object.keys(last).forEach(id=>{const m=last[id],rd=+localStorage.getItem('cpread_'+id)||0;if(m.sender_id===id&&m.kind!=='hito'&&new Date(m.created_at).getTime()>rd)n++;});badgeSet(n);}
+  else if(S&&S.chat){badgeSet(Math.max(0,S.chat.filter(m=>m.from==='coach').length-(S.chatRead||0)));}
+}catch(e){}}
+setInterval(badgeCalc,6000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')badgeCalc();});
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
