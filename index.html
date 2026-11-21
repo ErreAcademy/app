@@ -3625,12 +3625,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1520';
+const APP_VER='21nov-1525';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1520'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1525'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5797,6 +5797,98 @@ add('d','au','Smashed avo con huevo','🥑🍞🍳',{p:'Huevos',c:'Pan integral'
 add('a','au','Pescado al horno con papas','🐟🥔🥗',{p:'Pescado',c:'Papa',v:'Ensalada',f:'Aceite de oliva'},'Hornea el pescado y las papas en cuñas con limón y un chorrito de aceite a 200 °C. Es el fish and chips en versión ligera. Sirve con ensalada.');
 add('c','au','Ensalada de camarón y aguacate','🦐🥑🌾',{p:'Camarones',c:'Quinua',v:'Lechuga',f:'Aguacate (½)'},'Saltea los camarones 2 min con ajo y limón. Sirve sobre lechuga con la quinua y el aguacate en cubos.');
 add('m','au','Yogurt con mango y maracuyá','🥣🥭',{p:'Yogurt griego',fr:'Mango'},'Mezcla el yogurt con mango en cubos y la pulpa de 1 maracuyá. Fresco y listo en 1 minuto.');
+})();
+
+
+/* ===== Cómo prepararlo para TODAS las opciones (21 nov) ===== */
+(function(){
+const T={
+'d|Huevos con avena':'Cocina la avena con agua o leche 3–4 min. Prepara los huevos revueltos o fritos a tu gusto. Sirve con el banano en rodajas encima de la avena.',
+'d|Yogurt con granola':'Sirve el yogurt en un bowl, añade la granola justo antes de comer para que quede crocante y termina con las fresas.',
+'d|Arepa con huevos':'Asa la arepa en sartén o tostadora. Prepara los huevos pericos (con tomate y cebolla) o fritos y sírvelos con el aguacate.',
+'d|Tostadas con huevo':'Tuesta el pan, prepara los huevos a la plancha o revueltos y ponlos encima. Acompaña con la manzana.',
+'d|Omelette de vegetales':'Saltea la espinaca con cebolla 1 min. Bate los huevos, viértelos en la sartén y añade las verduras. Dobla y sirve con el pan tostado.',
+'d|Arepa con pollo y aguacate':'Abre la arepa caliente, rellénala con pollo desmechado y aguacate en láminas. Tip: desmecha pollo de sobra en tanda.',
+'d|Tostadas con atún':'Mezcla el atún escurrido con limón y un poco de cebolla. Ponlo sobre el pan tostado con el aguacate. Acompaña con la papaya.',
+'a|Pollo con arroz':'Dora la pechuga en sartén 5–6 min por lado con sal, ajo y pimienta. Sirve con el arroz, una ensalada grande y el aguacate.',
+'a|Carne con papa':'Sella la carne en sartén caliente 3–4 min por lado. Cocina la papa al vapor o al horno. Sirve con el brócoli salteado y un chorrito de aceite de oliva.',
+'a|Pescado con quinua':'Cocina la quinua (1 parte por 2 de agua, 15 min). Dora el pescado 3–4 min por lado con limón. Sirve con ensalada y aceite de oliva.',
+'a|Pollo con fríjol':'Dora el pollo con sal y comino. Calienta el fríjol o la lenteja ya cocidos con un poco de cebolla y ajo. Sirve con ensalada y aguacate.',
+'a|Pasta con pollo':'Cocina la pasta al dente. Saltea el pollo en cubos con ajo y el brócoli. Mezcla todo con un chorrito de aceite de oliva y pimienta.',
+'a|Cerdo con yuca':'Cocina la yuca en agua con sal hasta que esté blanda. Asa el cerdo magro a la plancha con ajo y limón. Sirve con ensalada y el aguacate.',
+'m|Yogurt con fruta':'Sirve el yogurt con las fresas picadas. Listo en 1 minuto.',
+'m|Frutos secos y fruta':'Acompaña el queso o requesón con el puñado de frutos secos y la manzana en gajos.',
+'m|Huevos duros':'Cuece los huevos 10 min en agua hirviendo, enfríalos y pélalos. Tip: cuece varios para la semana (duran 5 días en nevera). Come con el banano.',
+'m|Atún con arepa':'Mezcla el atún con limón y cebolla. Sirve sobre la arepa asada y acompaña con la naranja.',
+'m|Queso con fruta':'Corta el queso en cubos y la piña en trozos. Combínalos en un plato o en palillos.',
+'m|Pollo desmechado y fruta':'Usa el pollo desmechado que tengas de la tanda y acompáñalo con la manzana en gajos.',
+'m|Atún con aguacate':'Mezcla el atún con el aguacate machacado, limón y sal. Come con cuchara o sobre galletas de arroz. Acompaña con la naranja.',
+'c|Pollo con verduras':'Dora el pollo en tiras con ajo. Añade el brócoli y saltea 4 min. Sirve con el arroz (poco) y el aguacate.',
+'c|Tortilla de huevos':'Cuece la papa en rodajas finas. Bate los huevos, mézclalos con la papa y cuaja en sartén con un chorrito de aceite, 3–4 min por lado. Sirve con ensalada.',
+'c|Pescado con batata':'Hornea la batata en cuñas a 200 °C unos 25 min. Dora el pescado con limón 3–4 min por lado. Sirve con el brócoli al vapor y aceite de oliva.',
+'c|Carne con ensalada':'Sella la carne 3–4 min por lado y déjala reposar 2 min. Sirve con una ensalada grande aderezada con aceite de oliva y el arroz (poco).',
+'c|Crema de pollo':'Cuece la papa y la zanahoria en caldo 15 min. Añade el pollo cocido y licúa todo hasta que quede cremoso. Termina con aceite de oliva.',
+'c|Atún con ensalada':'Mezcla el atún con limón. Arma una ensalada grande, pon el atún encima con el aguacate y acompaña con el pan tostado.'};
+let n=0;AL_M.forEach(([k])=>AL_O[k].forEach(o=>{const t=T[k+'|'+o[0]];if(t&&!(o[3]&&o[3].r)){o[3]=Object.assign({},o[3]||{},{r:t});n++;}}));
+window.AL_REC_N=n;
+})();
+
+
+/* ===== Lista de compras semanal (21 nov) ===== */
+(function(){
+const CAT=[['p','Proteínas','#C0392B','🍗'],['c','Carbohidratos','#C7872A','🍚'],['v','Vegetales','#2F8E57','🥬'],['f','Grasas buenas','#6E8B3D','🥑'],['fr','Frutas','#B23E6E','🍎']];
+/* las porciones del plan son cocidas; para comprar se convierten a crudo */
+const BUY={'Arroz':.37,'Pasta':.4,'Quinua':.35,'Fríjol / lenteja':.4,'Garbanzos':.4,'Pechuga de pollo':1.3,'Muslo de pollo':1.3,'Carne magra':1.3,'Cerdo magro':1.3,'Pescado':1.25,'Salmón':1.25,'Bacalao / merluza':1.25,'Camarones':1.2};
+const SH=()=>{S.alshop=S.alshop||{sel:{d:[],a:[],m:[],c:[]},days:7,chk:{}};S.alshop.sel=S.alshop.sel||{d:[],a:[],m:[],c:[]};S.alshop.chk=S.alshop.chk||{};return S.alshop;};
+const goal=()=>(S.goal==='bajar'||S.goal==='aumentar')?S.goal:'complete';
+function okOpts(m){const keep=S.alcul;S.alcul='all';try{return AL_O[m].map((o,i)=>[o,i]).filter(x=>alpOptOk(m,x[1]));}finally{S.alcul=keep;}}
+function recent(){const out={d:[],a:[],m:[],c:[]},t=today();for(let i=0;i<7;i++){const d=addD(t,-i),st=(S.alim||{})[d]||{};AL_M.forEach(([k])=>{const e=(st[k]||{}).eat;if(e!=null&&AL_O[k][e]&&!out[k].includes(AL_O[k][e][0]))out[k].push(AL_O[k][e][0]);});}return out;}
+function calc(){const sh=SH(),por=AL_PORC[goal()],tot={};
+  AL_M.forEach(([k])=>{const L=(sh.sel[k]||[]).map(n=>AL_O[k].find(o=>o[0]===n)).filter(Boolean);if(!L.length)return;const times=sh.days/L.length;
+    L.forEach(o=>{Object.keys(o[2]).forEach(q=>{const food=o[2][q],f=alFd(food),g=alMul(por[k][q]||'1')*f[0]*times*(BUY[food]||1),key=q+'|'+food;tot[key]=(tot[key]||0)+g;});});});
+  return CAT.map(([q,n,c,ic])=>({q,n,c,ic,rows:Object.keys(tot).filter(k=>k.split('|')[0]===q).map(k=>{const food=k.slice(q.length+1),f=alFd(food),g=tot[k];let txt;
+      if(f[1]&&f[1][0]){const u=Math.max(1,Math.ceil(g/f[1][0]-0.01));txt=u+' '+(u>1?f[1][2]:f[1][1]);}
+      else{const r=Math.max(50,Math.ceil(g/50)*50);txt=r>=1000?(r/1000).toString().replace('.',',')+' kg':r+' g';}
+      return {key:k,food,txt,e:AL_FE[food]||(food==='Pechuga de pollo'?'🍗':'')};}).sort((a,b)=>a.food.localeCompare(b.food,'es'))})).filter(c=>c.rows.length);}
+function asText(){const sh=SH(),L=calc();return '🛒 Lista de compras · '+sh.days+' días\n\n'+L.map(c=>c.ic+' '+c.n+'\n'+c.rows.map(r=>'• '+r.food.replace(/ \(½\)/,'')+': '+r.txt).join('\n')).join('\n\n')+'\n\n(Cantidades aproximadas, en crudo. ERRE Academy)';}
+function view(){const sh=SH(),L=calc(),nsel=AL_M.reduce((a,[k])=>a+(sh.sel[k]||[]).length,0);
+  const days=[3,5,7].map(d=>`<button class="${sh.days===d?'on':''}" data-alshop="days" data-v="${d}">${d} días</button>`).join('');
+  const meals=AL_M.map(([k,n,ic])=>{const s=sh.sel[k]||[];return `<details class="alsp"><summary><span>${ic} ${n}</span><em>${s.length?s.length+' elegida'+(s.length>1?'s':''):'ninguna'}</em></summary><div class="alsc">${okOpts(k).map(([o,i])=>`<button class="${s.includes(o[0])?'on':''}" data-alshop="tog" data-m="${k}" data-n="${encodeURIComponent(o[0])}">${esc(/^[^<]*$/.test(alOpt(k,i).e||'')?(alOpt(k,i).e||''):'')} ${esc(o[0])}</button>`).join('')}</div></details>`;}).join('');
+  const list=nsel?L.map(c=>`<div class="alsl" style="--c:${c.c}"><h4>${c.ic} ${c.n}</h4>${c.rows.map(r=>`<button class="alsr${sh.chk[r.key]?' ok':''}" data-alshop="chk" data-k="${esc(r.key)}"><i>${sh.chk[r.key]?'✓':''}</i><span>${r.e} ${esc(r.food.replace(/ \(½\)/,''))}</span><b>${r.txt}</b></button>`).join('')}</div>`).join(''):'<div class="note" style="margin:10px 0">Elige abajo las opciones que vas a comer esta semana y aquí aparece tu lista.</div>';
+  return `<div class="alsh"><button class="alx" data-alshop="close">‹ Volver</button><div class="big">🛒</div><h2>Lista de compras</h2>
+   <div class="alsd">${days}</div><button class="alsauto" data-alshop="auto">✨ Usar lo que comí esta semana</button>
+   ${list}${nsel?`<div class="alsbt"><button data-alshop="copy">📋 Copiar</button><button data-alshop="share">📤 Compartir</button><button data-alshop="clear">↺ Reiniciar</button></div><p class="alsn">Cantidades aproximadas, en crudo. Se calculan con las porciones de tu plan.</p>`:''}
+   <h3 class="alsq">¿Qué vas a comer?</h3>${meals}</div>`;}
+function show(){let o=document.getElementById('alshopm');if(!o){o=document.createElement('div');o.id='alshopm';o.style.cssText='position:fixed;inset:0;z-index:9600;background:rgba(28,27,25,.55);display:flex;align-items:flex-end;justify-content:center';document.body.appendChild(o);document.body.style.overflow='hidden';
+  o.addEventListener('click',e=>{if(e.target===o)hide();});}
+  const keep=o.querySelector('.alsh'),sy=keep?keep.scrollTop:0,op=[...o.querySelectorAll('details')].map(d=>d.open);
+  o.innerHTML=view();const sh=o.querySelector('.alsh');o.querySelectorAll('details').forEach((d,i)=>{if(op[i])d.open=true;});sh.scrollTop=sy;}
+function hide(){const o=document.getElementById('alshopm');if(o)o.remove();document.body.style.overflow='';}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-alshop]');if(!t)return;e.stopPropagation();const a=t.dataset.alshop,sh=SH();
+  if(a==='open'){const n=AL_M.reduce((x,[k])=>x+(sh.sel[k]||[]).length,0);if(!n){const r=recent();AL_M.forEach(([k])=>sh.sel[k]=r[k].filter(nm=>AL_O[k].some(o=>o[0]===nm)));save();}show();return;}
+  if(a==='close'){hide();return;}
+  if(a==='days'){sh.days=+t.dataset.v;sh.chk={};save();show();return;}
+  if(a==='tog'){const k=t.dataset.m,n=decodeURIComponent(t.dataset.n),s=sh.sel[k]=sh.sel[k]||[],i=s.indexOf(n);if(i>=0)s.splice(i,1);else s.push(n);sh.chk={};save();show();return;}
+  if(a==='chk'){sh.chk[t.dataset.k]=!sh.chk[t.dataset.k];save();show();return;}
+  if(a==='auto'){const r=recent();AL_M.forEach(([k])=>sh.sel[k]=r[k].filter(nm=>AL_O[k].some(o=>o[0]===nm)));sh.chk={};save();show();return;}
+  if(a==='clear'){sh.sel={d:[],a:[],m:[],c:[]};sh.chk={};save();show();return;}
+  if(a==='copy'){const tx=asText();(navigator.clipboard?navigator.clipboard.writeText(tx):Promise.reject()).then(()=>{t.textContent='✓ Copiada';},()=>{const ta=document.createElement('textarea');ta.value=tx;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');t.textContent='✓ Copiada';}catch(x){}ta.remove();});return;}
+  if(a==='share'){const tx=asText();if(navigator.share)navigator.share({text:tx}).catch(()=>{});else{try{navigator.clipboard.writeText(tx);t.textContent='✓ Copiada';}catch(x){}}return;}
+},true);
+const av=alView;alView=function(){const h=av.apply(this,arguments);return h+`<button class="alshbtn" data-alshop="open"><span>🛒</span><b>Lista de compras</b><small>La arma sola con lo que vas a comer</small></button>`;};
+window.alShopText=asText;window.alShopCalc=calc;
+const st=document.createElement('style');st.textContent=`
+.alshbtn{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;margin:14px 0 4px;border:2px solid #1C1B19;background:#FBFAF8;border-radius:16px;padding:14px;font-family:Archivo,sans-serif}.alshbtn span{font-size:26px}.alshbtn b{font:700 16px Archivo,sans-serif}.alshbtn small{color:#5A554E;font-size:12px}
+#alshopm .alsd{display:flex;background:#E4DFD6;border-radius:99px;padding:3px;margin:0 0 10px}#alshopm .alsd button{flex:1;border:0;background:none;border-radius:99px;padding:8px;font:700 13px Archivo,sans-serif;color:#5A554E}#alshopm .alsd button.on{background:#1C1B19;color:#fff}
+.alsauto{width:100%;border:2px dashed #1F8F53;background:#E7F4EC;color:#1F6B43;border-radius:12px;padding:10px;font:700 14px Archivo,sans-serif;margin-bottom:6px}
+.alsl{background:#FBFAF8;border:1px solid #DCD6CC;border-left:6px solid var(--c);border-radius:12px;padding:8px 10px;margin:10px 0}.alsl h4{margin:0 0 4px;font:700 14px Oswald,Archivo,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--c)}
+.alsr{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;border-bottom:1px solid #EFEDE8;padding:9px 2px;font:500 15px Archivo,sans-serif;text-align:left}.alsl .alsr:last-child{border-bottom:0}.alsr i{width:22px;height:22px;flex:0 0 22px;border:2px solid #C9C2B6;border-radius:6px;font-style:normal;color:#fff;font-size:14px;line-height:18px;text-align:center}.alsr span{flex:1}.alsr b{font-weight:700}
+.alsr.ok i{background:#1F8F53;border-color:#1F8F53}.alsr.ok span,.alsr.ok b{text-decoration:line-through;color:#9A948A}
+.alsbt{display:flex;gap:8px;margin:8px 0}.alsbt button{flex:1;border:0;border-radius:12px;padding:12px 6px;background:#1C1B19;color:#fff;font:700 13px Archivo,sans-serif}.alsbt button:last-child{background:#fff;color:#1C1B19;border:1.5px solid #1C1B19}
+.alsn{font-size:12px;color:#5A554E;margin:0 0 6px;text-align:center}.alsq{font:700 15px Oswald,Archivo,sans-serif;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.alsp{background:#FBFAF8;border:1px solid #DCD6CC;border-radius:12px;margin-bottom:8px}.alsp summary{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;font:700 15px Archivo,sans-serif;list-style:none;cursor:pointer}.alsp summary::-webkit-details-marker{display:none}.alsp summary em{font-style:normal;font-weight:600;font-size:12px;color:#5A554E}
+.alsc{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 12px}.alsc button{border:1.5px solid #DCD6CC;background:#fff;border-radius:99px;padding:7px 11px;font:500 13px Archivo,sans-serif;color:#1C1B19}.alsc button.on{background:#1F8F53;border-color:#1F8F53;color:#fff}`;
+document.head.appendChild(st);
 })();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
