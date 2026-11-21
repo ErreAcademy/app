@@ -4203,7 +4203,7 @@ function fzSeries(){
   if(!dates.length)return emptyCard('Aún no hay series registradas','Cuando marques series en Entrenar, aquí verás cuántas hiciste por grupo muscular.');
   const sel=FZ.d&&days[FZ.d]?FZ.d:dates[0],hasP=S.prio&&Object.keys(S.prio).length,coach=PROFILE&&PROFILE.role==='coach';
   const rows=Object.keys(days[sel]).sort((a,b)=>days[sel][b]-days[sel][a]).map(g=>{
-    const n=days[sel][g],p=PRI[prioOf(g)],st=n<p.lo?'low':n>p.hi?'high':'ok',col=st==='ok'?'#2E9D6B':st==='low'?'#E08A2E':'#8A847B',mx=Math.max(8,n);
+    const n=days[sel][g],p=PRI[prioOf(g)],st=n<p.lo?'low':n>p.hi?'high':'ok',ex=st==='low'?p.lo-n:n-p.hi,col=st==='ok'?'#2E9D6B':st==='low'?(ex>=2?'#3B6FB6':'#5B9BD5'):(ex>=3?'#C0392B':ex===2?'#E08A2E':'#D9A21B'),mx=Math.max(8,n);
     const msg=st==='ok'?'En rango ✓':st==='low'?'Te faltaron '+(p.lo-n):'De más: '+(n-p.hi);
     return `<div class="fzr"><div class="fzh"><b>${g}</b>${hasP?`<span class="fzt" style="--c:${p.c}">${p.n}</span>`:''}<em>${n} serie${n>1?'s':''}</em></div>
      <div class="fzb"><u style="left:${p.lo/mx*100}%;width:${Math.max(.05,(p.hi-p.lo)/mx)*100}%"></u><i style="width:${n/mx*100}%;background:${col}"></i></div>
