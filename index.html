@@ -2131,7 +2131,7 @@ function realDB(){
         sb.from('chat_messages').select('id,sender_id,kind,body,created_at').eq('client_id',cid).order('created_at').then(ok),
         sb.from('calls').select('starts_at').eq('client_id',cid).gte('starts_at',new Date(Date.now()-36e5).toISOString()).order('starts_at').limit(1).then(ok),
         sb.from('progress_photos').select('month,angle,taken_at').eq('client_id',cid).then(ok)]);
-      let extra=[];try{extra=ok(await sb.from('client_data').select('key,value').eq('client_id',cid).in('key',['wnotes','sleep','excom','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','prefs','ctasks','freeOk','prio']));}catch(e){}
+      let extra=[];try{extra=ok(await sb.from('client_data').select('key,value').eq('client_id',cid).in('key',['wnotes','sleep','excom','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','prefs','ctasks','freeOk','prio','alimplan']));}catch(e){}
       const xv=k=>((extra.find(r=>r.key===k)||{}).value)||{};
       const data={};extra.forEach(r=>data[r.key]=r.value);
       return {profile,weights,steps,fb,chat,data,photos,call:calls[0]||null,wnotes:xv('wnotes'),sleep:xv('sleep'),excom:xv('excom')};
@@ -2169,7 +2169,7 @@ if(DB.updateClient){const _uc=DB.updateClient.bind(DB);DB.updateClient=async(cid
 if(DB.saveRoutine){const _sr=DB.saveRoutine.bind(DB);DB.saveRoutine=async(cid,n,d,uid)=>{const r=await _sr(cid,n,d,uid);try{if(uid&&cid!==uid){pushPlan(cid);DB.logAct(cid,'prog','Actualizó el programa «'+(n||'Programa')+'» ('+(d||[]).length+' workouts)');}}catch(e){}return r;};}
 let ME=null,PROFILE=null,LG={step:'email',email:'',err:'',busy:false},CHATT=null;
 const APPURL=()=>{try{const u=location.origin+location.pathname.replace(/[^/]*$/,'');return /^https?:/.test(u)?u:undefined;}catch(e){return undefined;}};
-const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom','ctasks','circuits','lowE','prs','grips','cirColors','freeOn','freeOk','tz','prio'];
+const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom','ctasks','circuits','lowE','prs','grips','cirColors','freeOn','freeOk','tz','prio','alimplan'];
 const LAST={weights:{},steps:{},slices:{},prefs:'',fb:{},profile:'',chatKey:{},photos:{},upl:{}};
 let needs=false,syncing=false,pend=false,tmr=null;
 const R_GRP={g_fuerza:'fuerza',g_cardio:'cardio',g_calm:'calma'};
@@ -2501,6 +2501,7 @@ function coachRender(keepInput){
         <div class="note" style="margin-bottom:8px">Miembro desde. Para clientes de la app anterior, pon la fecha real en que empezaron contigo y el cliente verá sus hitos de fidelidad.</div>
         <input class="fld" type="date" id="cpSince" value="${fidSince(p)||''}"><button class="btn solid" data-act="cpsince" style="width:100%;margin-top:8px;padding:11px">Guardar fecha</button>
         <div class="note">Hito actual: ${fidTier(fidMonths(fidSince(p)))>=0?FID[fidTier(fidMonths(fidSince(p)))][2]+' · '+FID[fidTier(fidMonths(fidSince(p)))][1]:'aún sin hito (primer hito al mes)'}</div></section>
+       ${(()=>{try{return cpAlimSec();}catch(e){console.warn(e);return '';}})()}
        <section class="sec"><div class="sec-h"><b>Módulos de la app</b></div>
         <div class="note" style="margin-bottom:8px">Por defecto el cliente solo ve Inicio, Entrenar y Progreso. Activa lo que quieras que vea.</div>
         <div class="chips">${[['recovery','Respiración'],['habitos','Hábitos'],['alim','Alimentación'],['medidas','Medidas antropométricas']].map(([k,n])=>`<button class="chip${(p.modules||[]).includes(k)?' on':''}" data-act="cpmod" data-v="${k}">${n}</button>`).join('')}</div></section>
@@ -2649,7 +2650,7 @@ function cpTaskModal(){
    ${CPT_SOON.map(n=>`<div class="cptt soon"><div class="cpth2"><i class="cpdot" style="background:#ccc"></i><b>${n}</b><span>Próximamente</span></div></div>`).join('')}</div>`;
 }
 /* ---------- panel coach: calendario de planificación + detalle del entrenamiento ---------- */
-const CPK=['prio','ctasks','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','program','start','weights','steps','wm','goal','sel','week','day','pos','raw','mes'];
+const CPK=['alimplan','prio','ctasks','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','program','start','weights','steps','wm','goal','sel','week','day','pos','raw','mes'];
 function cpWith(fn){
   const d=CP.d,dt=(d&&d.data)||{},p=d.profile,days=(CP.routine&&CP.routine.days)||[],o={},od=DAYS.slice(),pf=dt.prefs||{};
   CPK.forEach(k=>o[k]=S[k]);
@@ -2657,7 +2658,7 @@ function cpWith(fn){
   S.program=planOf(p);S.start=pf.start||S.start;S.wm='ex';S.goal=['bajar','complete','aumentar'].includes(p.goal)?p.goal:'complete';
   const u=dt.user||{};S.user=Object.assign({},u,{sched:(u.sched&&u.sched.length)?u.sched:((p.train_days&&p.train_days.length)?p.train_days:[0,2,4])});
   S.weights={};(d.weights||[]).forEach(r=>S.weights[r.log_date]=+r.kg);S.steps={};(d.steps||[]).forEach(r=>S.steps[r.log_date]=r.steps);
-  S.prio=dt.prio||{};S.ctasks=dt.ctasks||null;DAYS.length=0;days.forEach(x=>DAYS.push(x));cxSync();
+  S.prio=dt.prio||{};S.alimplan=dt.alimplan||{};S.ctasks=dt.ctasks||null;DAYS.length=0;days.forEach(x=>DAYS.push(x));cxSync();
   try{return fn();}finally{CPK.forEach(k=>S[k]=o[k]);DAYS.length=0;od.forEach(x=>DAYS.push(x));}
 }
 function cpDayInfo(date){return withDate(date,()=>{
@@ -3629,12 +3630,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1414';
+const APP_VER='21nov-1416';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1414'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1416'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5184,11 +5185,11 @@ var AL_FD={
 'Huevos':[100,[50,'huevo','huevos'],143,12.6,0.7,9.5],'Yogurt griego':[200,null,70,9,4,2],'Queso campesino / requesón':[100,null,100,12,3,4],'Proteína whey (en polvo)':[30,[30,'scoop','scoops'],380,75,8,6],
 'Arroz':[150,null,130,2.7,28,0.3],'Avena':[40,null,380,13,66,7],'Papa':[150,null,87,2,20,0.1],'Yuca':[130,null,160,1.4,38,0.3],'Plátano':[120,null,120,1,31,0.3],'Arepa':[80,[80,'arepa','arepas'],190,4,40,1],'Pan integral':[60,[30,'tajada','tajadas'],250,10,45,3.5],
 'Pasta':[150,null,158,6,31,0.9],'Quinua':[150,null,120,4.4,21,1.9],'Batata':[150,null,90,2,21,0.2],'Fríjol / lenteja':[150,null,125,8,22,0.5],'Granola':[40,null,450,10,65,18],
-'Aguacate (½)':[70,[70,'½ aguacate','½ aguacate'],160,2,9,15],'Aceite de oliva':[14,[14,'cucharada','cucharadas'],884,0,0,100],'Mantequilla de maní':[15,[15,'cucharada','cucharadas'],590,25,20,50],'Almendras / maní / nueces':[20,null,600,20,20,52],'Semillas (chía, girasol)':[15,null,540,20,20,45],
+'Aguacate (½)':[70,[140,'aguacate','aguacates'],160,2,9,15],'Aceite de oliva':[14,[14,'cucharada','cucharadas'],884,0,0,100],'Mantequilla de maní':[15,[15,'cucharada','cucharadas'],590,25,20,50],'Almendras / maní / nueces':[20,null,600,20,20,52],'Semillas (chía, girasol)':[15,null,540,20,20,45],
 'Banano':[120,[120,'banano','bananos'],90,1,23,0.3],'Manzana':[150,[150,'manzana','manzanas'],52,0.3,14,0.2],'Fresas':[150,null,32,0.7,8,0.3],'Fresas / arándanos':[150,null,35,0.7,9,0.3],'Piña':[150,null,50,0.5,13,0.1],'Papaya':[150,null,43,0.5,11,0.3],'Mango':[150,null,60,0.8,15,0.4],'Naranja':[150,[150,'naranja','naranjas'],47,0.9,12,0.1],'Uvas / kiwi':[120,null,65,0.8,16,0.3]};
 var AL_VEG=[150,null,25,1.5,5,0.3];
 function alFd(n){return AL_FD[n]||AL_VEG;}
-function alNum(str){const m=String(str||'').replace(/,/g,'.').replace('½','.5').match(/[\d.]+/g);if(!m)return [1,1];const a=parseFloat(m[0])||1,b=m[1]?parseFloat(m[1]):a;return [a,b];}
+function alNum(str){const m=String(str||'').replace(/,/g,'.').replace('½','.5').match(/[\d.]+/g);if(!m)return [1,1];const a0=parseFloat(m[0]),a=isNaN(a0)?1:a0,b=m[1]?parseFloat(m[1]):a;return [a,b];}
 function alMul(str){const [a,b]=alNum(str);return (a+b)/2;}
 function alQty(k,name,porStr,unit){const f=alFd(name),[lo,hi]=alNum(porStr);const veg=k==='v';
   const g1=Math.round(lo*f[0]/5)*5,g2=Math.round(hi*f[0]/5)*5,gt=g1===g2?g1+' g':g1+'–'+g2+' g';
@@ -5465,6 +5466,81 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
       let prog='complete';try{prog=planOf(c);}catch(x){}PDFM={days:rt.days.filter(d=>!d.x),sel:0,prog,goal:['bajar','complete','aumentar'].includes(c.goal)?c.goal:'complete',wk:1,who:c.full_name||'',title:rt.name||'Rutina',intro:PDF_INTRO,scope:'all'};pdfModal();}catch(x){console.warn(x);toast('No se pudo cargar la rutina');}}
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cpMenu(null);});
+
+
+/* ===== Plan de alimentación por cliente (generador del coach) ===== */
+var ALP_PRE={'Sin lácteos':['Yogurt griego','Queso campesino / requesón','Proteína whey (en polvo)'],'Sin huevo':['Huevos'],'Sin gluten':['Pan integral','Pasta','Avena','Granola'],'Sin carnes':['Pechuga de pollo','Muslo de pollo','Carne magra','Cerdo magro','Pescado','Atún']};
+const alP=()=>S.alimplan||{};
+function alpFoodOk(O){const ex=alP().ex||[];if(!ex.length)return true;return !Object.keys(O.comp).some(k=>ex.includes(O.comp[k]));}
+function alpOptOk(m,i){const hid=(alP().hide||{})[m]||[];return !hid.includes(AL_O[m][i][0])&&alpFoodOk(alOpt(m,i));}
+(function(){const f=alTargets;alTargets=function(raw){const T=f.apply(this,arguments),p=alP().tg;if(raw||!p)return T;return Object.assign({},T,p,{estimated:false});};})();
+alDay=function(){const st=alSt();
+  return `<section class="ald">`+AL_M.map(([k,n,ic])=>{const ch=(st[k]||{}).eat;
+   const cards=AL_O[k].map((o,i)=>{if(!alpOptOk(k,i))return '';const O=alOpt(k,i);return `<button class="alc${ch===i?' on':''}" data-alm="open" data-m="${k}" data-i="${i}"><div class="e">${O.e}</div><b>${esc(O.n)}</b></button>`;}).join('');
+   return `<div class="alh"><b>${ic} ${n}</b>${ch!=null?'<em>✓ Ya elegiste</em>':k==='m'?'<small style="color:#5A554E">opcional</small>':''}</div><div class="alrail">${cards||'<div class="note">Tu coach está preparando tus opciones.</div>'}</div>`;}).join('')+`</section>`;};
+(function(){const b=alBoard;alBoard=function(){const h=b.apply(this,arguments);return alP().nomac?h.replace('<div class="alb">','<div class="alb nomac">'):h;};
+ const g=alModal;alModal=function(m,i,sw){g.apply(this,arguments);if(m==null)return;const o=document.getElementById('almodal');if(!o)return;const ex=alP().ex||[];
+  o.querySelectorAll('.alsw button[data-v]').forEach(x=>{if(ex.includes(x.dataset.v))x.remove();});
+  if(alP().nomac)o.querySelectorAll('p').forEach(p=>{if(/^≈/.test(p.textContent.trim()))p.remove();});};
+ const st=document.createElement('style');st.textContent='.alb.nomac .r1{display:none}.alb.nomac h4{margin-bottom:2px}';document.head.appendChild(st);})();
+
+/* --- panel del coach --- */
+function cpAlimSec(){const d=CP.d;if(!d||!d.profile)return '';const dt=d.data||{},pl=dt.alimplan||{},on=((d.profile.modules)||[]).includes('alim');
+  const auto=cpWith(()=>alTargets(true)),T=Object.assign({},auto,pl.tg||{}),ex=pl.ex||[],hid=pl.hide||{},open=CP.alpOpen||{};
+  const F=(k,n,u,v)=>`<label class="alpf"><small>${n}</small><input class="fld" id="alp_${k}" type="number" inputmode="numeric" value="${v}"><em>${u}</em></label>`;
+  const foods=[].concat.apply([],['prot','carb','fat','fruit','veg'].map(g=>AL_G[g][4].filter(x=>x[0]!=='+')));
+  const cnt=cpWith(()=>{const r={},bad={};AL_M.forEach(([k])=>{r[k]=0;bad[k]={};AL_O[k].forEach((o,i)=>{const okF=alpFoodOk(alOpt(k,i));bad[k][o[0]]=!okF;if(alpOptOk(k,i))r[k]++;});});return {r,bad};});
+  const meals=AL_M.map(([k,n])=>{const vis=cnt.r[k];return `<div class="alpm"><button class="alpt" data-act="alptg" data-k="m${k}">${n} <em style="${vis?'':'color:#C0392B;font-weight:700'}">${vis?vis+' de '+AL_O[k].length+' opciones':'⚠ sin opciones: revisa las restricciones'}</em><i>${open['m'+k]?'▴':'▾'}</i></button>${open['m'+k]?`<div class="chips">${AL_O[k].map(o=>`<button class="chip${(hid[k]||[]).includes(o[0])?'':' on'}" data-act="alpopt" data-m="${k}" data-n="${esc(o[0])}">${esc(o[0])}${cnt.bad[k][o[0]]?' ⊘':''}</button>`).join('')}</div>${open['m'+k]&&AL_O[k].some(o=>cnt.bad[k][o[0]])?'<div class="note">⊘ = oculta por una restricción de alimentos.</div>':''}`:''}</div>`;}).join('');
+  return `<section class="sec"><div class="sec-h"><b>Plan de alimentación</b><em>${pl.tg||ex.length||Object.keys(hid).some(k=>(hid[k]||[]).length)||pl.nomac?'Personalizado':'Base del objetivo'}</em></div>
+   ${on?'':'<div class="note" style="margin-bottom:8px;color:#B87400">El módulo Alimentación está apagado para este cliente (Módulos de la app).</div>'}
+   <div class="note" style="margin-bottom:8px">Objetivo: <b>${GN[d.profile.goal]||d.profile.goal||'—'}</b>. Las metas automáticas salen de su peso, estatura, edad, sexo y días de entreno. Cambia lo que quieras; lo que dejes igual sigue siendo automático.</div>
+   <div class="alpg">${F('kc','Calorías','kcal',T.kc)}${F('P','Proteína','g',T.P)}${F('C','Carbo','g',T.C)}${F('F','Grasa','g',T.F)}${F('water','Agua','ml',T.water)}</div>
+   <div style="display:flex;gap:8px;margin-top:8px"><button class="btn solid" data-act="alpsave" style="flex:1">Guardar metas</button><button class="btn" data-act="alpreset" style="flex:1">Volver a automáticas</button></div>
+   <div class="chips" style="margin-top:10px"><button class="chip${pl.nomac?'':' on'}" data-act="alpmac">${pl.nomac?'Kcal y macros ocultos al cliente':'Mostrar kcal y macros al cliente'}</button></div>
+   <label class="pfl" style="margin-top:12px">Restricciones</label><div class="chips">${Object.keys(ALP_PRE).map(n=>{const all=ALP_PRE[n].every(x=>ex.includes(x));return `<button class="chip${all?' on':''}" data-act="alppre" data-n="${n}">${n}</button>`;}).join('')}</div>
+   <button class="alpt" data-act="alptg" data-k="foods" style="margin-top:6px">Alimentos que no come <em>${ex.length?ex.length+' excluidos':'ninguno'}</em><i>${open.foods?'▴':'▾'}</i></button>
+   ${open.foods?`<div class="chips">${foods.map(x=>`<button class="chip${ex.includes(x)?' on':''}" data-act="alpex" data-n="${esc(x)}">${esc(x)}</button>`).join('')}</div><div class="note" style="margin-top:4px">Las opciones con esos alimentos se ocultan y no salen para cambiar.</div>`:''}
+   <label class="pfl" style="margin-top:12px">Opciones de comida (toca para ocultar o mostrar)</label>${meals}
+   <button class="btn" data-act="alppdf" style="width:100%;margin-top:12px">Exportar plan a PDF</button></section>`;}
+(function(){const st=document.createElement('style');st.textContent=`.alpg{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}.alpf{display:flex;flex-direction:column;gap:2px;font:600 12px Archivo,sans-serif}.alpf small{color:#5A554E;font-weight:600}.alpf em{font-style:normal;color:#8b867e;font-size:11px}.alpf .fld{padding:9px 10px;margin:0}
+.alpt{display:flex;align-items:center;gap:8px;width:100%;border:1px solid #DCD6CC;background:#FBFAF8;border-radius:10px;padding:10px 12px;font:700 14px Archivo,sans-serif;text-align:left;margin-top:6px}.alpt em{font-style:normal;font-weight:500;color:#5A554E;font-size:12px;flex:1}.alpt i{font-style:normal;margin-left:auto}.alpm .chips{margin:6px 0 4px}`;document.head.appendChild(st);})();
+async function alpSet(fn){const d=CP.d,cur=JSON.parse(JSON.stringify((d.data&&d.data.alimplan)||{}));fn(cur);
+  try{await DB.upsert('client_data',[{client_id:CP.cid,key:'alimplan',value:cur,updated_at:new Date().toISOString()}],'client_id,key');d.data=d.data||{};d.data.alimplan=cur;const bl=(d.blobs||[]).find(x=>x.key==='alimplan');if(bl)bl.value=cur;else if(d.blobs)d.blobs.push({key:'alimplan',value:cur});try{DB.logAct(CP.cid,'cli','Ajustó su plan de alimentación');}catch(e){}coachRender();}catch(x){console.warn(x);toast('No se pudo guardar');}}
+document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act^="alp"]');if(!t)return;const a=t.dataset.act;if(!/^alp(tg|save|reset|mac|pre|ex|opt|pdf)$/.test(a))return;e.stopPropagation();e.preventDefault();
+  if(a==='alptg'){CP.alpOpen=CP.alpOpen||{};CP.alpOpen[t.dataset.k]=!CP.alpOpen[t.dataset.k];coachRender(true);return;}
+  if(a==='alpsave'){const g=k=>Math.round(+((document.getElementById('alp_'+k)||{}).value));const tg={kc:g('kc'),P:g('P'),C:g('C'),F:g('F'),water:g('water')};if(Object.values(tg).some(v=>!(v>0))){toast('Revisa los números: todos deben ser mayores que 0');return;}
+    const auto=cpWith(()=>alTargets(true)),same=['kc','P','C','F','water'].every(k=>tg[k]===auto[k]);await alpSet(p=>{if(same)delete p.tg;else p.tg=tg;});toast('Metas guardadas ✓');return;}
+  if(a==='alpreset'){await alpSet(p=>{delete p.tg;});toast('Metas automáticas');return;}
+  if(a==='alpmac'){await alpSet(p=>{p.nomac=!p.nomac;if(!p.nomac)delete p.nomac;});return;}
+  if(a==='alppre'){const L=ALP_PRE[t.dataset.n]||[];await alpSet(p=>{p.ex=p.ex||[];const all=L.every(x=>p.ex.includes(x));p.ex=all?p.ex.filter(x=>!L.includes(x)):p.ex.concat(L.filter(x=>!p.ex.includes(x)));if(!p.ex.length)delete p.ex;});return;}
+  if(a==='alpex'){const n=t.dataset.n;await alpSet(p=>{p.ex=p.ex||[];p.ex=p.ex.includes(n)?p.ex.filter(x=>x!==n):p.ex.concat(n);if(!p.ex.length)delete p.ex;});return;}
+  if(a==='alpopt'){const m=t.dataset.m,n=t.dataset.n;await alpSet(p=>{p.hide=p.hide||{};const L=p.hide[m]||[];p.hide[m]=L.includes(n)?L.filter(x=>x!==n):L.concat(n);if(!p.hide[m].length)delete p.hide[m];if(!Object.keys(p.hide).length)delete p.hide;});return;}
+  if(a==='alppdf'){try{const h=cpWith(()=>alpPdfHTML());alpPrint(h);}catch(x){console.warn(x);toast('No se pudo armar el PDF');}return;}
+},true);
+
+/* --- PDF del plan --- */
+function alpPdfHTML(){const p=CP.d.profile,g=(S.goal==='bajar'||S.goal==='aumentar')?S.goal:'complete',T=alTargets(),P=alPlan(),show=!alP().nomac,ex=alP().ex||[];
+  const logo=new URL('icon-192.png',location.href).href;
+  const css=`@page{size:A4;margin:12mm 13mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Archivo,Helvetica,Arial,sans-serif;color:#1C1B19;margin:0;font-size:12px}.hd{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #DCD6CC;padding-bottom:8px;margin-bottom:12px}.hd img{height:26px}.hd small{color:#5A554E;letter-spacing:.08em;text-transform:uppercase;font-size:10px}
+  h1{font-family:Oswald,Arial,sans-serif;text-transform:uppercase;font-size:24px;margin:0 0 2px}.who{color:#5A554E;margin-bottom:10px}.tg{display:flex;gap:8px;margin:8px 0 12px}.tg div{flex:1;border:1px solid #DCD6CC;border-radius:8px;padding:6px 8px;text-align:center}.tg b{display:block;font-size:16px}.tg small{color:#5A554E;font-size:10px}
+  h2{font-family:Oswald,Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:15px;margin:14px 0 6px;border-bottom:2px solid #C0392B;padding-bottom:3px}.op{break-inside:avoid;border:1px solid #DCD6CC;border-radius:8px;padding:7px 9px;margin-bottom:6px}.op b{font-size:13px}.op em{font-style:normal;color:#5A554E;font-size:10.5px;float:right}.op div{margin-top:2px;color:#3b3833}.op i{font-style:normal;color:#8b867e}.rc{color:#5A554E;font-size:10.5px;margin-top:3px}.alsv{width:15px;height:15px;vertical-align:-3px}.nt{color:#5A554E;font-size:10.5px;margin-top:10px}.ft{margin-top:10px;color:#8b867e;font-size:10px;text-align:center}`;
+  const body=AL_M.map(([k,n,ic])=>{const por=AL_PORC[g][k],cards=AL_O[k].map((o,i)=>{if(!alpOptOk(k,i))return '';const O=alOpt(k,i),X=alMacros(k,i);
+      const rows=Object.keys(O.comp).map(c=>{const q=alQty(c,O.comp[c],por[c]||(c==='v'?'1 plato':'1'),'g');return `<div>${alFeIcon(O.comp[c],c)} ${esc(O.comp[c])}: <b>${esc(q.main)}</b> <i>${esc(q.sub)}</i></div>`;}).join('');
+      return `<div class="op"><b>${esc(O.n)}</b>${show?`<em>≈ ${Math.round(X.kc)} kcal · P ${Math.round(X.P)} · C ${Math.round(X.C)} · G ${Math.round(X.F)}</em>`:''}${rows}${O.recipe?`<div class="rc">Cómo prepararlo: ${esc(O.recipe)}</div>`:''}</div>`;}).join('');
+    return `<h2>${ic} ${n}</h2>${cards||'<div class="nt">Sin opciones definidas.</div>'}`;}).join('');
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Plan de alimentación</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet"><style>${css}</style></head><body>
+   <div class="hd"><img src="${logo}" alt=""><small>ERRE Academy · Método Complete</small></div><h1>Plan de alimentación</h1><div class="who">Para: ${esc(p.full_name||'')} · ${esc(P.t)}</div>
+   ${show?`<div class="tg"><div><b>${T.kc}</b><small>kcal</small></div><div><b>${T.P} g</b><small>proteína</small></div><div><b>${T.C} g</b><small>carbo</small></div><div><b>${T.F} g</b><small>grasa</small></div><div><b>${(T.water/1000).toFixed(1).replace('.',',')} L</b><small>agua</small></div></div>`:`<div class="tg"><div><b>${(T.water/1000).toFixed(1).replace('.',',')} L</b><small>agua al día</small></div></div>`}
+   <div class="nt" style="margin-top:0">${esc(P.rule)}</div>${body}
+   ${ex.length?`<div class="nt">Alimentos excluidos: ${ex.map(esc).join(', ')}.</div>`:''}<div class="nt">Cantidades en gramos cocidos (avena y granola en seco). Valores aproximados. Elige una opción por comida; puedes cambiar un alimento por otro del mismo grupo.</div><div class="ft">ERRE Academy</div></body></html>`;}
+function alpPrint(html){const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);f.srcdoc=html;
+  f.onload=()=>{const w=f.contentWindow,go=()=>{try{w.focus();w.print();}catch(e){console.warn(e);}setTimeout(()=>f.remove(),60000);};(w.document.fonts&&w.document.fonts.ready?w.document.fonts.ready:Promise.resolve()).then(()=>setTimeout(go,300));};}
+
+/* desayunos sin huevo ni lácteos (para restricciones) */
+AL_O.d.push(['Arepa con pollo y aguacate',null,{p:'Pechuga de pollo',c:'Arepa',f:'Aguacate (½)'}]);
+AL_O.d.push(['Tostadas con atún',null,{p:'Atún',c:'Pan integral',f:'Aguacate (½)',fr:'Papaya'}]);
+AL_O.m.push(['Pollo desmechado y fruta',null,{p:'Pechuga de pollo',fr:'Manzana'}]);
+AL_O.m.push(['Atún con aguacate',null,{p:'Atún',f:'Aguacate (½)',fr:'Naranja'}]);
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
