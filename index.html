@@ -2087,6 +2087,9 @@ function realDB(){
     async chkAskGet(cid){const r=await sb.from('client_data').select('value').eq('client_id',cid).eq('key','chkask').maybeSingle();return r&&r.data?r.data.value:null;},
     async checkinsMine(){const r=await sb.from('client_feedback').select('period').eq('kind','checkin').eq('client_id',ME.id);return r.error?[]:(r.data||[]);},
     async checkinsAll(){const r=await sb.from('client_feedback').select('*').eq('kind','checkin').order('created_at',{ascending:false}).limit(120);return r.error?[]:(r.data||[]);},
+    async measuresOf(cid){const r=await sb.from('client_measures').select('*').eq('client_id',cid).order('date',{ascending:true});if(r.error)throw r.error;return r.data||[];},
+    async measureSave(row){const r=await sb.from('client_measures').insert(row);if(r.error)throw r.error;},
+    async measureDel(id){const r=await sb.from('client_measures').delete().eq('id',id);if(r.error)throw r.error;},
     async accessAll(){const r=await sb.from('client_access').select('*');return r.error?[]:(r.data||[]);},
     async accessOf(cid){const r=await sb.from('client_access').select('*').eq('client_id',cid).maybeSingle();return r.error?null:r.data;},
     async accessSave(row,cid){let email=row.email;if(!email){const q=await sb.rpc('client_email',{p_id:cid});email=q&&q.data;}if(!email)throw new Error('sin correo');
@@ -2486,7 +2489,7 @@ function coachRender(keepInput){
        <section class="sec"><div class="sec-h"><b>Pruebas</b></div><div class="note" style="margin-bottom:8px">Borra los registros de este cliente (peso, pasos, entrenamientos, feedback, hitos y niveles) para volver a probar desde cero. No borra su perfil, rutina, fotos ni chat.</div><button class="btn" data-act="cpreset" style="width:100%">Reiniciar registros y hitos</button></section>
        ${(()=>{const bl=(CP.d.blobs||[]).find(x=>x.key==='freeOk'),on=!!(bl&&bl.value===true);return `<section class="sec"><div class="sec-h"><b>Entreno libre</b><em>${on?'Activado':'Desactivado'}</em></div><div class="note" style="margin-bottom:8px">Si lo activas, esta persona ve en Entrenar el botón "Crear mi entreno" y usa el mismo editor que tú para armar sesiones extra. No cambia su programa. Tú ves lo que arma en su calendario.</div><button class="btn${on?'':' solid'}" data-act="cpfreeok" style="width:100%">${on?'Desactivar entreno libre':'Activar entreno libre'}</button></section>`;})()}
        ${accSec()}
-       ${prioSec()}
+       ${prioSec()}${cpMedSec()}
        ${cpGripsSec(d)}
        <section class="sec"><div class="sec-h"><b>Hitos celebrados</b></div><div class="note" style="margin-bottom:8px">Reinicia la celebración de un hito para que el cliente la vuelva a ver (y pueda compartirla). No borra sus registros.</div>
         ${(()=>{const bl=(CP.d.blobs||[]).find(x=>x.key==='msSeen'),L=Array.isArray(bl&&bl.value)?bl.value:[];return L.length?`<div class="chips">${L.map(t=>`<button class="chip" data-act="cphreset" data-t="${esc(t)}">↺ ${esc(t)}</button>`).join('')}</div>`:'<div class="note">Aún no tiene hitos celebrados.</div>';})()}
@@ -2498,7 +2501,7 @@ function coachRender(keepInput){
         <div class="note">Hito actual: ${fidTier(fidMonths(fidSince(p)))>=0?FID[fidTier(fidMonths(fidSince(p)))][2]+' · '+FID[fidTier(fidMonths(fidSince(p)))][1]:'aún sin hito (primer hito al mes)'}</div></section>
        <section class="sec"><div class="sec-h"><b>Módulos de la app</b></div>
         <div class="note" style="margin-bottom:8px">Por defecto el cliente solo ve Inicio, Entrenar y Progreso. Activa lo que quieras que vea.</div>
-        <div class="chips">${[['recovery','Respiración'],['habitos','Hábitos'],['alim','Alimentación']].map(([k,n])=>`<button class="chip${(p.modules||[]).includes(k)?' on':''}" data-act="cpmod" data-v="${k}">${n}</button>`).join('')}</div></section>
+        <div class="chips">${[['recovery','Respiración'],['habitos','Hábitos'],['alim','Alimentación'],['medidas','Medidas antropométricas']].map(([k,n])=>`<button class="chip${(p.modules||[]).includes(k)?' on':''}" data-act="cpmod" data-v="${k}">${n}</button>`).join('')}</div></section>
        <section class="sec"><div class="sec-h"><b>Perfil</b></div>
         <div class="pfrow"><span><b>Objetivo</b><small>${GN[p.goal]||p.goal||'—'}</small></span><span><b>Nivel</b><small>${esc(p.level||'—')}</small></span></div>
         <div class="pfrow"><span><b>Días</b><small>${(p.train_days||[]).map(i=>DAYL[i]).join(' · ')||'—'}</small></span><span><b>Edad</b><small>${edad!=null?edad+' años':'—'}</small></span></div>
@@ -3621,12 +3624,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1237';
+const APP_VER='21nov-1239';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1237'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1239'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4786,6 +4789,67 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 (function(){const pv2=profileView;profileView=function(){let h=pv2.apply(this,arguments);
   try{const sec=`<details class="sec acc" data-pk="Mi rutina en PDF"${S.pfOpen&&S.pfOpen['Mi rutina en PDF']?' open':''}><summary><span>Mi rutina en PDF<small>Descárgala con los links de video</small></span></summary><div class="accbody"><div class="note" style="margin-bottom:8px">Tu rutina en un PDF profesional, con la miniatura de cada ejercicio y el enlace a su video técnico.</div><button class="btn solid" data-act="pdfopen" data-v="me" style="width:100%">Descargar mi rutina en PDF</button></div></details>`;
     return h.replace(/(<details class="sec acc" data-pk="Mi plan"[\s\S]*?<\/details>)/,m=>m+sec);}catch(e){return h;}};})();
+
+
+/* --- medidas antropométricas (módulo que el coach activa por cliente) --- */
+const MED_F=[['Básicas',[['peso','Peso','kg'],['talla','Talla','cm'],['grasa','% de grasa','%'],['musculo','Masa muscular','kg']]],
+ ['Perímetros',[['cuello','Cuello'],['hombros','Hombros'],['pecho','Pecho'],['brazoD','Brazo der. relajado'],['brazoI','Brazo izq. relajado'],['antebrazoD','Antebrazo der.'],['antebrazoI','Antebrazo izq.'],['cintura','Cintura (más estrecha)'],['abdomen','Abdomen (ombligo)'],['cadera','Cadera (más ancha)'],['musloD','Muslo der. (medio)'],['musloI','Muslo izq. (medio)'],['pantD','Pantorrilla der.'],['pantI','Pantorrilla izq.']].map(x=>x.concat('cm'))],
+ ['Pliegues cutáneos',[['pl_tri','Tríceps'],['pl_sub','Subescapular'],['pl_bic','Bíceps'],['pl_ili','Cresta ilíaca'],['pl_sup','Supraespinal'],['pl_abd','Abdominal'],['pl_mus','Muslo'],['pl_pan','Pantorrilla']].map(x=>x.concat('mm'))]];
+var MED={rows:null,loading:false};
+const medN=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:null;};
+const medFmt=v=>v==null?'—':(Math.round(v*10)/10).toString().replace('.',',');
+function medDerived(d){const o=[];const p=medN(d.peso),t=medN(d.talla),c=medN(d.cintura),h=medN(d.cadera);
+  if(p&&t)o.push(['IMC',p/Math.pow(t/100,2),'']);if(c&&h)o.push(['Cintura / cadera',c/h,'']);
+  const pl=['pl_tri','pl_sub','pl_bic','pl_ili','pl_sup','pl_abd','pl_mus','pl_pan'].map(k=>medN(d[k])).filter(v=>v!=null);if(pl.length>=3)o.push(['Suma de '+pl.length+' pliegues',pl.reduce((a,b)=>a+b,0),'mm']);return o;}
+function medTable(rows,canDel){
+  if(!rows.length)return '';const L=rows.slice(-3),first=rows[0],last=rows[rows.length-1],multi=rows.length>1;
+  const head=`<tr><th></th>${L.map(r=>`<th>${pd(r.date).toLocaleDateString('es-CO',{day:'numeric',month:'short'}).replace('.','')}${canDel?`<button class="medx" data-act="medel" data-id="${r.id}" aria-label="Borrar medición">✕</button>`:''}</th>`).join('')}${multi?'<th>Cambio</th>':''}</tr>`;
+  const val=(r,k)=>medN((r.data||{})[k]);
+  const row=(k,n,u,d0,d1)=>{const vs=L.map(r=>val(r,k));if(vs.every(v=>v==null))return '';const a=val(first,k),b=val(last,k),dd=(multi&&a!=null&&b!=null)?b-a:null;
+    return `<tr><td>${n}${u?` <small>${u}</small>`:''}</td>${vs.map(v=>`<td>${medFmt(v)}</td>`).join('')}${multi?`<td class="dl">${dd==null?'—':(dd>0?'▲ ':dd<0?'▼ ':'')+medFmt(Math.abs(dd))}</td>`:''}</tr>`;};
+  const body=MED_F.map(([g,fs])=>{const rs=fs.map(([k,n,u])=>row(k,n,u)).join('');return rs?`<tr class="mg"><td colspan="${L.length+(multi?2:1)}">${g}</td></tr>${rs}`:'';}).join('');
+  const dv=['IMC','Cintura / cadera'].concat([...new Set(L.map(r=>medDerived(r.data||{}).find(x=>/^Suma/.test(x[0]))).filter(Boolean).map(x=>x[0]))]);
+  const drows=dv.map(n=>{const vs=L.map(r=>{const x=medDerived(r.data||{}).find(y=>y[0]===n);return x?x[1]:null;});if(vs.every(v=>v==null))return '';return `<tr><td>${n}</td>${vs.map(v=>`<td>${v==null?'—':medFmt(v)}</td>`).join('')}${multi?'<td class="dl">—</td>':''}</tr>`;}).join('');
+  return `<div class="medw"><table class="medt">${head}${body}${drows?`<tr class="mg"><td colspan="${L.length+(multi?2:1)}">Calculados</td></tr>${drows}`:''}</table></div>`;}
+(function(){const st=document.createElement('style');st.textContent=`.medw{overflow-x:auto;margin:6px 0}.medt{width:100%;border-collapse:collapse;font-size:12.5px}.medt td:first-child{white-space:normal;max-width:104px;line-height:1.2}.medt th,.medt td{padding:6px 5px;border-bottom:1px solid #DCD6CC;text-align:right;white-space:nowrap}.medt th:first-child,.medt td:first-child{text-align:left;position:sticky;left:0;background:#FBFAF8}.medt th{font-size:11px;color:#5A554E;text-transform:uppercase;letter-spacing:.04em}.medt .mg td{background:#EFEDE8;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;text-align:left}.medt .dl{color:#5A554E;font-weight:600}.medt small{color:#8b867e}.medx{background:none;border:0;color:#C0392B;font-size:12px;margin-left:4px;padding:0 2px}
+.medg{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}.medg label{font-size:12px;color:#5A554E;display:block;margin-bottom:2px}.medg .fld{width:100%;padding:8px 10px}.medh{font-weight:700;margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#C0392B}`;document.head.appendChild(st);})();
+/* coach */
+function medLoad(){if(MED.loading)return;MED.loading=true;DB.measuresOf(CP.cid).then(r=>{CP.med={cid:CP.cid,rows:r};}).catch(e=>{console.warn(e);CP.med={cid:CP.cid,rows:[],err:1};}).then(()=>{MED.loading=false;try{coachRender(true);}catch(e){}});}
+function cpMedSec(){try{
+  if(!CP.cid||!CP.d)return '';const on=((CP.d.profile||{}).modules||[]).includes('medidas');
+  if(!CP.med||CP.med.cid!==CP.cid){medLoad();return `<section class="sec"><div class="sec-h"><b>Medidas antropométricas</b></div><div class="note">Cargando…</div></section>`;}
+  const rows=CP.med.rows;
+  return `<section class="sec"><div class="sec-h"><b>Medidas antropométricas</b><em>${rows.length}</em></div>
+   <div class="note" style="margin-bottom:8px">${on?'El cliente ve sus medidas en Progreso → Medidas.':'El cliente aún no las ve. Actívalas en "Módulos de la app" (Medidas antropométricas) cuando quieras mostrárselas.'}</div>
+   <button class="btn solid" data-act="medopen" style="width:100%;margin-bottom:6px">+ Nueva medición</button>${rows.length?medTable(rows,true):'<div class="note">Aún no hay mediciones. Puedes registrar las tuyas o las que te pase el fisioterapeuta.</div>'}</section>`;}catch(e){return '';}}
+function medModal(open){let o=document.getElementById('medm');if(!open){if(o)o.remove();return;}
+  if(!o){o=document.createElement('div');o.id='medm';o.className='cpdv';document.body.appendChild(o);}
+  const inp=([k,n,u])=>`<div><label>${n}${u?' ('+u+')':''}</label><input class="fld" data-med="${k}" inputmode="decimal" placeholder="—"></div>`;
+  o.innerHTML=`<div class="cpdc" style="max-width:560px"><div class="cpdhd"><div><b>Nueva medición</b><small>Llena solo lo que mediste</small></div><button class="cpdx" data-act="medclose" aria-label="Cerrar">✕</button></div><div class="cpmvb">
+   <div class="medg"><div><label>Fecha</label><input class="fld" type="date" id="medD" value="${today()}"></div><div><label>Medido por (opcional)</label><input class="fld" id="medB" placeholder="Ej. fisioterapeuta, coach"></div></div>
+   ${MED_F.map(([g,fs])=>`<div class="medh">${g}</div><div class="medg">${fs.map(inp).join('')}</div>`).join('')}
+   <label class="pfl" style="margin-top:12px">Nota (opcional)</label><textarea class="fld" id="medN" rows="2" placeholder="Condiciones, protocolo, observaciones"></textarea>
+   <button class="cpmvbt pri" data-act="medsave" style="width:100%;margin-top:10px">Guardar medición</button></div></div>`;}
+document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act="medopen"],[data-act="medclose"],[data-act="medsave"],[data-act="medel"]');if(!t)return;e.stopPropagation();const a=t.dataset.act;
+  if(a==='medopen'){medModal(true);return;}if(a==='medclose'){medModal(false);return;}
+  if(a==='medsave'){const data={};document.querySelectorAll('#medm [data-med]').forEach(i=>{const v=medN(i.value);if(v!=null)data[i.dataset.med]=v;});
+    if(!Object.keys(data).length){toast('Escribe al menos una medida');return;}
+    const date=(document.getElementById('medD')||{}).value||today(),by=((document.getElementById('medB')||{}).value||'').trim(),note=((document.getElementById('medN')||{}).value||'').trim();
+    try{await DB.measureSave({client_id:CP.cid,date,data,by_name:by||null,note:note||null});medModal(false);CP.med=null;medLoad();toast('Medición guardada ✓');}catch(x){console.warn(x);toast('No se pudo guardar la medición');}return;}
+  if(a==='medel'){if(!confirm('¿Borrar esta medición? No se puede deshacer.'))return;try{await DB.measureDel(+t.dataset.id);CP.med=null;medLoad();toast('Medición borrada');}catch(x){toast('No se pudo borrar');}}
+},true);
+/* cliente: Progreso → Medidas */
+(function(){const pv=progresoView;progresoView=function(){
+  const on=(S.mods||[]).includes('medidas');
+  if(!on){return pv.apply(this,arguments);}
+  const seg=S.prog.seg;
+  if(seg!=='medidas'){const h=pv.apply(this,arguments);return h.replace(/(<button class="chip[^"]*" data-act="pseg" data-v="fotos">Fotos<\/button>)/,m=>m+'<button class="chip" data-act="pseg" data-v="medidas">Medidas</button>');}
+  const chips=`<div class="chips seg">${[['resumen','Resumen'],['peso','Peso'],['fuerza','Fuerza'],['pasos','Pasos'],['fotos','Fotos'],['medidas','Medidas']].map(x=>`<button class="chip${seg===x[0]?' on':''}" data-act="pseg" data-v="${x[0]}">${x[1]}</button>`).join('')}</div>`;
+  if(MED.rows===null&&!MED.loading&&ME){MED.loading=true;DB.measuresOf(ME.id).then(r=>{MED.rows=r;}).catch(()=>{MED.rows=[];}).then(()=>{MED.loading=false;try{render();}catch(e){}});}
+  if(MED.rows===null)return chips+'<p class="lead">Cargando…</p>';
+  if(!MED.rows.length)return chips+emptyCard('Aún no hay medidas','Cuando tu coach (o tu fisioterapeuta) registre tus medidas, las verás aquí con su evolución.');
+  const last=MED.rows[MED.rows.length-1];
+  return chips+`<h2 class="h2" style="margin-top:4px">Mis medidas</h2><div class="sub2" style="margin:0 0 8px">Última medición: ${fdate(last.date)}${last.by_name?' · '+esc(last.by_name):''}. Muestra tus últimas 3 mediciones y el cambio desde la primera.</div>${medTable(MED.rows,false)}${last.note?`<div class="note" style="margin-top:8px">${esc(last.note)}</div>`:''}`;};})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
