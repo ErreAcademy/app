@@ -2504,6 +2504,7 @@ function coachRender(keepInput){
        <section class="sec"><div class="sec-h"><b>Módulos de la app</b></div>
         <div class="note" style="margin-bottom:8px">Por defecto el cliente solo ve Inicio, Entrenar y Progreso. Activa lo que quieras que vea.</div>
         <div class="chips">${[['recovery','Respiración'],['habitos','Hábitos'],['alim','Alimentación'],['medidas','Medidas antropométricas']].map(([k,n])=>`<button class="chip${(p.modules||[]).includes(k)?' on':''}" data-act="cpmod" data-v="${k}">${n}</button>`).join('')}</div></section>
+       <section class="sec"><div class="sec-h"><b>Exportar datos</b></div><div class="note" style="margin-bottom:8px">Copia en un clic el perfil, la salud, el historial y el programa de este cliente, listo para pegar en una IA y revisar su plan.</div><button class="btn solid" data-act="exdata" data-id="${CP.cid}" style="width:100%">Exportar datos del cliente</button></section>
        <section class="sec"><div class="sec-h"><b>Perfil</b></div>
         <div class="pfrow"><span><b>Objetivo</b><small>${GN[p.goal]||p.goal||'—'}</small></span><span><b>Nivel</b><small>${esc(p.level||'—')}</small></span></div>
         <div class="pfrow"><span><b>Días</b><small>${(p.train_days||[]).map(i=>DAYL[i]).join(' · ')||'—'}</small></span><span><b>Edad</b><small>${edad!=null?edad+' años':'—'}</small></span></div>
@@ -3628,12 +3629,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1403';
+const APP_VER='21nov-1410';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1403'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1410'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5357,6 +5358,81 @@ alGuide=function(){const P=alPlan(),tot=P.plate.reduce((a,x)=>a+x[2],0);let acc=
 
 /* Mi guía retirada de la vista (21 nov, decisión del coach). El código de alGuide queda guardado por si se retoma. */
 (function(){const v=alView;alView=function(){const h=v.apply(this,arguments);const i=h.indexOf('<div class="alcard" style="margin-top:6px"><button class="alsum" data-alm="tg" data-k="guide">');return i<0?h:h.slice(0,i);};})();
+
+
+/* ===== Exportar datos del cliente (texto para pegar en una IA) ===== */
+var EXM=null;
+function exF(iso){if(!iso)return '';const p=String(iso).slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:String(iso);}
+async function exLoad(cid){
+  const d=(CP.d&&CP.cid===cid&&CP.d.profile)?CP.d:await DB.clientDetail(cid);
+  const [meas,chk,rt]=await Promise.all([DB.measuresOf(cid).catch(()=>[]),DB.checkinsAll().catch(()=>[]),(CP.routine&&CP.cid===cid)?Promise.resolve(CP.routine):DB.routine(cid).catch(()=>null)]);
+  return {d,meas,chk:(chk||[]).filter(x=>x.client_id===cid).slice(0,3),rt};
+}
+function exBuild(R,o){
+  const d=R.d,p=d.profile||{},dt=d.data||{},u=(dt.user&&dt.user.data)||{},L=[],sec=(t)=>{L.push('','## '+t)},sd=v=>(v===undefined||v===null||v===''||(Array.isArray(v)&&!v.length))?'Sin dato':(Array.isArray(v)?v.join(', '):String(v));
+  const age=p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null;
+  const ws=(d.weights||[]),wNow=ws.length?ws[ws.length-1].kg:(p.start_weight_kg||u.weight);
+  const DL=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],GNm={bajar:'Bajar peso',complete:'Complete (recomposición)',aumentar:'Aumentar (superávit)',salud:'Salud'};
+  L.push('Datos de un cliente de ERRE Academy (Método Complete). Úsalos para sugerir un plan; no diagnostiques. Marca todo lo que requiera criterio del coach o del médico.');
+  L.push('Generado: '+exF(new Date().toISOString())+(o.health?'  |  ⚠ Contiene datos de salud. Pégalo solo en una herramienta que tengas aprobada.':''));
+  L.push('','# Cliente'+(o.name?': '+(p.full_name||'Sin nombre'):''));
+  sec('Perfil');
+  [['Edad',age!=null?age+' años':null],['Sexo',u.sex||p.sex],['Estatura',(p.height_cm||u.height)?(p.height_cm||u.height)+' cm':null],['Peso actual',wNow?(+wNow).toFixed(1)+' kg':null],['Plan',p.plan],['Objetivo',GNm[p.goal]||p.goal],['Nivel',p.level],['Días de entreno',(p.train_days||[]).map(i=>DL[i]).join(', ')],['Tiempo por sesión',u.session?u.session+' min':null],['Horario preferido',u.time]].forEach(r=>L.push('- '+r[0]+': '+sd(r[1])));
+  if(o.health){sec('Salud (tal como lo escribió el cliente)');
+    L.push('- Molestias o lesiones: '+sd(p.injuries||(u.pain==='Sí'?u.painTxt:(u.pain==='No'?'Ninguna':''))));
+    L.push('- Cirugías o condiciones médicas: '+sd(u.medical));
+    L.push('- Sueño promedio: '+sd(u.sleep)+' | Estrés: '+sd(u.stress));
+    L.push('- Comidas al día: '+sd(u.meals)+' | Restricciones o alergias: '+sd(u.diet));
+    const fb=(d.fb||[]).filter(f=>/olest|dolor/i.test((f.feel||'')+' '+(f.note||'')));
+    sec('Molestias reportadas en sesiones');
+    if(!fb.length)L.push('- Sin dato');else fb.slice(0,8).forEach(f=>L.push('- '+exF(f.log_date)+' ('+(f.grp||'sesión')+'): '+sd(f.feel)+(f.note?' — '+f.note:'')));}
+  const days=(R.rt&&R.rt.days)||[],exName=id=>(typeof E!=='undefined'&&E[id]&&E[id].n)||id;
+  if(o.strength){sec('Fuerza (últimas 6 sesiones por ejercicio, series reps×kg)');
+    const logs=dt.logs||{},sw=dt.swaps||{},map={};
+    Object.keys(logs).forEach(k=>{const [date,did,bk,ix]=k.split('|'),day=days.find(x=>x.id===did);if(!day||bk==='warm'||bk==='calm')return;const blk=(day.blocks||[]).find(b=>b.k===bk),it=blk&&blk.items&&blk.items[+ix];if(!it)return;
+      const sets=(Array.isArray(logs[k])?logs[k]:[]).filter(s=>s&&(s.kg>0||s.reps>0)&&(s.done||s.kg>0||s.reps>0));if(!sets.length)return;
+      const nm=exName(sw[k]||it.ex);(map[nm]=map[nm]||[]).push({date,txt:sets.map(s=>(s.reps||'?')+'×'+(s.kg||0)).join(', '),rpe:(sets.map(s=>s.rpe).filter(Boolean).pop()||''),best:Math.max.apply(null,sets.map(s=>+s.kg||0))});});
+    const names=Object.keys(map);
+    if(!names.length)L.push('- Sin dato');
+    names.forEach(nm=>{const r=map[nm].sort((a,b)=>a.date<b.date?1:-1),best=Math.max.apply(null,r.map(x=>x.best));L.push('- '+nm+(best?' (mejor: '+best+' kg)':'')+': '+r.slice(0,6).map(x=>exF(x.date)+' '+x.txt+(x.rpe?' RPE'+x.rpe:'')).join(' | '));});}
+  if(o.track){sec('Seguimiento');
+    const fbk=Object.keys(dt.fb||{}),cut=new Date(Date.now()-28*864e5).toISOString().slice(0,10),n28=fbk.filter(k=>k.slice(0,10)>=cut).length,ints=(d.fb||[]).map(f=>+f.intensity).filter(Boolean),avg=ints.length?(ints.reduce((a,b)=>a+b,0)/ints.length).toFixed(1):null;
+    L.push('- Entrenamientos finalizados en los últimos 28 días: '+n28);
+    L.push('- Intensidad percibida promedio (últimos registros): '+sd(avg));
+    L.push('- Último peso registrado: '+(ws.length?exF(ws[ws.length-1].log_date)+' · '+(+ws[ws.length-1].kg).toFixed(1)+' kg':'Sin dato'));
+    L.push('- Chequeo quincenal (últimos 3):'+(R.chk.length?'':' Sin dato'));
+    R.chk.forEach(c=>{const kv=c.data&&typeof c.data==='object'?Object.keys(c.data).map(k=>k+': '+(typeof c.data[k]==='object'?JSON.stringify(c.data[k]):c.data[k])).join('; '):'';L.push('  · '+exF(c.created_at)+(kv?' — '+kv:'')+(c.comment?' | Comentario: '+c.comment:''));});}
+  if(o.meas){sec('Medidas');const ms=(R.meas||[]).slice(-2).reverse();
+    if(!ms.length)L.push('- Sin dato');
+    ms.forEach((m,i)=>{const dd=m.data||{},lab={};try{MED_F.forEach(g=>g[1].forEach(f=>lab[f[0]]=f[1]+(f[2]?' ('+f[2]+')':'')));}catch(e){}L.push('- '+(i?'Medición anterior':'Última medición')+' ('+exF(m.date)+'): '+(Object.keys(dd).filter(k=>dd[k]!==''&&dd[k]!=null).map(k=>(lab[k]||k)+' '+dd[k]).join('; ')||'Sin dato'));});
+    L.push('- Peso en el tiempo (últimas 8): '+(ws.length?ws.slice(-8).map(w=>exF(w.log_date)+' '+(+w.kg).toFixed(1)).join(' | '):'Sin dato'));}
+  if(o.prog){sec('Programa actual');
+    if(!days.length)L.push('- Sin dato');else{
+      let prog='complete';try{prog=planOf(p);}catch(e){}const P=(typeof PERIOD!=='undefined'&&(PERIOD[prog]||PERIOD.complete))||null,st=(dt.prefs&&dt.prefs.start)||null;
+      let wk=1;if(st&&P){wk=Math.min(P.weeks,Math.max(1,Math.floor((Date.now()-new Date(st))/6048e5)+1));}
+      L.push('- Nombre: '+sd(R.rt&&R.rt.name)+' | Semana del mesociclo: '+(P?wk+' de '+P.weeks:'Sin dato'));
+      days.forEach(day=>{if(day.x)return;L.push('- '+(day.label||'Día')+(day.name?' — '+day.name:'')+':');
+        (day.blocks||[]).forEach(b=>{if(b.cardio){L.push('    · Cardio');return;}(b.items||[]).forEach(it=>{let sr='';if(it.fixed)sr=it.fixed.sets+'×'+it.fixed.reps;else if(P&&(it.kind==='basic'||it.kind==='acc')){const q=P[it.kind==='basic'?'basic':'acc'];sr=q.sets[wk-1]+'×'+q.reps[wk-1];}
+          L.push('    · ['+(b.t||b.k)+'] '+exName(it.ex)+(sr?' '+sr:'')+(it.rir?' RIR '+it.rir:''));});});});}}
+  return L.join('\n');
+}
+function exModal(){let o=document.getElementById('exm');if(!EXM){if(o)o.remove();return;}
+  if(!o){o=document.createElement('div');o.id='exm';o.className='cpdv';document.body.appendChild(o);}
+  const m=EXM,opt=[['health','Salud'],['strength','Fuerza'],['track','Seguimiento'],['meas','Medidas'],['prog','Programa']];
+  if(m.loading){o.innerHTML='<div class="cpdc" style="max-width:560px"><div class="cpdhd"><div><b>Exportar datos del cliente</b><small>Preparando…</small></div><button class="cpdx" data-act="exclose" aria-label="Cerrar">✕</button></div><div class="note">Cargando datos…</div></div>';return;}
+  const txt=m.err?'':exBuild(m.R,m.o);m.txt=txt;
+  o.innerHTML=`<div class="cpdc" style="max-width:560px"><div class="cpdhd"><div><b>Exportar datos del cliente</b><small>Revísalo antes de pegarlo en una IA</small></div><button class="cpdx" data-act="exclose" aria-label="Cerrar">✕</button></div><div class="cpmvb">
+   <label class="pfl">Qué incluir</label><div class="chips">${opt.map(([k,n])=>`<button class="chip${m.o[k]?' on':''}" data-act="exopt" data-v="${k}">${n}</button>`).join('')}<button class="chip${m.o.name?' on':''}" data-act="exopt" data-v="name">Incluir nombre</button></div>
+   ${m.o.health?'<div class="note" style="margin:8px 0;color:#B87400">Contiene datos de salud. Pégalo solo en una herramienta que tengas aprobada. Nunca incluye correo, teléfono ni fotos.</div>':''}
+   ${m.err?'<div class="note">No se pudieron cargar los datos del cliente.</div>':`<textarea id="exTxt" readonly style="width:100%;height:46vh;font:12px/1.45 ui-monospace,Menlo,monospace;border:1px solid #DCD6CC;border-radius:10px;padding:10px;background:#FBFAF8;color:#1C1B19;resize:vertical">${esc(txt)}</textarea>
+   <div style="display:flex;gap:8px;margin-top:10px"><button class="cpmvbt pri" data-act="excopy" style="flex:1">Copiar</button><button class="cpmvbt" data-act="exdl" style="flex:1">Descargar .txt</button></div>`}</div></div>`;}
+document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act^="ex"]');if(!t)return;const a=t.dataset.act;if(!['exdata','exclose','exopt','excopy','exdl'].includes(a))return;e.stopPropagation();e.preventDefault();
+  if(a==='exdata'){const cid=t.dataset.id||CP.cid;EXM={loading:true,o:{health:true,strength:true,track:true,meas:true,prog:true,name:false}};exModal();try{EXM.R=await exLoad(cid);EXM.loading=false;}catch(x){console.warn(x);EXM.loading=false;EXM.err=true;}exModal();}
+  else if(a==='exclose'){EXM=null;exModal();}
+  else if(a==='exopt'&&EXM){EXM.o[t.dataset.v]=!EXM.o[t.dataset.v];exModal();}
+  else if(a==='excopy'&&EXM){const tx=EXM.txt||'';try{await navigator.clipboard.writeText(tx);toast('Copiado ✓ Pégalo en tu chat con la IA');}catch(x){const ta=document.getElementById('exTxt');if(ta){ta.removeAttribute('readonly');ta.select();try{document.execCommand('copy');toast('Copiado ✓');}catch(y){toast('Selecciona el texto y cópialo');}ta.setAttribute('readonly','');}}}
+  else if(a==='exdl'&&EXM){const b=new Blob([EXM.txt||''],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(b),l=document.createElement('a');l.href=url;l.download='cliente-erre-'+new Date().toISOString().slice(0,10)+'.txt';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+},true);
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
