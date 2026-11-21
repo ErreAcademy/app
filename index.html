@@ -2412,7 +2412,7 @@ function cpHomeData(){
     }
     (H.fb||[]).filter(f=>f.client_id===c.id&&f.feel==='molestia'&&f.log_date>=addD(tdy,-7)).slice(0,1).forEach(f=>al.push({s:0,k:c.id+'|mol|'+f.log_date,cid:c.id,t:'Reportó una molestia',q:fdate(f.log_date)+(f.note?' · “'+f.note+'”':'')+' Revisa y ajusta la rutina.'}));
     if(coachP&&has&&pf.start){const P=PERIOD[planOf(c)],raw=Math.floor(diffD(monOf(tdy),pf.start)/7)+1;if(raw>=1){const wk=((raw-1)%P.weeks)+1;if(wk===P.weeks)al.push({s:1,k:c.id+'|meso|'+monOf(tdy),cid:c.id,t:'Última semana del mesociclo',q:'Programa el siguiente antes del domingo.'});}}
-    if(coachP&&!calls[c.id])al.push({s:2,k:c.id+'|call',cid:c.id,t:'Sin llamada 1:1 agendada',q:'Agéndala en su pestaña Llamada 1:1.'});
+    if(coachP&&!calls[c.id])al.push({s:2,k:c.id+'|call',cid:c.id,t:'Sin llamada 1:1 agendada',q:'Agéndala en su ficha, pestaña Hoy.'});
   });
   al.sort((a,b)=>a.s-b.s);
   const dis=cpDisGet(),hid=al.filter(a=>dis[a.k]);
@@ -3624,12 +3624,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1424';
+const APP_VER='21nov-1430';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1424'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1430'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5545,10 +5545,10 @@ AL_O.m.push(['Atún con aguacate',null,{p:'Atún',f:'Aguacate (½)',fr:'Naranja'
 .cpnavx .cptab.on{background:#1C1B19;color:#fff;border-color:#1C1B19}
 .cpseg{display:flex;gap:6px;margin:0 0 12px}.cpseg button{flex:1;padding:10px;border-radius:10px;border:1px solid #DCD6CC;background:#FBFAF8;font:600 14px Archivo,sans-serif;cursor:pointer}.cpseg button.on{background:#C0392B;color:#fff;border-color:#C0392B}
 .cph-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}.cph-chips span{background:#FBFAF8;border:1px solid #DCD6CC;border-radius:99px;padding:6px 12px;font-size:13px}.cph-chips span.red{background:#FBEAE7;border-color:#E9B9B1;color:#8E2A1F;font-weight:600}
-.cpal{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;margin-bottom:8px;border:1px solid #DCD6CC;background:#FBFAF8}
-.cpal b{flex:1;font-weight:600;font-size:14px;line-height:1.3}.cpal small{display:block;font-weight:400;color:#5A554E;margin-top:2px}
-.cpal i{width:12px;height:12px;border-radius:50%;flex:none}.cpal.r{border-color:#E9B9B1;background:#FBEAE7}.cpal.r i{background:#C0392B}.cpal.o{border-color:#EBD2A4;background:#FBF3E3}.cpal.o i{background:#E8A317}.cpal.g i{background:#2E9E5B}
-.cpal button{flex:none;padding:8px 14px;border-radius:10px;border:0;background:#1C1B19;color:#fff;font:600 13px Archivo,sans-serif;cursor:pointer}
+.cphal{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;margin-bottom:8px;border:1px solid #DCD6CC;background:#FBFAF8}
+.cphal b{flex:1;font-weight:600;font-size:14px;line-height:1.3}.cphal small{display:block;font-weight:400;color:#5A554E;margin-top:2px}
+.cphal i{width:12px;height:12px;border-radius:50%;flex:none}.cphal.r{border-color:#E9B9B1;background:#FBEAE7}.cphal.r i{background:#C0392B}.cphal.o{border-color:#EBD2A4;background:#FBF3E3}.cphal.o i{background:#E8A317}.cphal.g i{background:#2E9E5B}
+.cphal button{flex:none;padding:8px 14px;border-radius:10px;border:0;background:#1C1B19;color:#fff;font:600 13px Archivo,sans-serif;cursor:pointer}
 .cpk4{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
 .cpk{background:#FBFAF8;border:1px solid #DCD6CC;border-radius:14px;padding:12px}.cpk small{display:block;color:#5A554E;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.cpk b{display:block;font:700 22px Oswald,sans-serif;margin:4px 0 2px;color:#1C1B19}.cpk em{font-style:normal;font-size:12px;color:#5A554E}
 .cpqa{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0}
@@ -5605,7 +5605,7 @@ function cpHoy(d){
   const W=(d.weights||[]).map(r=>({d:r.log_date,k:+r.kg})).sort((a,b)=>a.d<b.d?-1:1);
   if(W.length&&dd(W[W.length-1].d,tdy)>=10)al.push({c:'g',t:'Sin pesarse hace '+dd(W[W.length-1].d,tdy)+' días'});
   const rank={r:0,o:1,g:2};al.sort((a,b)=>rank[a.c]-rank[b.c]);
-  const alH=al.length?al.map(x=>`<div class="cpal ${x.c}"><i></i><b>${esc(x.t)}${x.s?`<small>${esc(x.s)}</small>`:''}</b>${x.b?`<button ${x.a}>${x.b}</button>`:''}</div>`).join(''):'<div class="cpal g"><i></i><b>Todo al día ✓</b></div>';
+  const alH=al.length?al.map(x=>`<div class="cphal ${x.c}"><i></i><b>${esc(x.t)}${x.s?`<small>${esc(x.s)}</small>`:''}</b>${x.b?`<button ${x.a}>${x.b}</button>`:''}</div>`).join(''):'<div class="cphal g"><i></i><b>Todo al día ✓</b></div>';
   const last=W.length?W[W.length-1].k:null,w0=W.length>1?W[Math.max(0,W.length-8)].k:null,dl=(last!=null&&w0!=null&&W.length>1)?last-w0:null;
   const S7=(d.steps||[]).slice(-7).map(r=>r.steps),avg=S7.length?Math.round(S7.reduce((a,b)=>a+b,0)/S7.length):null;
   const w7=new Set(fb.filter(f=>dd(f.log_date,tdy)<7&&dd(f.log_date,tdy)>=0).map(f=>f.log_date)).size,plan=(p.train_days||[]).length;
