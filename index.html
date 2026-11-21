@@ -3628,12 +3628,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1332';
+const APP_VER='21nov-1334';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1332'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1334'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5250,6 +5250,24 @@ alModal=function(m,i,sw){let o=document.getElementById('almodal');if(m==null){if
    <p style="text-align:center;color:#5A554E;font:600 13px Archivo,sans-serif;margin:4px 0 8px">≈ ${Math.round(X.kc)} kcal · P ${Math.round(X.P)} g · C ${Math.round(X.C)} g · G ${Math.round(X.F)} g</p>
    <button class="aleat${eaten?' on':''}" data-alm="eat">${eaten?'✓ La comí hoy':'Esta es la que como hoy'}</button></div>`;o.dataset.m=m;o.dataset.i=i;o.dataset.sw=sw||'';};
 (function(){const v=alView;alView=function(){const h=v.apply(this,arguments),i=h.indexOf('</div>')+6;try{return h.slice(0,i)+alBoard()+h.slice(i);}catch(e){console.warn(e);return h;}};})();
+
+
+/* ===== Músculos objetivo con dibujo del músculo (SVG propio) ===== */
+var PV_BODY='<g fill="#D9D3C8" stroke="#BDB6A8" stroke-width=".8" stroke-linejoin="round"><circle cx="30" cy="10" r="6.5"/><path d="M26.5 16h7v5h-7z"/><path d="M14 23q16-6 32 0l-3 33q-13 5-26 0z"/><path d="M13 24q-6 3-7 17l5 1q1-11 4-16z"/><path d="M47 24q6 3 7 17l-5 1q-1-11-4-16z"/><path d="M6 41l-1 20 5 1 1-20z"/><path d="M54 41l1 20-5 1-1-20z"/><path d="M17 56l11 2-1 47h-8z"/><path d="M43 56l-11 2 1 47h8z"/></g>';
+var PV_OV={
+ 'Pecho':['<path d="M16 26q14-4 14 3v11q-8 4-14-2z"/><path d="M44 26q-14-4-14 3v11q8 4 14-2z"/>',0],
+ 'Hombros':['<ellipse cx="12.5" cy="27.5" rx="5.2" ry="6.5"/><ellipse cx="47.5" cy="27.5" rx="5.2" ry="6.5"/>',0],
+ 'Bíceps':['<path d="M7 31q3-4 6-1l-1 12h-6z"/><path d="M53 31q-3-4-6-1l1 12h6z"/>',0],
+ 'Tríceps':['<path d="M7 31q3-4 6-1l-1 12h-6z"/><path d="M53 31q-3-4-6-1l1 12h6z"/>',1],
+ 'Abdomen':['<path d="M23 42h14l-1 14q-6 2-12 0z"/>',0],
+ 'Espalda':['<path d="M16 24q14-5 28 0l-3 22q-11 4-22 0z"/>',1],
+ 'Glúteos':['<path d="M18 52q12-3 24 0l-1 13q-11 4-22 0z"/>',1],
+ 'Piernas':['<path d="M18 58l10 2-1 26h-8z"/><path d="M42 58l-10 2 1 26h8z"/>',0]};
+function pvMuscle(name,c){const o=PV_OV[name],low=name==='Piernas'||name==='Glúteos',vb=low?'0 46 60 62':'0 1 60 62';
+  return `<svg viewBox="${vb}" width="62" height="${low?62:60}" aria-hidden="true">${PV_BODY}${o?`<g fill="${c}" opacity=".95">${o[0]}</g>`:''}</svg>`;}
+(function(){const st=document.createElement('style');st.textContent=`.pvmc{display:flex;align-items:center;gap:10px;min-width:172px;padding:8px 14px 8px 8px}.pvmc .pvfig{width:68px;height:64px;flex:0 0 68px;border-radius:10px;background:#EFEDE8;display:flex;align-items:center;justify-content:center;overflow:hidden}.pvmc div:last-child b{display:block;font-size:15px}`;document.head.appendChild(st);})();
+(function(){const h0=pvHTML;pvHTML=function(){let h=h0.apply(this,arguments);
+  return h.replace(/<div class="pvmc" style="--c:([^"]+)"><b>([^<]+)<\/b><em>([^<]+)<\/em><\/div>/g,(m,c,n,pc)=>`<div class="pvmc" style="--c:${c}"><div class="pvfig">${pvMuscle(n,c)}</div><div><b>${n}</b><em>${pc}</em></div></div>`);};})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
