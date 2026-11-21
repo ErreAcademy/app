@@ -3627,12 +3627,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1252';
+const APP_VER='21nov-1300';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1252'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1300'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4830,7 +4830,7 @@ function medModal(open){let o=document.getElementById('medm');if(!open){if(o)o.r
   const inp=([k,n,u])=>`<div><label>${n}${u?' ('+u+')':''}</label><input class="fld" data-med="${k}" inputmode="decimal" placeholder="—"></div>`;
   o.innerHTML=`<div class="cpdc" style="max-width:560px"><div class="cpdhd"><div><b>Nueva medición</b><small>Llena solo lo que mediste</small></div><button class="cpdx" data-act="medclose" aria-label="Cerrar">✕</button></div><div class="cpmvb">
    <div class="medg"><div><label>Fecha</label><input class="fld" type="date" id="medD" value="${today()}"></div><div><label>Medido por (opcional)</label><input class="fld" id="medB" placeholder="Ej. fisioterapeuta, coach"></div></div>
-   ${MED_F.map(([g,fs])=>`<div class="medh">${g}</div><div class="medg">${fs.map(inp).join('')}</div>`).join('')}
+   ${MED_IN().map(([g,fs])=>`<div class="medh">${g}</div><div class="medg">${fs.map(inp).join('')}</div>`).join('')}
    <label class="pfl" style="margin-top:12px">Nota (opcional)</label><textarea class="fld" id="medN" rows="2" placeholder="Condiciones, protocolo, observaciones"></textarea>
    <button class="cpmvbt pri" data-act="medsave" style="width:100%;margin-top:10px">Guardar medición</button></div></div>`;}
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act="medopen"],[data-act="medclose"],[data-act="medsave"],[data-act="medel"]');if(!t)return;e.stopPropagation();const a=t.dataset.act;
@@ -4924,8 +4924,8 @@ function mcDue(){try{if(!ME||!S.user||(PROFILE&&PROFILE.role==='coach')||ACC.sta
 function mcRender(){const s=MC.s;let ov=document.getElementById('chkov');
   if(!s){if(ov)ov.remove();document.body.style.overflow='';return;}
   if(!ov){ov=document.createElement('div');ov.id='chkov';document.body.appendChild(ov);document.body.style.overflow='hidden';}
-  if(s.fin){ov.innerHTML=`<h2 class="h2" style="margin-top:40px">¡Listo, gracias!</h2><p class="wzs">Guardamos tus medidas. Tu coach las ve y compara con las anteriores.</p><button class="chkok" data-mc="close">Volver al inicio</button>`;return;}
-  const n=MED_F.length,g=MED_F[s.i],last=s.i===n-1;
+  if(s.fin){ov.innerHTML=`<h2 class="h2" style="margin-top:40px">¡Listo, gracias!</h2><p class="wzs">Guardamos tus medidas. Tu coach las ve y compara con las anteriores.</p>${s.rev||''}<button class="chkok" data-mc="close">Volver al inicio</button>`;return;}
+  const n=MED_IN().length,g=MED_IN()[s.i],last=s.i===n-1;
   const hint={'Básicas':'Peso en ayunas si puedes. Todo es opcional.','Perímetros':'Con cinta métrica, sin apretar. Puedes dejar en blanco lo que no mediste.','Pliegues':'Solo si tienes plicómetro o te los midió un profesional.'}[g[0]]||'Todo es opcional.';
   ov.innerHTML=`<div style="display:flex;justify-content:space-between"><button class="chkx" data-mc="prev">${s.i?'‹ Atrás':'‹ Ahora no'}</button><small style="align-self:center;color:#5A554E">Medidas</small></div>
    <div class="wzp"><div class="wzb"><i style="width:${Math.round((s.i+1)/n*100)}%"></i></div><small>Paso ${s.i+1} de ${n}</small></div>
@@ -4936,6 +4936,8 @@ function mcRender(){const s=MC.s;let ov=document.getElementById('chkov');
 async function mcSend(){const s=MC.s;if(!s||s.busy)return;const data={};Object.keys(s.v).forEach(k=>{const v=medN(s.v[k]);if(v!=null)data[k]=v;});
   if(!Object.keys(data).length){toast('Escribe al menos una medida');return;}
   s.busy=true;mcRender();
+  let prev=null;try{const rs=await DB.measuresOf(ME.id);prev=rs.filter(r=>r.date<today()||r.task_id!==s.task).reverse().find(r=>MED_PER().some(([k])=>r.data&&r.data[k]!=null))||null;}catch(e){}
+  s.rev=mcReview(data,prev);
   try{await DB.measureSave({client_id:ME.id,date:today(),data,by_name:'Cliente',note:(s.note||'').trim()||null,task_id:s.task,created_by:ME.id});MC.done=MC.done||new Set();MC.done.add(s.task);
     try{if(PROFILE&&PROFILE.coach_id)pushTo(PROFILE.coach_id,(PROFILE.full_name||'Un cliente')+' registró sus medidas','Ya están en su ficha','med-'+ME.id);}catch(e){}
     s.fin=true;s.busy=false;mcRender();}
@@ -4955,6 +4957,30 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.data
     if(h.includes('>Importante<')){const m='<h2 class="h2">Tareas de',i=h.indexOf(m);return i<0?h+card:h.slice(0,i)+card+h.slice(i);}
     const m='<h2 class="h2">Tareas de',i=h.indexOf(m),blk='<h2 class="h2">Importante</h2>'+card;return i<0?blk+h:h.slice(0,i)+blk+h.slice(i);}catch(e){return h;}};})();
 (function(){const cl=cpMedSec;})();
+
+/* --- Medidas: sin "Básicas" en el formulario + resumen al terminar --- */
+function MED_IN(){return MED_F.filter(g=>g[0]!=='Básicas');}
+function MED_PER(){return (MED_F.find(g=>g[0]==='Perímetros')||[0,[]])[1];}
+function mcReview(cur,prev){try{
+  const per=MED_PER(),nm=Object.fromEntries(per.map(x=>[x[0],x[1].replace(/\s*\(.*?\)/g,'')])),has=per.filter(([k])=>cur[k]!=null);
+  if(!has.length)return '';
+  const down=new Set(['cintura','abdomen']),neutral=new Set(['cuello','cadera']),f1=v=>(Math.round(v*10)/10).toString().replace('.',',');
+  const card=(t,body)=>`<div class="chkr" style="margin-bottom:10px"><b>${t}</b>${body}</div>`;
+  const row=(l,r,c)=>`<div style="display:flex;justify-content:space-between;gap:8px;margin:6px 0;font-size:14px"><span>${l}</span><b style="color:${c||'#1C1B19'}">${r}</b></div>`;
+  let out='';
+  if(prev){const rows=[];has.forEach(([k])=>{if(prev.data[k]==null)return;const d=cur[k]-prev.data[k];if(Math.abs(d)<0.05)return;
+      const good=neutral.has(k)?null:(down.has(k)?d<0:d>0);rows.push({k,d,good});});
+    const goods=rows.filter(r=>r.good===true).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+    out+=card('Cambios desde tu medición anterior',(rows.length?rows.sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).map(r=>row(nm[r.k],(r.d>0?'▲ +':'▼ ')+f1(r.d)+' cm',r.good===true?'#1F8F53':r.good===false?'#B87400':'#5A554E')).join(''):'<p class="wzs" style="margin:6px 0 0">Sin cambios importantes.</p>'));
+    out+=goods.length?`<div class="chkt">Tu mejor avance: ${goods.slice(0,2).map(r=>nm[r.k].toLowerCase()+' ('+(r.d>0?'+':'')+f1(r.d)+' cm)').join(' y ')}. Tu coach lo revisa con el contexto de tu entrenamiento.</div>`:`<div class="chkt">Los cambios toman tiempo. Tu coach los lee junto con tu entrenamiento y tu alimentación.</div>`;
+  }else{
+    const top=has.filter(([k])=>!['cintura','abdomen','cuello','cadera'].includes(k)).sort((a,b)=>cur[b[0]]-cur[a[0]]).slice(0,3);
+    out+=card('Tus zonas más grandes',top.map(([k])=>row(nm[k],f1(cur[k])+' cm')).join(''));
+    const asy=[['brazo','brazoD','brazoI'],['antebrazo','antebrazoD','antebrazoI'],['muslo','musloD','musloI'],['pantorrilla','pantD','pantI']].filter(([,a,b])=>cur[a]!=null&&cur[b]!=null&&Math.abs(cur[a]-cur[b])>=1.5);
+    if(asy.length)out+=card('Simetría',asy.map(([n,a,b])=>row(n[0].toUpperCase()+n.slice(1),(cur[a]>cur[b]?'derecho':'izquierdo')+' +'+f1(Math.abs(cur[a]-cur[b]))+' cm','#B87400')).join(''))+'<div class="chkt">Una diferencia de 1–2 cm entre lados es normal. Tu coach la tiene en cuenta en tu programa.</div>';
+    if(cur.cintura&&cur.cadera)out+=card('Cintura / cadera',row('Relación',f1(cur.cintura/cur.cadera).replace(',','.')==='NaN'?'—':(cur.cintura/cur.cadera).toFixed(2).replace('.',',')));
+    out+='<div class="chkt">Esta es tu primera medición: la base. La próxima vez verás aquí cómo cambiaste.</div>';}
+  return out;}catch(e){return '';}}
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
