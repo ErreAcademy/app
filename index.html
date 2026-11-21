@@ -3628,12 +3628,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1329';
+const APP_VER='21nov-1332';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1329'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1332'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5174,6 +5174,82 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
     if(fa&&E[fa])h=`<div class="prerow">${thumb(fa)}<span><b>${esc(E[fa].n)}</b><small>Calentamiento recomendado de hoy</small></span></div>`+h;
     sheet(`<h3>Calentamiento</h3><div class="presheet">${h||'<p>Sin calentamiento.</p>'}</div><button class="btn" data-act="close" style="width:100%;margin-top:10px">Cerrar</button>`);}
 },true);
+
+
+/* ===== Alimentación v3: gramos/porciones, tablero del día (kcal, macros, agua, electrolitos) ===== */
+/* [gramos por 1 porción, unidad natural (g por unidad, nombre sing, plural)|null, kcal/100g, P, C, G] — valores aproximados */
+var AL_FD={
+'Pechuga de pollo':[120,null,165,31,0,3.6],'Muslo de pollo':[120,null,180,25,0,8],'Carne magra':[120,null,190,28,0,8],'Cerdo magro':[120,null,200,27,0,9],'Pescado':[130,null,140,25,0,4],'Atún':[100,null,110,25,0,1],
+'Huevos':[100,[50,'huevo','huevos'],143,12.6,0.7,9.5],'Yogurt griego':[200,null,70,9,4,2],'Queso campesino / requesón':[100,null,100,12,3,4],'Proteína en polvo':[30,[30,'scoop','scoops'],380,75,8,6],
+'Arroz':[150,null,130,2.7,28,0.3],'Avena':[40,null,380,13,66,7],'Papa':[150,null,87,2,20,0.1],'Yuca':[130,null,160,1.4,38,0.3],'Plátano':[120,null,120,1,31,0.3],'Arepa':[80,[80,'arepa','arepas'],190,4,40,1],'Pan integral':[60,[30,'tajada','tajadas'],250,10,45,3.5],
+'Pasta':[150,null,158,6,31,0.9],'Quinua':[150,null,120,4.4,21,1.9],'Batata':[150,null,90,2,21,0.2],'Fríjol / lenteja':[150,null,125,8,22,0.5],'Granola':[40,null,450,10,65,18],
+'Aguacate (½)':[70,[70,'½ aguacate','½ aguacate'],160,2,9,15],'Aceite de oliva':[10,[10,'cucharada','cucharadas'],884,0,0,100],'Mantequilla de maní':[15,[15,'cucharada','cucharadas'],590,25,20,50],'Almendras / maní / nueces':[20,null,600,20,20,52],'Semillas (chía, girasol)':[15,null,540,20,20,45],
+'Banano':[120,[120,'banano','bananos'],90,1,23,0.3],'Manzana':[150,[150,'manzana','manzanas'],52,0.3,14,0.2],'Fresas':[150,null,32,0.7,8,0.3],'Fresas / arándanos':[150,null,35,0.7,9,0.3],'Piña':[150,null,50,0.5,13,0.1],'Papaya':[150,null,43,0.5,11,0.3],'Mango':[150,null,60,0.8,15,0.4],'Naranja':[150,[150,'naranja','naranjas'],47,0.9,12,0.1],'Uvas / kiwi':[120,null,65,0.8,16,0.3]};
+var AL_VEG=[150,null,25,1.5,5,0.3];
+function alFd(n){return AL_FD[n]||AL_VEG;}
+function alNum(str){const m=String(str||'').replace(/,/g,'.').replace('½','.5').match(/[\d.]+/g);if(!m)return [1,1];const a=parseFloat(m[0])||1,b=m[1]?parseFloat(m[1]):a;return [a,b];}
+function alMul(str){const [a,b]=alNum(str);return (a+b)/2;}
+function alQty(k,name,porStr,unit){const f=alFd(name),[lo,hi]=alNum(porStr);const veg=k==='v';
+  const g1=Math.round(lo*f[0]/5)*5,g2=Math.round(hi*f[0]/5)*5,gt=g1===g2?g1+' g':g1+'–'+g2+' g';
+  const pl=(k==='p'?'palma':k==='c'?'pocillo':k==='f'?'cda':k==='fr'?'fruta':'plato'),pt=porStr?(String(porStr).replace(/ plato.*/,'')+(k==='v'?'':' '+pl+((hi>1)&&pl!=='cda'?(pl==='palma'?'s':pl==='pocillo'?'s':''):''))):'';
+  let u='';if(f[1]){const n1=lo*f[0]/f[1][0],n2=hi*f[0]/f[1][0],fm=x=>(Math.round(x*2)/2).toString().replace('.5','½').replace(/^0½$/,'½').replace(/^(\d+)½$/,'$1½');u=(n1===n2?fm(n1):fm(n1)+'–'+fm(n2))+' '+(n2>1?f[1][2]:f[1][1]);}
+  const portTxt=veg?(porStr||'libre'):pt;
+  return unit==='p'?{main:portTxt,sub:(u?u+' · ':'')+gt}:{main:u&&(name==='Huevos'||name==='Arepa'||name==='Aguacate (½)')?gt+' · '+u:gt,sub:portTxt};}
+function alMacros(m,i,stOverride){const g=(S.goal==='bajar'||S.goal==='aumentar')?S.goal:'complete',por=AL_PORC[g][m],O=alOpt(m,i);let kc=0,P=0,C=0,F=0,fr=0,vg=0;
+  Object.keys(O.comp).forEach(k=>{const f=alFd(O.comp[k]),mu=alMul(por[k]||'1'),gr=mu*f[0];kc+=gr*f[2]/100;P+=gr*f[3]/100;C+=gr*f[4]/100;F+=gr*f[5]/100;if(k==='fr')fr+=mu;if(k==='v')vg+=mu;});
+  return {kc,P,C,F,fr,vg};}
+function alTargets(){const u=S.user||{},f=u.data||{},g=(S.goal==='bajar'||S.goal==='aumentar')?S.goal:'complete';
+  let w=0;try{const ks=Object.keys(S.weights||{}).sort();if(ks.length)w=+S.weights[ks[ks.length-1]];}catch(e){}if(!w)w=parseFloat(f.weight)||0;
+  const hom=u.sex==='Hombre';if(!w)w=hom?75:62;const h=parseFloat(f.height)||(hom?174:162);
+  let age=30;if(f.yy)age=Math.max(16,new Date().getFullYear()-(+f.yy));
+  const bmr=10*w+6.25*h-5*age+(hom?5:-161),days=(u.sched||[0,2,4]).length,act=1.4+0.03*days;
+  let kc=bmr*act*(g==='bajar'?0.82:g==='aumentar'?1.1:1);kc=Math.round(kc/50)*50;
+  const P=Math.round(w*(g==='bajar'?2:1.8)),F=Math.round(w*(g==='bajar'?0.8:0.9)),C=Math.max(60,Math.round((kc-P*4-F*9)/4));
+  return {kc,P,C,F,water:Math.round(w*35/250)*250,fr:3,vg:3,estimated:!parseFloat(f.weight)&&!Object.keys(S.weights||{}).length};}
+function alTotals(){const st=alSt(),t={kc:0,P:0,C:0,F:0,fr:0,vg:0,meals:0};
+  AL_M.forEach(([k])=>{const e=(st[k]||{}).eat;if(e==null)return;t.meals++;const x=alMacros(k,e);['kc','P','C','F','fr','vg'].forEach(q=>t[q]+=x[q]);});return t;}
+(function(){const st=document.createElement('style');st.textContent=`
+.alb{background:#FBFAF8;border:1px solid #DCD6CC;border-radius:18px;padding:14px;margin:12px 0}
+.alb h4{margin:0 0 10px;font:700 13px Oswald,Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#4E7D63}
+.alb .r1{display:flex;gap:14px;align-items:center}.alring{position:relative;width:112px;height:112px;flex:0 0 112px}.alring b{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 22px Oswald,Archivo,sans-serif}.alring small{font:500 11px Archivo,sans-serif;color:#5A554E}
+.almac{flex:1;display:flex;flex-direction:column;gap:9px}.almc{font:600 12px Archivo,sans-serif}.almc div{display:flex;justify-content:space-between}.almc span{color:#5A554E;font-weight:500}.albar{height:9px;border-radius:99px;background:#E4DFD6;overflow:hidden;margin-top:3px}.albar i{display:block;height:100%;border-radius:99px;transition:width .35s}
+.alr2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.alsm{background:#EFEDE8;border-radius:14px;padding:10px 12px;font:600 13px Archivo,sans-serif}.alsm small{display:block;color:#5A554E;font-weight:500;font-size:11px}
+.aldots{display:flex;gap:6px;margin-top:6px}.aldots i{width:22px;height:22px;border-radius:50%;background:#DCD6CC;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-style:normal}.aldots i.on{background:#1F8F53}
+.alw{display:flex;gap:14px;align-items:center;margin-top:12px;background:#E3EEF4;border-radius:16px;padding:12px}.alwb{width:64px;height:120px;flex:0 0 64px}.alwi{flex:1}.alwi b{font:700 20px Oswald,Archivo,sans-serif}.alwi small{display:block;color:#3C6A86;font:500 12px Archivo,sans-serif}
+.alwbt{display:flex;gap:8px;margin-top:8px}.alwbt button{flex:1;border:0;border-radius:12px;padding:10px;font:700 14px Archivo,sans-serif;background:#3C7FA6;color:#fff}.alwbt button.m{flex:0 0 46px;background:#fff;color:#3C7FA6;border:1.5px solid #3C7FA6}
+.alel{display:flex;align-items:center;gap:10px;width:100%;margin-top:8px;border:2px solid #3C7FA6;background:#fff;border-radius:12px;padding:9px 12px;font:600 14px Archivo,sans-serif;color:#3C7FA6;text-align:left}.alel.on{background:#3C7FA6;color:#fff}.alel i{font-style:normal;font-size:20px}
+.alun{display:flex;background:#E4DFD6;border-radius:99px;padding:3px;margin:0 0 12px}.alun button{flex:1;border:0;background:none;border-radius:99px;padding:8px;font:700 13px Archivo,sans-serif;color:#5A554E}.alun button.on{background:#1C1B19;color:#fff}
+.alrow em small{display:block;font-weight:500;color:#5A554E;font-size:11px;text-align:right}`;document.head.appendChild(st);})();
+function alRing(p,c){const r=46,C=2*Math.PI*r,v=Math.min(1,Math.max(0,p));return `<svg viewBox="0 0 112 112" width="112" height="112"><circle cx="56" cy="56" r="${r}" fill="none" stroke="#E4DFD6" stroke-width="12"/><circle cx="56" cy="56" r="${r}" fill="none" stroke="${c}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C*v} ${C}" transform="rotate(-90 56 56)" style="transition:stroke-dasharray .4s"/></svg>`;}
+function alBottle(p,el){const v=Math.min(1,Math.max(0,p)),h=78*v;return `<svg class="alwb" viewBox="0 0 64 120"><defs><clipPath id="alcp"><path d="M22 4h20v14c0 6 12 10 12 24v66a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8V42c0-14 12-18 12-24z"/></clipPath></defs><g clip-path="url(#alcp)"><rect x="0" y="0" width="64" height="120" fill="#fff"/><rect x="0" y="${112-h}" width="64" height="${h+10}" fill="${el?'#E0A64E':'#3C7FA6'}" style="transition:all .4s"/></g><path d="M22 4h20v14c0 6 12 10 12 24v66a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8V42c0-14 12-18 12-24z" fill="none" stroke="#3C6A86" stroke-width="2.5"/></svg>`;}
+function alBoard(){const T=alTargets(),t=alTotals(),st=alSt(),w=st.w||0,el=!!st.el,pc=x=>Math.round(x);
+  const mac=(n,v,tg,c)=>`<div class="almc"><div><b>${n}</b><span>${pc(v)} / ${tg} g</span></div><div class="albar"><i style="width:${Math.min(100,v/tg*100)}%;background:${c}"></i></div></div>`;
+  return `<div class="alb"><h4>Tu día</h4><div class="r1"><div class="alring">${alRing(t.kc/T.kc,t.kc>T.kc*1.1?'#C0392B':'#1F8F53')}<b>${pc(t.kc)}<small>de ${T.kc} kcal</small></b></div>
+   <div class="almac">${mac('Proteína',t.P,T.P,'#C0392B')}${mac('Carbo',t.C,T.C,'#C7872A')}${mac('Grasa',t.F,T.F,'#6E8B3D')}</div></div>
+   <div class="alr2"><div class="alsm">Comidas<div class="aldots">${['d','a','c'].map(k=>`<i class="${(st[k]||{}).eat!=null?'on':''}">${(st[k]||{}).eat!=null?'✓':''}</i>`).join('')}<i class="${(st.m||{}).eat!=null?'on':''}" style="opacity:.7">${(st.m||{}).eat!=null?'✓':''}</i></div></div>
+    <div class="alsm">Micros (frutas y vegetales)<div style="margin-top:4px">🍎 ${Math.round(t.fr*10)/10}/${T.fr} · 🥬 ${Math.round(t.vg*10)/10}/${T.vg}</div></div></div>
+   <div class="alw">${alBottle(w/T.water,el)}<div class="alwi"><b>${(w/1000).toFixed(2).replace('.',',')} L</b><small>de ${(T.water/1000).toFixed(1).replace('.',',')} L de agua hoy</small>
+     <div class="alwbt"><button data-alb="w" data-v="250">+ Vaso 250 ml</button><button class="m" data-alb="w" data-v="-250" aria-label="Quitar">−</button></div>
+     <button class="alel${el?' on':''}" data-alb="el"><i>🧂</i><span>${el?'Electrolitos tomados ✓':'Cóctel de electrolitos'}</span></button></div></div>
+   <small style="display:block;color:#5A554E;margin-top:8px;font-size:11px">Metas de referencia según tu peso, objetivo y días de entreno${T.estimated?' (estimadas: completa tu peso en el perfil)':''}. Valores de comida aproximados.</small></div>`;}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-alb]');if(!t)return;e.stopPropagation();const st=alSt(),T=alTargets();
+  if(t.dataset.alb==='w'){st.w=Math.max(0,(st.w||0)+(+t.dataset.v));try{tk()['alim.agua']=st.w>=T.water;}catch(x){}}
+  else if(t.dataset.alb==='el'){st.el=!st.el;}
+  else if(t.dataset.alb==='un'){S.alUnit=t.dataset.v;save();alRefreshModal();render();return;}
+  save();render();},true);
+function alRefreshModal(){const o=document.getElementById('almodal');if(o)alModal(o.dataset.m,+o.dataset.i,o.dataset.sw||'');}
+document.addEventListener('click',e=>{if(e.target&&e.target.id==='almodal'){alModal(null);render();}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('almodal')){alModal(null);render();}});
+/* modal v3: unidad gramos/porciones + macros de la opción */
+alModal=function(m,i,sw){let o=document.getElementById('almodal');if(m==null){if(o)o.remove();document.body.style.overflow='';return;}
+  if(!o){o=document.createElement('div');o.id='almodal';document.body.appendChild(o);document.body.style.overflow='hidden';}
+  const g=(S.goal==='bajar'||S.goal==='aumentar')?S.goal:'complete',por=AL_PORC[g][m],O=alOpt(m,i),st=alSt(),eaten=(st[m]||{}).eat===i,un=S.alUnit||'g',X=alMacros(m,i);
+  const rows=Object.keys(AL_GI).filter(k=>O.comp[k]).map(k=>{const [ic,nm,u,c]=AL_GI[k],q=alQty(k,O.comp[k],por[k]||(k==='v'?'1 plato':'1'),un);return `<button class="alrow" style="--c:${c}" data-alm="sw" data-k="${k}"><i>${ic}</i><span>${esc(O.comp[k])}${(sw===k)?'':'<small>Toca para cambiar</small>'}</span><em>${esc(q.main)}<small>${esc(q.sub)}</small></em></button>${sw===k?`<div class="alsw" style="--c:${c};--ct:${AL_G[AL_GI[k][4]][2]}">${AL_G[AL_GI[k][4]][4].filter(x=>x[0]!=='+').map(x=>`<button class="${O.comp[k]===x?'on':''}" data-alm="pick" data-k="${k}" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>`:''}`;}).join('');
+  o.innerHTML=`<div class="alsh"><button class="alx" data-alm="close">‹ Volver</button><div class="big">${O.e}</div><h2>${esc(O.n)}</h2>
+   <div class="alun"><button class="${un==='g'?'on':''}" data-alb="un" data-v="g">Gramos</button><button class="${un==='p'?'on':''}" data-alb="un" data-v="p">Porciones</button></div>${rows}
+   <p style="text-align:center;color:#5A554E;font:600 13px Archivo,sans-serif;margin:4px 0 8px">≈ ${Math.round(X.kc)} kcal · P ${Math.round(X.P)} g · C ${Math.round(X.C)} g · G ${Math.round(X.F)} g</p>
+   <button class="aleat${eaten?' on':''}" data-alm="eat">${eaten?'✓ La comí hoy':'Esta es la que como hoy'}</button></div>`;o.dataset.m=m;o.dataset.i=i;o.dataset.sw=sw||'';};
+(function(){const v=alView;alView=function(){const h=v.apply(this,arguments),i=h.indexOf('</div>')+6;try{return h.slice(0,i)+alBoard()+h.slice(i);}catch(e){console.warn(e);return h;}};})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
