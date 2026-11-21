@@ -2463,7 +2463,7 @@ async function coachLive(m){try{
 }catch(e){}}
 async function coachHome(){try{if(DB.onChat)DB.onChat(coachLive);}catch(e){}CP.view='list';coachRender();try{DB.chatInbox().then(r=>{CP.inbox=r;badgeCalc();}).catch(()=>{});}catch(e){}try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{CP.info=await DB.clientInfo();}catch(e){console.warn('info',e);}try{CP.home=await DB.homeData();}catch(e){console.warn('home',e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
-  CP.view='client';CP.cid=id;CP.tab=tab||'plan';CP.cd=null;CP.d=null;CP.routine=null;coachRender();
+  CP.view='client';CP.cid=id;CP.tab=tab||'hoy';CP.cd=null;CP.d=null;CP.routine=null;coachRender();
   try{await rtLoadTpls();CP.routine=await DB.routine(id);}catch(e){console.warn(e);}
   try{CP.d=await DB.clientDetail(id);}catch(e){console.warn(e);CP.err='No pudimos cargar al cliente.';}
   coachRender();clearInterval(CP.poll);CP.poll=setInterval(async()=>{if(CP.view==='client'&&(CP.tab==='chat'||CP.tab==='plan')&&document.visibilityState==='visible'&&!(typeof RT!=='undefined'&&RT.open)){try{CP.d=await DB.clientDetail(CP.cid);coachRender(true);}catch(e){}}},20000);
@@ -2475,7 +2475,8 @@ function coachRender(keepInput){
     const body=CP.sec==='lecc'?cpLessonsPage():CP.sec==='editor'?rtTplList():CP.sec==='inicio'?cpHomePage():CP.sec==='chat'?cpChatPage():CP.sec==='pagos'?cpPagosPage():cpClientsPage();
     el.innerHTML=cpShell(body);cpWideCls(el);const qi=document.getElementById('cpQ');if(qi&&CP.sec==='clientes'&&keepInput){qi.focus();qi.setSelectionRange(qi.value.length,qi.value.length);}return;
   }
-  const d=CP.d,SB=[['plan','Planificación','Organiza entrenamientos, tareas y objetivos'],['rutina','Programa','Asigna y edita su programa'],['resumen','Información','Perfil, plan, módulos y fidelidad'],['alim','Nutrición','Planes y seguimiento nutricional'],['arch','Archivos','Documentos compartidos'],['evol','Evolución','Peso, pasos, sueño y sesiones'],['chat','Chat','Habla directo con tu cliente'],['llamada','Llamada 1:1','Agenda y avisa a tu cliente']],tabs=SB.map(x=>x[0]),TL=Object.fromEntries(SB.map(x=>[x[0],x[1]]));
+  if(CP.tab==='llamada'||CP.tab==='arch'||!CP.tab)CP.tab='hoy';
+  const d=CP.d,SB=[['hoy','🏠','Hoy'],['plan','🏋','Entreno'],['alim','🍽','Nutrición'],['evol','📈','Progreso'],['chat','💬','Chat'],['resumen','⚙️','Ajustes']],tabs=SB.map(x=>x[0]),TL=Object.fromEntries(SB.map(x=>[x[0],x[2]]));
   const nm=d?esc(d.profile.full_name||'Cliente'):'Cargando…';
   let body='<p class="lead">Cargando…</p>';
   if(d){
@@ -2485,7 +2486,7 @@ function coachRender(keepInput){
       const S7=d.steps.slice(-7).map(r=>r.steps),avg=S7.length?Math.round(S7.reduce((a,b)=>a+b,0)/S7.length):null;
       const edad=p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null;
       const inf=(CP.info&&CP.info[CP.cid])||{},rg=REGL[inf.reg],cuenta=`<section class="sec"><div class="sec-h"><b>Cuenta</b></div><div class="cpgr"><span>Correo</span><small>${esc(inf.email||'—')}${inf.email?` <button class="lblbtn" data-act="cpcopy" data-v="${esc(inf.email)}">Copiar</button>`:''}</small></div><div class="cpgr"><span>Tipo de registro</span><small>${rg?rg[0]:(p.status==='pending'?'Cuenta nueva, aún sin registro':'Aún no hace el registro')}</small></div><div class="cpgr"><span>Zona horaria</span><small>${esc(inf.tz||'Sin dato (se asume Bogotá)')}</small></div></section>`,
-      all=cuenta+cpChkSec()+`<section class="sec"><div class="sec-h"><b>Plan</b><em>${PNAME[p.plan]}</em></div>
+      all=cuenta+`<section class="sec"><div class="sec-h"><b>Plan</b><em>${PNAME[p.plan]}</em></div>
         <div class="chips">${['basic','complete','elite'].map(k=>`<button class="chip${p.plan===k?' on':''}" data-act="cpplan" data-v="${k}">${PNAME[k]}</button>`).join('')}</div>
         <div class="note">Cambiar el plan cambia lo que ve el cliente en su app.</div></section>
        <section class="sec"><div class="sec-h"><b>Pruebas</b></div><div class="note" style="margin-bottom:8px">Borra los registros de este cliente (peso, pasos, entrenamientos, feedback, hitos y niveles) para volver a probar desde cero. No borra su perfil, rutina, fotos ni chat.</div><button class="btn" data-act="cpreset" style="width:100%">Reiniciar registros y hitos</button></section>
@@ -2501,7 +2502,6 @@ function coachRender(keepInput){
         <div class="note" style="margin-bottom:8px">Miembro desde. Para clientes de la app anterior, pon la fecha real en que empezaron contigo y el cliente verá sus hitos de fidelidad.</div>
         <input class="fld" type="date" id="cpSince" value="${fidSince(p)||''}"><button class="btn solid" data-act="cpsince" style="width:100%;margin-top:8px;padding:11px">Guardar fecha</button>
         <div class="note">Hito actual: ${fidTier(fidMonths(fidSince(p)))>=0?FID[fidTier(fidMonths(fidSince(p)))][2]+' · '+FID[fidTier(fidMonths(fidSince(p)))][1]:'aún sin hito (primer hito al mes)'}</div></section>
-       ${(()=>{try{return cpAlimSec();}catch(e){console.warn(e);return '';}})()}
        <section class="sec"><div class="sec-h"><b>Módulos de la app</b></div>
         <div class="note" style="margin-bottom:8px">Por defecto el cliente solo ve Inicio, Entrenar y Progreso. Activa lo que quieras que vea.</div>
         <div class="chips">${[['recovery','Respiración'],['habitos','Hábitos'],['alim','Alimentación'],['medidas','Medidas antropométricas']].map(([k,n])=>`<button class="chip${(p.modules||[]).includes(k)?' on':''}" data-act="cpmod" data-v="${k}">${n}</button>`).join('')}</div></section>
@@ -2518,28 +2518,22 @@ function coachRender(keepInput){
 <!--M3--><section class="sec"><div class="sec-h"><b>Pasos</b><em>${avg!=null?avg.toLocaleString('es-CO'):'—'}</em></div><div class="note">Promedio de los últimos ${S7.length||0} días registrados. Meta: ${(p.step_goal||0).toLocaleString('es-CO')}.</div></section>
        <section class="sec"><div class="sec-h"><b>Sesiones recientes</b></div>${d.fb.length?d.fb.map(f=>`<div class="pfrow"><span><b>${GRN[f.grp]||f.grp} · ${fdate(f.log_date)}</b><small>${f.intensity?INT(f.intensity)+' ('+f.intensity+'/10)':'Sin intensidad'}${f.feel?' · '+(R_FEELR[f.feel]||f.feel):''}${f.feel==='molestia'?' ⚠':''}${f.duration_min?' · '+f.duration_min+' min':''}${f.skip_reason?'<br>No hizo todo: '+esc(f.skip_reason):''}${f.note?'<br>“'+esc(f.note)+'”':''}</small></span>${f.intensity?`<span class="rb" style="background:${RC[f.intensity-1]}">${f.intensity}</span>`:''}</div>`).join(''):'<div class="pfrow"><small>Aún no hay sesiones registradas.</small></div>'}</section>`;
       const P1=all.split('<!--M1-->'),P2=P1[1].split('<!--M2-->'),P3=P2[1].split('<!--M3-->');
-      body=CP.tab==='evol'?P2[0]+(()=>{try{return cpWith(()=>fzSeries());}catch(e){return '';}})()+P3[1]:P1[0]+P3[0];
-    }else if(CP.tab==='alim'||CP.tab==='arch'){body='<div class="note">Próximamente. Esta sección llega en una próxima versión.</div>';
-    }else if(CP.tab==='plan'){body=cpPlanBody();
-    }else if(CP.tab==='rutina'){body=rtClientTab();
+      body=CP.tab==='evol'?cpChkSec()+P2[0]+P3[0]+(()=>{try{return cpWith(()=>fzSeries());}catch(e){return '';}})()+P3[1]:cpAjustes(P1[0]);
+    }else if(CP.tab==='alim'){body=cpAlimTab();
+    }else if(CP.tab==='plan'){body=cpEntSeg()+cpPlanBody();
+    }else if(CP.tab==='rutina'){body=cpEntSeg()+rtClientTab();
     }else if(CP.tab==='chat'){
       const msgs=mapChat(d.chat,ME.id);
       body=`<div style="padding:4px 0 8px">${msgs.length?msgs.map(m=>msgHTML(m,m.from==='client')).join(''):'<div class="note">Aún no hay mensajes. Escríbele para empezar.</div>'}</div>
         <div class="chatin"><input id="cpIn" placeholder="Escribe al cliente…" value="${esc(keep)}"><button data-act="cpsend">Enviar</button></div>`;
-    }else{
-      const c=d.call?bogota(d.call.starts_at):null;
-      body=`<div class="callc"><small>Llamada 1:1</small><b>${c?fmtCall(c):'Sin llamada agendada'}</b>
-        <label class="pfl">Fecha</label><input class="fld" type="date" id="cpD" value="${c?c.date:addD(today(),10)}">
-        <label class="pfl">Hora (Bogotá)</label><input class="fld" type="time" id="cpT" value="${c?c.time:'19:00'}">
-        <button class="btn solid" data-act="cpcall" style="width:100%;margin-top:10px;padding:12px">${c?'Reprogramar y avisar':'Agendar y avisar'}</button></div>
-        <div class="note">El cliente ve la llamada en su Inicio y su Perfil y recibe un mensaje en el chat.</div>`;
+    }else{body=cpHoy(d);
     }
   }
   const pp=d?d.profile:{},ini=(pp.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
   el.innerHTML=cpShell(`<div class="cpcrumb"><button class="lblbtn" data-act="cpback">Clientes</button> / <b>${nm}</b></div>
     <div class="cphead"><span class="cpav">${esc(ini)}</span><div><h2 class="h2" style="margin:0">${nm}</h2>${(CP.info&&CP.info[CP.cid]&&CP.info[CP.cid].email)?`<small class="cpem" style="display:block">${esc(CP.info[CP.cid].email)}</small>`:''}<small>${d?(PNAME[pp.plan]||'')+' · '+(GN[pp.goal]||pp.goal||'Sin objetivo')+' · '+fidSpan(fidMonths(fidSince(pp)))+' con ERRE':''}</small></div></div>
-    ${pp&&pp.status==='pending'?`<section class="sec" style="border:2px solid #F28C28;margin:10px 0"><div class="sec-h"><b>Cuenta pendiente</b></div><div class="note" style="margin-bottom:8px">Se registró solo. Elige su plan (Resumen → Plan) y actívala para que entre a la app.</div><button class="btn solid" data-act="cpactivate" style="width:100%">Activar cuenta</button></section>`:''}
-    ${cpW()&&!CP.wide?`<div class="cpcx"><nav class="cpsb">${SB.map(([k,n,ds])=>`<button class="cpsi${CP.tab===k?' on':''}" data-act="cptab" data-v="${k}"><b>${n}</b><small>${ds}</small></button>`).join('')}</nav><div class="cpcc">${CP.err?`<div class="note">${CP.err}</div>`:''}${body}</div></div>`:`<div class="cptabs">${tabs.map(t=>`<button class="cptab${CP.tab===t?' on':''}" data-act="cptab" data-v="${t}">${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}${body}`}`);cpWideCls(el);
+    ${pp&&pp.status==='pending'?`<section class="sec" style="border:2px solid #F28C28;margin:10px 0"><div class="sec-h"><b>Cuenta pendiente</b></div><div class="note" style="margin-bottom:8px">Se registró solo. Elige su plan (Ajustes → Cuenta y acceso) y actívala para que entre a la app.</div><button class="btn solid" data-act="cpactivate" style="width:100%">Activar cuenta</button></section>`:''}
+    <div class="cptabs cpnavx">${tabs.map(t=>`<button class="cptab${(CP.tab===t||(t==='plan'&&CP.tab==='rutina'))?' on':''}" data-act="cptab" data-v="${t}"><i>${SB.find(x=>x[0]===t)[1]}</i>${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}${body}`);cpWideCls(el);
 }
 /* tareas asignadas por el coach (cliente + coach) */
 const cxList=()=>((S.ctasks&&S.ctasks.tasks)||[]);
@@ -3630,12 +3624,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1416';
+const APP_VER='21nov-1424';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1416'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1424'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5542,6 +5536,93 @@ AL_O.d.push(['Tostadas con atún',null,{p:'Atún',c:'Pan integral',f:'Aguacate (
 AL_O.m.push(['Pollo desmechado y fruta',null,{p:'Pechuga de pollo',fr:'Manzana'}]);
 AL_O.m.push(['Atún con aguacate',null,{p:'Atún',f:'Aguacate (½)',fr:'Naranja'}]);
 
+
+/* ===== FICHA DEL CLIENTE reorganizada (21 nov): Hoy · Entreno · Nutrición · Progreso · Chat · Ajustes ===== */
+(function(){const s=document.createElement('style');s.textContent=`
+.cpnavx{display:flex;gap:6px;margin:10px 0 12px;overflow-x:auto;padding-bottom:2px;position:sticky;top:0;z-index:5;background:var(--bg,#EFEDE8)}
+.cpnavx .cptab{flex:1 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 14px;border-radius:12px;border:1px solid #DCD6CC;background:#FBFAF8;font:600 14px Archivo,sans-serif;color:#1C1B19;white-space:nowrap;cursor:pointer}
+.cpnavx .cptab i{font-style:normal;font-size:16px}
+.cpnavx .cptab.on{background:#1C1B19;color:#fff;border-color:#1C1B19}
+.cpseg{display:flex;gap:6px;margin:0 0 12px}.cpseg button{flex:1;padding:10px;border-radius:10px;border:1px solid #DCD6CC;background:#FBFAF8;font:600 14px Archivo,sans-serif;cursor:pointer}.cpseg button.on{background:#C0392B;color:#fff;border-color:#C0392B}
+.cph-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}.cph-chips span{background:#FBFAF8;border:1px solid #DCD6CC;border-radius:99px;padding:6px 12px;font-size:13px}.cph-chips span.red{background:#FBEAE7;border-color:#E9B9B1;color:#8E2A1F;font-weight:600}
+.cpal{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;margin-bottom:8px;border:1px solid #DCD6CC;background:#FBFAF8}
+.cpal b{flex:1;font-weight:600;font-size:14px;line-height:1.3}.cpal small{display:block;font-weight:400;color:#5A554E;margin-top:2px}
+.cpal i{width:12px;height:12px;border-radius:50%;flex:none}.cpal.r{border-color:#E9B9B1;background:#FBEAE7}.cpal.r i{background:#C0392B}.cpal.o{border-color:#EBD2A4;background:#FBF3E3}.cpal.o i{background:#E8A317}.cpal.g i{background:#2E9E5B}
+.cpal button{flex:none;padding:8px 14px;border-radius:10px;border:0;background:#1C1B19;color:#fff;font:600 13px Archivo,sans-serif;cursor:pointer}
+.cpk4{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
+.cpk{background:#FBFAF8;border:1px solid #DCD6CC;border-radius:14px;padding:12px}.cpk small{display:block;color:#5A554E;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.cpk b{display:block;font:700 22px Oswald,sans-serif;margin:4px 0 2px;color:#1C1B19}.cpk em{font-style:normal;font-size:12px;color:#5A554E}
+.cpqa{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0}
+.cpqa button{display:flex;align-items:center;gap:10px;padding:14px;border-radius:14px;border:1px solid #DCD6CC;background:#FBFAF8;font:600 14px Archivo,sans-serif;text-align:left;cursor:pointer}.cpqa button i{font-style:normal;font-size:22px}
+.cpacc{background:#FBFAF8;border:1px solid #DCD6CC;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.cpacc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px}.cpacc>summary::-webkit-details-marker{display:none}
+.cpacc>summary i{font-style:normal;font-size:22px}.cpacc>summary b{display:block;font-size:15px}.cpacc>summary small{color:#5A554E;font-size:12px}.cpacc>summary:after{content:'▾';margin-left:auto;color:#5A554E}.cpacc[open]>summary:after{content:'▴'}
+.cpacc>.cpaccb{padding:0 10px 10px}.cpacc .sec{box-shadow:none;margin:8px 0 0}@media(max-width:600px){.cpnavx .cptab{padding:10px 11px;font-size:13px;gap:4px}}
+`;document.head.appendChild(s);})();
+document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.classList&&t.classList.contains('cpacc')){CP.dopen=CP.dopen||{};CP.dopen[t.dataset.k]=t.open;}},true);
+
+function cpEntSeg(){return `<div class="cpseg"><button class="${CP.tab==='plan'?'on':''}" data-act="cptab" data-v="plan">🗓 Calendario</button><button class="${CP.tab==='rutina'?'on':''}" data-act="cptab" data-v="rutina">📋 Programa</button></div>`;}
+
+function cpAlimTab(){try{return cpAlimSec();}catch(e){console.warn(e);return '<div class="note">No se pudo cargar la nutrición.</div>';}}
+
+function cpAjustes(h){
+  const parts=h.split('<section class="sec"');parts.shift();
+  const G=[['cuenta','🔐','Cuenta y acceso','Correo, plan, pago y fidelidad',['cuenta','plan','acceso y pago','fidelidad']],
+    ['perfil','👤','Perfil y salud','Objetivo, días, lesiones',['perfil']],
+    ['app','📱','Lo que ve en su app','Módulos, entreno libre, prioridad muscular, medidas',['módulos de la app','entreno libre','prioridad por grupo muscular','medidas antropométricas','agarres y posturas']],
+    ['tools','🧰','Herramientas y pruebas','Exportar datos, hitos y reinicio',['exportar datos','hitos celebrados','pruebas']]];
+  const bk={};G.forEach(g=>bk[g[0]]=[]);
+  parts.forEach(x=>{const m=x.match(/<div class="sec-h"><b>([^<]*)<\/b>/),t=(m?m[1]:'').trim().toLowerCase();let g=G.find(y=>y[4].includes(t));if(!g)g=G[3];bk[g[0]].push([g[4].indexOf(t),'<section class="sec"'+x]);});
+  CP.dopen=CP.dopen||{};
+  return G.map(g=>{const L=bk[g[0]].sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join('');if(!L)return '';
+    const op=CP.dopen[g[0]]!==undefined?CP.dopen[g[0]]:false;
+    return `<details class="cpacc" data-k="${g[0]}"${op?' open':''}><summary><i>${g[1]}</i><span><b>${g[2]}</b><small>${g[3]}</small></span></summary><div class="cpaccb">${L}</div></details>`;}).join('');
+}
+
+function cpHoy(d){
+  const p=d.profile,tdy=today(),dt=d.data||{},pf=dt.prefs||{},al=[];
+  try{accSec();}catch(e){}
+  if(!CP.chk)try{cpChkLoad();}catch(e){}
+  const dd=(a,b)=>Math.round((Date.parse(b)-Date.parse(a))/864e5);
+  const hasR=!!(CP.routine&&CP.routine.days&&CP.routine.days.length);
+  if(p.status==='pending')al.push({c:'r',t:'Cuenta pendiente de activar',b:'Activar',a:'data-act="cpactivate"'});
+  const row=(CP.acc&&CP.acc.cid===CP.cid)?CP.acc.row:null;
+  try{const st=accState(row);
+    if(st==='expired')al.push({c:'r',t:'Acceso vencido',s:'Revisa el pago',b:'Ver',a:'data-act="cptab" data-v="resumen"'});
+    else if(st==='grace')al.push({c:'o',t:'Pago vencido · en días de gracia',b:'Ver',a:'data-act="cptab" data-v="resumen"'});
+    else if(row&&row.paid_until){const n=Math.ceil((new Date(row.paid_until).getTime()-Date.now())/864e5);if(n>=0&&n<=5)al.push({c:'o',t:'El acceso vence en '+n+' día'+(n===1?'':'s'),b:'Ver',a:'data-act="cptab" data-v="resumen"'});}}catch(e){}
+  const fb=(d.fb||[]).slice().sort((a,b)=>a.log_date<b.log_date?1:-1);
+  const mol=fb.find(f=>f.feel==='molestia'&&dd(f.log_date,tdy)<=14);
+  if(mol)al.push({c:'r',t:'Molestia en '+(GRN[mol.grp]||mol.grp),s:fdate(mol.log_date)+(mol.note?' · “'+mol.note+'”':''),b:'Ver',a:'data-act="cptab" data-v="evol"'});
+  try{const ck=(CP.chk||[]).filter(x=>x.client_id===CP.cid)[0];if(ck){const fl=chkFlags(ck.data||{});if(fl.length&&dd(ck.period,tdy)<=21)al.push({c:'o',t:'Chequeo quincenal: '+fl.join(' · '),b:'Ver',a:'data-act="cptab" data-v="evol"'});}}catch(e){}
+  const ms=d.chat||[],lm=ms[ms.length-1];let rd=0;try{rd=+localStorage.getItem('cpread_'+CP.cid)||0;}catch(e){}
+  if(lm&&lm.sender_id===CP.cid&&(!lm.kind||lm.kind==='msg')&&Date.parse(lm.created_at)>rd)al.push({c:'o',t:'Mensaje sin responder',s:String(lm.body||'').slice(0,70),b:'Responder',a:'data-act="cptab" data-v="chat"'});
+  if(!hasR)al.push({c:'o',t:'Sin programa asignado',b:'Asignar',a:'data-act="cptab" data-v="rutina"'});
+  let wk=null,tot=null;
+  try{const prog=planOf(p);tot=PERIOD[prog].weeks;if(pf.start&&hasR){wk=Math.floor(dd(pf.start,tdy)/7)+1;
+    if(wk>tot)al.push({c:'o',t:'Mesociclo terminado · programa el siguiente',s:'Iba por la semana '+wk+' de '+tot,b:'Programa',a:'data-act="cptab" data-v="rutina"'});
+    else if(wk===tot)al.push({c:'g',t:'Semana '+wk+' de '+tot+' · descarga'});}}catch(e){}
+  if(hasR&&fb.length){const n=dd(fb[0].log_date,tdy);if(n>=6)al.push({c:'o',t:'Sin entrenos registrados hace '+n+' días',b:'Escribir',a:'data-act="cptab" data-v="chat"'});}
+  const W=(d.weights||[]).map(r=>({d:r.log_date,k:+r.kg})).sort((a,b)=>a.d<b.d?-1:1);
+  if(W.length&&dd(W[W.length-1].d,tdy)>=10)al.push({c:'g',t:'Sin pesarse hace '+dd(W[W.length-1].d,tdy)+' días'});
+  const rank={r:0,o:1,g:2};al.sort((a,b)=>rank[a.c]-rank[b.c]);
+  const alH=al.length?al.map(x=>`<div class="cpal ${x.c}"><i></i><b>${esc(x.t)}${x.s?`<small>${esc(x.s)}</small>`:''}</b>${x.b?`<button ${x.a}>${x.b}</button>`:''}</div>`).join(''):'<div class="cpal g"><i></i><b>Todo al día ✓</b></div>';
+  const last=W.length?W[W.length-1].k:null,w0=W.length>1?W[Math.max(0,W.length-8)].k:null,dl=(last!=null&&w0!=null&&W.length>1)?last-w0:null;
+  const S7=(d.steps||[]).slice(-7).map(r=>r.steps),avg=S7.length?Math.round(S7.reduce((a,b)=>a+b,0)/S7.length):null;
+  const w7=new Set(fb.filter(f=>dd(f.log_date,tdy)<7&&dd(f.log_date,tdy)>=0).map(f=>f.log_date)).size,plan=(p.train_days||[]).length;
+  const k=(l,v,e)=>`<div class="cpk"><small>${l}</small><b>${v}</b><em>${e||'&nbsp;'}</em></div>`;
+  const edad=p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null;
+  const inj=(p.injuries||'').trim(),hasInj=inj&&!/^ning/i.test(inj);
+  const chips=`<div class="cph-chips">${p.level?`<span>${esc(p.level)}</span>`:''}${(p.train_days||[]).length?`<span>${(p.train_days||[]).map(i=>DAYL[i]).join(' · ')}</span>`:''}${edad!=null?`<span>${edad} años</span>`:''}${p.height_cm?`<span>${p.height_cm} cm</span>`:''}${hasInj?`<span class="red">⚠ ${esc(inj)}</span>`:''}</div>`;
+  const c=d.call?bogota(d.call.starts_at):null;
+  const call=`<section class="sec"><div class="sec-h"><b>Llamada 1:1</b><em>${c?fmtCall(c):'Sin agendar'}</em></div>
+    <div class="rtgrid g3" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><label>Fecha<input class="fld" type="date" id="cpD" value="${c?c.date:addD(tdy,10)}"></label><label>Hora (Bogotá)<input class="fld" type="time" id="cpT" value="${c?c.time:'19:00'}"></label></div>
+    <button class="btn solid" data-act="cpcall" style="width:100%;margin-top:10px;padding:12px">${c?'Reprogramar y avisar':'Agendar y avisar'}</button></section>`;
+  const qa=[['💬','Escribir','data-act="cptab" data-v="chat"'],['🗓','Asignar tarea','data-act="cptab" data-v="plan"'],['📋','Editar programa','data-act="cptab" data-v="rutina"'],['🍽','Plan de comidas','data-act="cptab" data-v="alim"'],['📄','Rutina en PDF',`data-act="cpmact" data-k="pdf" data-id="${CP.cid}"`],['🤖','Exportar para IA',`data-act="exdata" data-id="${CP.cid}"`]];
+  return `${chips}<div class="sec-h" style="margin:4px 2px 8px"><b>Atención</b></div>${alH}
+   <div class="cpk4">${k('Peso',last!=null?last.toFixed(1)+' kg':'—',dl!=null?(dl>0?'+':dl<0?'−':'')+Math.abs(dl).toFixed(1)+' kg':'sin registros')}${k('Entrenos 7 días',w7+(plan?' / '+plan:''),plan?'del plan semanal':'')}${k('Pasos prom.',avg!=null?(avg/1000).toFixed(1)+'k':'—',p.step_goal?'meta '+(p.step_goal/1000).toFixed(1)+'k':'')}${k('Mesociclo',wk!=null&&wk>=1?'S'+Math.min(wk,tot)+' / '+tot:'—',wk!=null&&wk>tot?'terminado':(wk===tot?'descarga':''))}</div>
+   <div class="cpqa">${qa.map(x=>`<button ${x[2]}><i>${x[0]}</i>${x[1]}</button>`).join('')}</div>${call}`;
+}
+
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
 const E_EXTRA={
@@ -6047,6 +6128,29 @@ document.addEventListener('drop',e=>{
 document.addEventListener('dragend',()=>{RT.dr=null;RT.dl=null;RT.dt=null;rtDropClear();},true);
 
 async function rtLoadCir(){RT.cir=null;try{const r=await DB.circuits();RT.cir=(r||[]).map(x=>({id:x.id,name:x.name,cfg:x.cfg}));}catch(e){console.warn('circuits',e);RT.cir=[];}rtShow();}
+
+/* ===== Ejercicios SIN VIDEO: eliminados de la app (21 nov) ===== */
+const E_SIN={};
+(function(){
+  Object.keys(E).forEach(k=>{const e=E[k];if(e&&e.n&&!e.yt&&!/\(ANTIGUO\)/i.test(e.n)&&!/^x_/.test(k)){E_SIN[k]=e;delete E[k];}});
+  const alt=k=>{const o=E_SIN[k];if(!o)return null;
+    if(o.pat==='Respiración'||/^Movilidad/.test(o.pat||'')||o.pat==='Activación escapular'||o.pat==='Trapecio')return null;
+    const c=Object.keys(E).filter(x=>E[x].yt&&!/\(ANTIGUO\)/i.test(E[x].n)&&E[x].pat===o.pat);
+    const r=c.find(x=>E[x].eq===o.eq)||c[0];return r||null;};
+  window.exClean=function(days){
+    if(!Array.isArray(days))return days;
+    days.forEach(d=>(d.blocks||[]).forEach(b=>{if(!Array.isArray(b.items))return;
+      b.items=b.items.map(it=>{if(!it||!it.ex||E[it.ex]||!E_SIN[it.ex])return it;const a=alt(it.ex);if(!a)return null;it.ex=a;return it;}).filter(Boolean);}));
+    return days;};
+  exClean(DAYS);
+  RT_SEED.forEach(s=>exClean(s.days));
+  const r0=DB.routine,t0=DB.templates;
+  DB.routine=async function(){const r=await r0.apply(DB,arguments);if(r&&r.days)exClean(r.days);return r;};
+  DB.templates=async function(){const r=await t0.apply(DB,arguments);(r||[]).forEach(x=>exClean(x.days));return r;};
+})();
+/* sin barra "Con video / Sin video": solo hay ejercicios con video */
+exMatch=(function(f){return function(k,P,sg){const e=E[k];if(!e||(!e.yt&&!/^x_/.test(k)))return false;return f(k,Object.assign({},P,{vid:'todos'}),sg);};})(exMatch);
+(function(){const s=document.createElement('style');s.textContent='.vidbar{display:none!important}';document.head.appendChild(s);})();
 
 boot();
 </script>
