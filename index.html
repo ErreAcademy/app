@@ -2387,8 +2387,8 @@ const cpW=()=>window.innerWidth>=1000;
 const cpWideNow=()=>!!CP.wide;
 function cpWideCls(el){el.classList.toggle('cpwide',cpW());el.style.maxWidth=(cpWideNow()&&CP.view==='client'&&cpW())?'none':'';}
 function cpShell(inner){
-  const nav=[['inicio','Inicio'],['clientes','Clientes'],['chat','Chat'],['lecc','Lecciones'],['editor','Programas y workouts'],['pagos','Suscripciones']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
-  return `<div class="cpshell${cpWideNow()&&CP.view==='client'&&cpW()?' cpfull':''}"><aside class="cpside">${authHead()}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small>${pushCoachBtn()}<button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
+  const nav=[['inicio','Inicio'],['clientes','Clientes'],['chat','Chat'],['lecc','Lecciones'],['editor','Programas y workouts'],['qp','Plan de comidas externo'],['pagos','Suscripciones']].map(([k,n])=>k==='qp'?`<button class="cpn" data-act="qpopen">${n}</button>`:`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
+  return `<div class="cpshell${cpWideNow()&&CP.view==='client'&&cpW()?' cpfull':''}"><aside class="cpside">${authHead().replace('</small>','</small><span class="cpbadge">Panel Coach</span>')}<nav class="cpnav">${nav}</nav><div class="cpfoot"><small>${esc(PROFILE.full_name||'Coach')}</small>${pushCoachBtn()}<button class="lblbtn" data-act="acct">Mi cuenta</button><button class="lblbtn" data-act="newuser">Cerrar sesión</button></div></aside><main class="cpmain">${draftBanner()}${CP.err&&CP.view==='list'?`<div class="note">${CP.err}</div>`:''}${inner}</main></div>`;
 }
 const dAgo=s=>{if(!s)return '—';const n=Math.floor((Date.now()-new Date(s+'T12:00:00'))/864e5);return n<=0?'Hoy':n===1?'Ayer':'hace '+n+' d';};
 const CPDIS_K='erre_cp_dis';
@@ -3625,12 +3625,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1442';
+const APP_VER='21nov-1448';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1442'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1448'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5669,6 +5669,8 @@ function qpRender(){
   const q=QP,T=q.tg||qpWith(q,()=>alTargets(true)),ch=(on,act,v,t)=>`<button class="chip${on?' on':''}" data-act="${act}" data-v="${v}">${t}</button>`;
   const f=(id,l,v,ty)=>`<label class="pfl" style="margin:0">${l}<input class="fld" id="${id}" value="${esc(String(v))}" inputmode="${ty||'numeric'}" style="margin-top:3px"></label>`;
   o.innerHTML=`<div class="cpdc"><div class="cpdhd"><div><b>Plan de comidas sin cuenta</b><small>Para alguien que no está en la app</small></div><button class="cpdx" data-act="qpclose" aria-label="Cerrar">✕</button></div>
+   <label class="pfl" style="margin:0 0 10px">📋 Pega aquí los datos del cliente y se llena solo<textarea class="fld" id="qp_paste" rows="3" placeholder="Pega el texto con sexo, edad, estatura, peso, objetivo…" style="margin-top:3px;resize:vertical"></textarea></label>
+   <button class="btn" data-act="qpfill" style="width:100%;margin:0 0 12px">✨ Rellenar con lo pegado</button>
    <label class="pfl" style="margin:0 0 8px">Nombre<input class="fld" id="qp_name" value="${esc(q.name)}" placeholder="Ej. Yojan Taborda" style="margin-top:3px"></label>
    <div class="chips" style="margin-bottom:8px">${ch(q.sex==='Hombre','qpsex','Hombre','Hombre')}${ch(q.sex==='Mujer','qpsex','Mujer','Mujer')}</div>
    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">${f('qp_age','Edad',q.age)}${f('qp_h','Estatura (cm)',q.h)}${f('qp_w','Peso (kg)',q.w,'decimal')}</div>
@@ -5690,6 +5692,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(a==='qpopen'){QP=qpDef();qpRender();return;}
   if(!QP&&a!=='qpclose')return;
   if(a==='qpclose'){qpClose();return;}
+  if(a==='qpfill'){const r=qpParse((document.getElementById('qp_paste')||{}).value||'');if(!r.n){toast('No encontré datos en el texto');return;}Object.assign(QP,r.o);QP.tg=null;qpRender();toast('Detecté: '+r.found.join(' · '));return;}
   if(a==='qpsex'){QP.sex=v;if(!QP.tg){}qpRender();return;}
   if(a==='qpdays'){QP.days=+v;qpRender();return;}
   if(a==='qpgoal'){QP.goal=v;QP.tg=null;qpRender();return;}
@@ -5699,7 +5702,30 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(a==='qppdf'){if(!QP.name.trim()){toast('Escribe el nombre');return;}try{alpPrint(qpWith(QP,()=>alpPdfHTML()));}catch(x){console.warn(x);toast('No se pudo generar el PDF');}return;}
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&QP)qpClose();});
-(function(){const f=cpClientsPage;cpClientsPage=function(){const h=f.apply(this,arguments);return h.replace(/(<em class="cpcount">[^<]*<\/em>)/,'$1<button class="btn" data-act="qpopen" style="margin-left:auto;width:auto;flex:none;padding:9px 14px;font-size:13px">🍽 Plan de comidas sin cuenta</button>');};})();
+
+
+function qpParse(t){
+  const o={},found=[];t=String(t||'');
+  const g=(re)=>{const m=t.match(re);return m?m[1]:null;};
+  const first=(t.split(/\n/).map(x=>x.trim()).filter(Boolean)[0]||'').replace(/^["'“”\s*#-]+/,'');
+  let nm=g(/nombre\s*[:：]\s*\**\s*([^\n·|]+)/i);
+  if(!nm){const m=first.match(/^([A-ZÁÉÍÓÚÑ][\wáéíóúñ]+(?: [A-ZÁÉÍÓÚÑ][\wáéíóúñ]+){0,3})(?=\s+(?:consolidad|datos|ficha)|$)/);if(m)nm=m[1];}
+  if(nm){o.name=nm.trim();found.push(o.name);}
+  const sx=g(/sexo\s*[:：]?\s*\**\s*(masculino|femenino|hombre|mujer|male|female)/i);
+  if(sx){o.sex=/^(m(asc|ale)|hombre)/i.test(sx)?'Hombre':'Mujer';found.push(o.sex);}
+  const ed=g(/edad\s*[:：]?\s*\**\s*(\d{1,2})/i);if(ed){o.age=+ed;found.push(ed+' años');}
+  const ht=g(/estatura\s*[:：]?\s*\**\s*(\d{3}|\d[.,]\d{1,2})/i);if(ht){let h=parseFloat(ht.replace(',','.'));if(h<3)h*=100;o.h=Math.round(h);found.push(o.h+' cm');}
+  const wt=g(/\bpeso\s*[:：]?\s*\**\s*(\d{2,3}(?:[.,]\d)?)\s*kg/i);if(wt){o.w=parseFloat(wt.replace(',','.'));found.push(o.w+' kg');}
+  const dy=g(/(\d)\s*d[ií]as?\s*(?:\/|por|a la)?\s*(?:sem|semana)/i);if(dy&&+dy>=1&&+dy<=7){o.days=+dy;found.push(dy+' días');}
+  const ob=(t.match(/objetivo[^\n]*(?:\n[^\n]*){0,2}/i)||[''])[0].toLowerCase();
+  if(ob){let gl=null;if(/bajar|perder|p[eé]rdida de peso|definici|d[eé]ficit/.test(ob))gl='bajar';else if(/aument|ganar|volumen|super[aá]vit|lean gain|bulk/.test(ob))gl='aumentar';else if(/complete|recomposici|mantener|mantenimiento/.test(ob))gl='complete';if(gl){o.goal=gl;found.push({bajar:'Bajar peso',aumentar:'Aumentar',complete:'Complete'}[gl]);}}
+  const al=(t.match(/(?:alergias?|intolerancias?|restricciones?|alimentaci[oó]n)[^\n]*/gi)||[]).join(' ').toLowerCase();
+  const pre={};if(/lactosa|l[aá]cteo/.test(al))pre['Sin lácteos']=1;if(/huevo/.test(al))pre['Sin huevo']=1;if(/gluten|cel[ií]aco/.test(al))pre['Sin gluten']=1;
+  if(/vegano/.test(al)){pre['Sin carnes']=1;pre['Sin lácteos']=1;pre['Sin huevo']=1;}else if(/vegetarian/.test(al))pre['Sin carnes']=1;
+  if(Object.keys(pre).length){o.pre=pre;found.push(Object.keys(pre).join(', '));}
+  return {o,found,n:found.length};
+}
+(function(){const st=document.createElement('style');st.textContent='.cpbadge{display:inline-block;margin-top:4px;background:#C0392B;color:#fff;font:700 10px Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:99px}';document.head.appendChild(st);})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
