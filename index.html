@@ -3628,12 +3628,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1342';
+const APP_VER='21nov-1343';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1342'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1343'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5301,6 +5301,23 @@ document.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;if(t
 document.addEventListener('keydown',e=>{if(e.key==='Escape')elInfo(false);});
 const ab=alBoard;alBoard=function(){return ab.apply(this,arguments).replace('</span></button></div></div>\n','</span></button><button class="alelinfo" data-elinfo="1">¿Cómo tomarlos? Opciones y beneficios</button></div></div>\n');};
 })();
+
+/* ===== Emojis por alimento (reales) + insignia de letra cuando no existe emoji ===== */
+var AL_FE={'Huevos':'🥚','Pechuga de pollo':'🍗','Muslo de pollo':'🍗','Carne magra':'🥩','Cerdo magro':'🥩','Pescado':'🐟','Atún':'🐟','Yogurt griego':'🥛','Queso campesino / requesón':'🧀','Proteína en polvo':'🥤',
+ 'Arroz':'🍚','Avena':'🥣','Papa':'🥔','Arepa':'🫓','Pan integral':'🍞','Pasta':'🍝','Batata':'🍠','Fríjol / lenteja':'🫘','Granola':'🥣',
+ 'Aguacate (½)':'🥑','Aceite de oliva':'🫒','Mantequilla de maní':'🥜','Almendras / maní / nueces':'🥜','Semillas (chía, girasol)':'🌱',
+ 'Banano':'🍌','Manzana':'🍎','Fresas':'🍓','Fresas / arándanos':'🍓','Piña':'🍍','Mango':'🥭','Naranja':'🍊','Uvas / kiwi':'🍇',
+ 'Espinaca':'🥬','Lechuga':'🥬','Tomate':'🍅','Pepino':'🥒','Brócoli':'🥦','Zanahoria':'🥕','Pimentón':'🫑','Cebolla':'🧅','Champiñones':'🍄','Habichuela':'🫛','Ensalada':'🥗'};
+/* Sin emoji propio (queda insignia de letra de color): Yuca, Plátano, Quinua, Papaya, Calabacín */
+function alFeIcon(food,k){const e=AL_FE[food];if(e)return e;const c=(AL_GI[k]||[])[3]||'#5A554E';return `<b class="alfb" style="background:${c}">${esc(String(food||'?').trim().charAt(0).toUpperCase())}</b>`;}
+(function(){const st=document.createElement('style');st.textContent=`.alfb{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font:700 14px Oswald,Archivo,sans-serif;font-style:normal}.alsw button{display:inline-flex;align-items:center;gap:5px}.alsw button .alfb{width:18px;height:18px;font-size:11px;flex:0 0 18px}`;document.head.appendChild(st);})();
+(function(){const o=alOpt;alOpt=function(m,i){const r=o.apply(this,arguments);let e='';['p','c','v','fr','f'].forEach(k=>{const x=AL_FE[r.comp[k]];if(x&&e.indexOf(x)<0&&[...e].length<3)e+=x;});if(e)r.e=e;return r;};})();
+alDay=function(){const st=alSt();
+  return `<section class="ald">`+AL_M.map(([k,n,ic])=>{const ch=(st[k]||{}).eat;
+   return `<div class="alh"><b>${ic} ${n}</b>${ch!=null?'<em>✓ Ya elegiste</em>':k==='m'?'<small style="color:#5A554E">opcional</small>':''}</div><div class="alrail">${AL_O[k].map((o,i)=>{const O=alOpt(k,i);return `<button class="alc${ch===i?' on':''}" data-alm="open" data-m="${k}" data-i="${i}"><div class="e">${O.e}</div><b>${esc(O.n)}</b></button>`;}).join('')}</div>`;}).join('')+`</section>`;};
+(function(){const f=alModal;alModal=function(m,i,sw){f.apply(this,arguments);if(m==null)return;const o=document.getElementById('almodal');if(!o)return;const O=alOpt(m,i);
+  o.querySelectorAll('.alrow[data-k]').forEach(b=>{const k=b.dataset.k,ic=b.querySelector('i');if(ic)ic.innerHTML=alFeIcon(O.comp[k],k);});
+  o.querySelectorAll('.alsw button[data-v]').forEach(b=>{const k=b.dataset.k;b.innerHTML=alFeIcon(b.dataset.v,k).replace(/^(<b)/,'$1')+' '+b.innerHTML;});};})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
