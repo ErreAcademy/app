@@ -2089,6 +2089,7 @@ function realDB(){
     async checkinsAll(){const r=await sb.from('client_feedback').select('*').eq('kind','checkin').order('created_at',{ascending:false}).limit(120);return r.error?[]:(r.data||[]);},
     async measuresOf(cid){const r=await sb.from('client_measures').select('*').eq('client_id',cid).order('date',{ascending:true});if(r.error)throw r.error;return r.data||[];},
     async measureSave(row){const r=await sb.from('client_measures').insert(row);if(r.error)throw r.error;},
+    async measDoneMine(){const r=await sb.from('client_measures').select('task_id').eq('client_id',ME.id).not('task_id','is',null);if(r.error)throw r.error;return (r.data||[]).map(x=>x.task_id);},
     async measureDel(id){const r=await sb.from('client_measures').delete().eq('id',id);if(r.error)throw r.error;},
     async thumbs(ids){const r=await sb.functions.invoke('yt-thumbs',{body:{ids}});if(r.error)throw r.error;return r.data||{};},
     async accessAll(){const r=await sb.from('client_access').select('*');return r.error?[]:(r.data||[]);},
@@ -2641,7 +2642,8 @@ function cpTaskModal(){
    ${T('rest','Descanso','#8A8F98',`<div class="note">El cliente verá ese día como descanso y no tendrá entrenamiento.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Marcar descanso</button>`)}
    ${T('note','Nota para el cliente','#3B82C4',`<textarea class="fld" id="cptN" rows="3" placeholder="Ej. Hoy prioriza técnica, baja el peso un 10 %."></textarea><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Guardar nota</button>`)}
    ${T('cardio','Cardio','#E6477A',`<label class="pfl">Qué cardio</label><select class="fld" id="cptCm">${cpModOpts('camin_cam')}</select><label class="pfl">Intensidad</label><select class="fld" id="cptCt"><option value="">Según el plan</option><option value="Base">Base · 20-40 min</option><option value="Moderado">Moderado · 10-25 min</option></select><label class="pfl">Minutos (opcional)</label><input class="fld" id="cptCn" inputmode="numeric" placeholder="Ej. 20"><label class="pfl">Nota (opcional)</label><input class="fld" id="cptCx" placeholder="Ej. Después de pierna"><div class="note">Si ese día ya tiene entrenamiento con cardio, reemplaza el cardio del plan. Si es descanso, el cliente lo ve como cardio asignado.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Asignar cardio</button>`)}
-   ${T('form','Formulario','#C0392B',`<div class="note" style="margin-bottom:8px"><b>Chequeo quincenal</b><br>Cumplimiento, molestias, carga, alimentación, energía, sueño, estrés y progreso. 1 minuto, con colores. Le aparece en Inicio en la fecha elegida y la respuesta te llega aquí.</div><button class="btn solid" data-act="cptsave" style="width:100%;margin-top:8px">Asignar chequeo</button>`)}
+   ${T('form','Formulario','#C0392B',`<div class="note" style="margin-bottom:8px"><b>Chequeo quincenal</b><br>Cumplimiento, molestias, carga, alimentación, energía, sueño, estrés y progreso. 1 minuto, con colores. Le aparece en Inicio en la fecha elegida y la respuesta te llega aquí.</div><button class="btn solid" data-act="cptsave" data-f="chequeo" style="width:100%;margin-top:8px">Asignar chequeo</button>`)}
+   ${T('med','Medidas antropométricas','#2E7D6B',`<div class="note" style="margin-bottom:8px"><b>Medidas para llenar</b><br>El cliente se mide y las anota: peso, perímetros y pliegues (todo opcional). Te llega aquí y queda en su historial.</div><button class="btn solid" data-act="cptsave" data-f="medidas" style="width:100%;margin-top:8px">Asignar medidas</button>`)}
    <div class="cptt"><button class="cpth2" data-act="cptprog"><i class="cpdot" style="background:#777"></i><b>Asignar programa</b><span>›</span></button></div>
    ${CPT_SOON.map(n=>`<div class="cptt soon"><div class="cpth2"><i class="cpdot" style="background:#ccc"></i><b>${n}</b><span>Próximamente</span></div></div>`).join('')}</div>`;
 }
@@ -2684,7 +2686,7 @@ function cpPlanBody(){
         +L.filter(t=>t.type==='rest').map(t=>`<button class="cpp rest" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>☾</i><span>Descanso</span></button>`).join('')
         +L.filter(t=>t.type==='cardio'&&!inf.d).map(t=>`<button class="cpp card" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>🏃</i><span>Cardio${t.min?' · '+t.min+' min':''}</span></button>`).join('')
         +L.filter(t=>t.type==='note').map(t=>`<button class="cpp note" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>✎</i><span>${esc(t.text||'Nota')}</span></button>`).join('')
-        +L.filter(t=>t.type==='form').map(t=>{const dn=(CP.chk||[]).some(x=>x.client_id===CP.cid&&x.period==='f-'+t.id);return `<button class="cpp form" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>${dn?'✓':'▤'}</i><span>Chequeo${dn?' · respondido':''}</span></button>`;}).join('');
+        +L.filter(t=>t.type==='form').map(t=>{const md=t.form==='medidas',dn=md?((CP.med&&CP.med.rows)||[]).some(x=>x.task_id==='f-'+t.id):(CP.chk||[]).some(x=>x.client_id===CP.cid&&x.period==='f-'+t.id);return `<button class="cpp form" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>${dn?'✓':md?'📏':'▤'}</i><span>${md?'Medidas':'Chequeo'}${dn?' · listo':''}</span></button>`;}).join('');
       return `<div class="cpc${inM?'':' out'}${dt===tdy?' tdy':''}${big?' big':''}" data-act="cptnew" data-v="${dt}"><button class="cpcn" data-act="cptnew" data-v="${dt}">${big?fdate(dt)+' ':''}${+dt.slice(8)}</button>${pills}${cpDefs(dt,big||vw==='sem')}</div>`;
     };
     let main='';
@@ -2754,7 +2756,7 @@ const cpHas=dt=>{const i=cpDayInfo(dt);return !!i.d||cxList().some(t=>t.date===d
 function cpDayHTML(date){
   const d=CP.d;
   return cpWith(()=>withDate(date,()=>{
-    const inf=cpDayInfo(date),TL=cxList().filter(t=>t.date===date),tlh=`<div class="cpdhd"><div><b>${fmtL(date)}</b><small>${inf.d?'Entrenamiento y tareas':'Tareas del día'}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div><button class="btn solid" data-act="cptnew" data-v="${date}" style="width:100%;margin-bottom:10px">+ Tarea</button>${TL.map(t=>`<div class="cptask"><span><b>${t.type==='workout'?'Workout · '+esc(t.title||''):t.type==='rest'?'Descanso':t.type==='cardio'?'Cardio · '+esc(((typeof CMODS!=='undefined'&&CMODS[t.mod])||{n:''}).n)+(t.tier?' · '+t.tier:'')+(t.min?' · '+t.min+' min':''):t.type==='form'?'Formulario · Chequeo quincenal':'Nota'}</b>${t.type==='note'?'<small>'+esc(t.text||'')+'</small>':''}</span><button class="cpdx" data-act="cptdel" data-id="${t.id}" aria-label="Quitar">✕</button>${t.series?`<button class="lblbtn" data-act="cptdel" data-all="1" data-id="${t.id}" style="font-size:11px">Quitar serie</button>`:''}</div>`).join('')}`;
+    const inf=cpDayInfo(date),TL=cxList().filter(t=>t.date===date),tlh=`<div class="cpdhd"><div><b>${fmtL(date)}</b><small>${inf.d?'Entrenamiento y tareas':'Tareas del día'}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div><button class="btn solid" data-act="cptnew" data-v="${date}" style="width:100%;margin-bottom:10px">+ Tarea</button>${TL.map(t=>`<div class="cptask"><span><b>${t.type==='workout'?'Workout · '+esc(t.title||''):t.type==='rest'?'Descanso':t.type==='cardio'?'Cardio · '+esc(((typeof CMODS!=='undefined'&&CMODS[t.mod])||{n:''}).n)+(t.tier?' · '+t.tier:'')+(t.min?' · '+t.min+' min':''):t.type==='form'?(t.form==='medidas'?'Formulario · Medidas antropométricas':'Formulario · Chequeo quincenal'):'Nota'}</b>${t.type==='note'?'<small>'+esc(t.text||'')+'</small>':''}</span><button class="cpdx" data-act="cptdel" data-id="${t.id}" aria-label="Quitar">✕</button>${t.series?`<button class="lblbtn" data-act="cptdel" data-all="1" data-id="${t.id}" style="font-size:11px">Quitar serie</button>`:''}</div>`).join('')}`;
     if(!inf.d)return tlh+(TL.length?'':'<p class="lead">Ese día no tiene entrenamiento programado ni tareas.</p>');
     const dy=inf.d,st=cpSt(inf,date),pct=inf.total?Math.round(inf.done/inf.total*100):0,ec=(d.data&&d.data.excom)||d.excom||{};
     let sets=0,vol=0,fe=null;
@@ -2842,7 +2844,7 @@ document.addEventListener('click',async e=>{
       task.day=JSON.parse(JSON.stringify(day));task.title=day.name||day.label||'Workout';}
     else if(type==='note'){const tx=((document.getElementById('cptN')||{}).value||'').trim();if(!tx){toast('Escribe la nota');return;}task.text=tx;}
     else if(type==='cardio'){task.mod=(document.getElementById('cptCm')||{}).value||'camin_cam';task.tier=(document.getElementById('cptCt')||{}).value||'';task.min=+((document.getElementById('cptCn')||{}).value)||0;task.text=(((document.getElementById('cptCx')||{}).value)||'').trim();task.title='Cardio';}
-    else if(type==='form'){task.form='chequeo';task.title='Chequeo quincenal';}
+    else if(type==='form'||type==='med'){task.type='form';task.form=t.dataset.f==='medidas'||type==='med'?'medidas':'chequeo';task.title=task.form==='medidas'?'Medidas antropométricas':'Chequeo quincenal';}
     else if(type!=='rest')return;
     cpTmSync();
     let dates=[date];if(m.rep){const until=(document.getElementById('cptU')||{}).value||m.until||addD(date,28),rd=(m.rd&&m.rd.length)?m.rd:[wdOf(date)];dates=[];for(let x=date,n=0;x<=until&&n<400;x=addD(x,1),n++)if(x===date||rd.includes(wdOf(x)))dates.push(x);if(dates.length>90){toast('Máximo 90 repeticiones. Acorta la fecha final.');return;}}
@@ -3625,12 +3627,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1251';
+const APP_VER='21nov-1252';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1251'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1252'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4618,7 +4620,7 @@ function chkDue(){try{
   if(!ME||!S.user||(PROFILE&&PROFILE.role==='coach')||ACC.state==='expired')return null;
   if(CHK.done===null){chkLoad();return null;}
   if(Date.now()-(CHK.t||0)>45000)chkLoad();
-  const tdy0=today(),tk=cxList().filter(t=>t.type==='form'&&t.date<=tdy0&&t.date>=addD(tdy0,-6)&&!CHK.done.has('f-'+t.id)).sort((a,b)=>a.date<b.date?1:-1)[0];
+  const tdy0=today(),tk=cxList().filter(t=>t.type==='form'&&t.form!=='medidas'&&t.date<=tdy0&&t.date>=addD(tdy0,-6)&&!CHK.done.has('f-'+t.id)).sort((a,b)=>a.date<b.date?1:-1)[0];
   if(tk)return {sat:'f-'+tk.id,raw:0,nps:false,manual:true};
   if(!S.start)return null;
   const t=today(),sat=addD(t,-((wdOf(t)-5+7)%7));if(diffD(t,sat)>4)return null;
@@ -4911,6 +4913,48 @@ async function pdfMake(o){
     const name=String(o.title||'Rutina').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'')||'Rutina';
     doc.save('ERRE_'+name+'.pdf');toast('PDF listo ✓ Revisa tus descargas');
   }catch(e){console.warn(e);toast('No se pudo generar el PDF. Intenta de nuevo.');}}
+
+
+/* --- Medidas como tarea del cliente --- */
+var MC={done:null,loading:false,s:null};
+function mcLoad(){if(MC.loading)return;MC.loading=true;DB.measDoneMine().then(r=>{MC.done=new Set(r);}).catch(()=>{if(!MC.done)MC.done=new Set();}).then(()=>{MC.loading=false;try{if(!MC.s&&!document.getElementById('chkov'))render();}catch(e){}});}
+function mcDue(){try{if(!ME||!S.user||(PROFILE&&PROFILE.role==='coach')||ACC.state==='expired')return null;
+  if(MC.done===null){mcLoad();return null;}
+  const t0=today();return cxList().filter(t=>t.type==='form'&&t.form==='medidas'&&t.date<=t0&&t.date>=addD(t0,-13)&&!MC.done.has('f-'+t.id)).sort((a,b)=>a.date<b.date?1:-1)[0]||null;}catch(e){return null;}}
+function mcRender(){const s=MC.s;let ov=document.getElementById('chkov');
+  if(!s){if(ov)ov.remove();document.body.style.overflow='';return;}
+  if(!ov){ov=document.createElement('div');ov.id='chkov';document.body.appendChild(ov);document.body.style.overflow='hidden';}
+  if(s.fin){ov.innerHTML=`<h2 class="h2" style="margin-top:40px">¡Listo, gracias!</h2><p class="wzs">Guardamos tus medidas. Tu coach las ve y compara con las anteriores.</p><button class="chkok" data-mc="close">Volver al inicio</button>`;return;}
+  const n=MED_F.length,g=MED_F[s.i],last=s.i===n-1;
+  const hint={'Básicas':'Peso en ayunas si puedes. Todo es opcional.','Perímetros':'Con cinta métrica, sin apretar. Puedes dejar en blanco lo que no mediste.','Pliegues':'Solo si tienes plicómetro o te los midió un profesional.'}[g[0]]||'Todo es opcional.';
+  ov.innerHTML=`<div style="display:flex;justify-content:space-between"><button class="chkx" data-mc="prev">${s.i?'‹ Atrás':'‹ Ahora no'}</button><small style="align-self:center;color:#5A554E">Medidas</small></div>
+   <div class="wzp"><div class="wzb"><i style="width:${Math.round((s.i+1)/n*100)}%"></i></div><small>Paso ${s.i+1} de ${n}</small></div>
+   <h2 class="h2 wzq">${g[0]}${g[0]==='Perímetros'?' (cm)':g[0]==='Pliegues'?' (mm)':''}</h2><p class="wzs">${hint}</p>
+   <div class="chkr">${g[1].map(([k,nm,u])=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0"><label style="font-weight:600">${nm}${u?' <small style="color:#5A554E">'+u+'</small>':''}</label><input class="fld" data-mc-in="${k}" inputmode="decimal" placeholder="—" value="${s.v[k]!=null?s.v[k]:''}" style="width:110px;text-align:right"></div>`).join('')}</div>
+   ${last?`<textarea data-mc-in="__note" placeholder="Nota (opcional)" style="width:100%;margin-bottom:10px">${esc(s.note||'')}</textarea>`:''}
+   <button class="chkok" data-mc="${last?'send':'next'}">${last?(s.busy?'Enviando…':'Guardar mis medidas'):'Siguiente'}</button>`;}
+async function mcSend(){const s=MC.s;if(!s||s.busy)return;const data={};Object.keys(s.v).forEach(k=>{const v=medN(s.v[k]);if(v!=null)data[k]=v;});
+  if(!Object.keys(data).length){toast('Escribe al menos una medida');return;}
+  s.busy=true;mcRender();
+  try{await DB.measureSave({client_id:ME.id,date:today(),data,by_name:'Cliente',note:(s.note||'').trim()||null,task_id:s.task,created_by:ME.id});MC.done=MC.done||new Set();MC.done.add(s.task);
+    try{if(PROFILE&&PROFILE.coach_id)pushTo(PROFILE.coach_id,(PROFILE.full_name||'Un cliente')+' registró sus medidas','Ya están en su ficha','med-'+ME.id);}catch(e){}
+    s.fin=true;s.busy=false;mcRender();}
+  catch(e){console.warn(e);s.busy=false;mcRender();toast('No se pudo guardar. Revisa tu internet e inténtalo de nuevo.');}}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-mc]');if(!t)return;e.stopPropagation();const a=t.dataset.mc,s=MC.s;
+  if(a==='open'){const d=mcDue();if(!d)return;MC.s={task:'f-'+d.id,i:0,v:{},note:''};mcRender();return;}
+  if(!s)return;
+  if(a==='close'){MC.s=null;mcRender();try{render();}catch(x){}return;}
+  if(a==='prev'){if(s.i>0){s.i--;mcRender();}else{MC.s=null;mcRender();}return;}
+  if(a==='next'){s.i++;mcRender();document.getElementById('chkov').scrollTop=0;return;}
+  if(a==='send'){mcSend();}
+},true);
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.mcIn==null||!MC.s)return;if(t.dataset.mcIn==='__note')MC.s.note=t.value;else MC.s.v[t.dataset.mcIn]=t.value;});
+(function(){const hv=homeView;homeView=function(){const h=hv.apply(this,arguments);
+  try{if(S.sel!==today())return h;const d=mcDue();if(!d)return h;
+    const card=`<button class="chkcard" data-mc="open" style="margin-top:8px"><span><small>Medidas</small><b>Anota tus medidas</b><em>Peso, perímetros y pliegues · todo opcional · 1 minuto</em></span><i>›</i></button>`;
+    if(h.includes('>Importante<')){const m='<h2 class="h2">Tareas de',i=h.indexOf(m);return i<0?h+card:h.slice(0,i)+card+h.slice(i);}
+    const m='<h2 class="h2">Tareas de',i=h.indexOf(m),blk='<h2 class="h2">Importante</h2>'+card;return i<0?blk+h:h.slice(0,i)+blk+h.slice(i);}catch(e){return h;}};})();
+(function(){const cl=cpMedSec;})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
