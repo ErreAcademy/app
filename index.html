@@ -3625,12 +3625,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1441';
+const APP_VER='21nov-1442';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1441'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1442'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5644,10 +5644,62 @@ function cpHoy(d){
 `;document.head.appendChild(st);})();
 document.addEventListener('click',e=>{const t=e.target;if(!t||!t.id)return;
   if(t.id==='cptm'){CP.tm=null;cpTaskModal();e.stopPropagation();}
-  else if(t.id==='cpdv'){cpDayClose();e.stopPropagation();}},true);
+  else if(t.id==='cpdv'){cpDayClose();e.stopPropagation();}
+  else if(t.id==='qpv'){qpClose();e.stopPropagation();}},true);
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
   if(document.getElementById('cptm')){CP.tm=null;cpTaskModal();}
   else if(document.getElementById('cpdv'))cpDayClose();});
+
+
+/* ===== Plan de comidas para alguien SIN cuenta (cliente externo) ===== */
+var QP=null;
+const qpDef=()=>({name:'',sex:'Hombre',age:30,h:175,w:75,days:3,goal:'complete',pre:{},nomac:false,tg:null});
+function qpWith(o,fn){
+  const sv={user:S.user,goal:S.goal,weights:S.weights,alimplan:S.alimplan,cd:CP.d};
+  S.user={sex:o.sex,sched:Array.from({length:o.days},(_,i)=>i),data:{weight:String(o.w),height:String(o.h),yy:new Date().getFullYear()-o.age}};
+  S.goal=o.goal;S.weights={};
+  const ex=[];Object.keys(o.pre).forEach(n=>{if(o.pre[n])ALP_PRE[n].forEach(x=>{if(!ex.includes(x))ex.push(x);});});
+  S.alimplan={};if(o.tg)S.alimplan.tg=o.tg;if(o.nomac)S.alimplan.nomac=1;if(ex.length)S.alimplan.ex=ex;
+  CP.d={profile:{full_name:o.name}};
+  try{return fn();}finally{S.user=sv.user;S.goal=sv.goal;S.weights=sv.weights;S.alimplan=sv.alimplan;CP.d=sv.cd;}
+}
+function qpClose(){QP=null;const o=document.getElementById('qpv');if(o)o.remove();document.body.style.overflow='';}
+function qpRender(){
+  if(!QP)return;let o=document.getElementById('qpv');if(!o){o=document.createElement('div');o.id='qpv';o.className='cpdv';document.body.appendChild(o);document.body.style.overflow='hidden';}
+  const q=QP,T=q.tg||qpWith(q,()=>alTargets(true)),ch=(on,act,v,t)=>`<button class="chip${on?' on':''}" data-act="${act}" data-v="${v}">${t}</button>`;
+  const f=(id,l,v,ty)=>`<label class="pfl" style="margin:0">${l}<input class="fld" id="${id}" value="${esc(String(v))}" inputmode="${ty||'numeric'}" style="margin-top:3px"></label>`;
+  o.innerHTML=`<div class="cpdc"><div class="cpdhd"><div><b>Plan de comidas sin cuenta</b><small>Para alguien que no está en la app</small></div><button class="cpdx" data-act="qpclose" aria-label="Cerrar">✕</button></div>
+   <label class="pfl" style="margin:0 0 8px">Nombre<input class="fld" id="qp_name" value="${esc(q.name)}" placeholder="Ej. Yojan Taborda" style="margin-top:3px"></label>
+   <div class="chips" style="margin-bottom:8px">${ch(q.sex==='Hombre','qpsex','Hombre','Hombre')}${ch(q.sex==='Mujer','qpsex','Mujer','Mujer')}</div>
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">${f('qp_age','Edad',q.age)}${f('qp_h','Estatura (cm)',q.h)}${f('qp_w','Peso (kg)',q.w,'decimal')}</div>
+   <label class="pfl" style="margin:0 0 4px">Días de entreno por semana</label><div class="chips" style="margin-bottom:10px">${[1,2,3,4,5,6,7].map(n=>ch(q.days===n,'qpdays',n,n)).join('')}</div>
+   <label class="pfl" style="margin:0 0 4px">Objetivo</label><div class="chips" style="margin-bottom:10px">${[['bajar','Bajar peso'],['complete','Complete'],['aumentar','Aumentar']].map(([k,n])=>ch(q.goal===k,'qpgoal',k,n)).join('')}</div>
+   <label class="pfl" style="margin:0 0 4px">Restricciones</label><div class="chips" style="margin-bottom:10px">${Object.keys(ALP_PRE).map(n=>ch(!!q.pre[n],'qppre',esc(n),n)).join('')}</div>
+   <label class="pfl" style="margin:0 0 4px">Metas ${q.tg?'(editadas)':'(automáticas, puedes cambiarlas)'}</label>
+   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px">${f('qp_kc','kcal',T.kc)}${f('qp_P','Prot g',T.P)}${f('qp_C','Carbo g',T.C)}${f('qp_F','Grasa g',T.F)}${f('qp_wa','Agua ml',T.water)}</div>
+   <div class="chips" style="margin-bottom:12px">${ch(!q.nomac,'qpmac','1','Mostrar kcal y macros en el PDF')}${q.tg?ch(false,'qpauto','1','↺ Volver a automáticas'):''}</div>
+   <button class="btn solid" data-act="qppdf" style="width:100%;padding:13px">Exportar plan a PDF</button>
+   <div class="note" style="margin-top:8px">Calculado con Mifflin-St Jeor y los mismos platos y porciones de los clientes. Sirve igual para una persona que aún no está registrada.</div></div>`;
+}
+document.addEventListener('input',e=>{const t=e.target;if(!QP||!t.id||t.id.indexOf('qp_')!==0)return;const v=id=>(document.getElementById(id)||{}).value;
+  if(t.id==='qp_name'){QP.name=t.value;return;}
+  if(['qp_kc','qp_P','qp_C','qp_F','qp_wa'].includes(t.id)){QP.tg={kc:+v('qp_kc')||0,P:+v('qp_P')||0,C:+v('qp_C')||0,F:+v('qp_F')||0,water:+v('qp_wa')||0,fr:3,vg:3};return;}
+  const m={qp_age:['age',16],qp_h:['h',120],qp_w:['w',30]};if(m[t.id]){const n=parseFloat(String(t.value).replace(',','.'));if(n>0){QP[m[t.id][0]]=n;if(!QP.tg){const T=qpWith(QP,()=>alTargets(true));[['qp_kc',T.kc],['qp_P',T.P],['qp_C',T.C],['qp_F',T.F],['qp_wa',T.water]].forEach(([i,x])=>{const el=document.getElementById(i);if(el)el.value=x;});}}}
+},true);
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act^="qp"]');if(!t)return;const a=t.dataset.act,v=t.dataset.v;e.stopPropagation();e.preventDefault();
+  if(a==='qpopen'){QP=qpDef();qpRender();return;}
+  if(!QP&&a!=='qpclose')return;
+  if(a==='qpclose'){qpClose();return;}
+  if(a==='qpsex'){QP.sex=v;if(!QP.tg){}qpRender();return;}
+  if(a==='qpdays'){QP.days=+v;qpRender();return;}
+  if(a==='qpgoal'){QP.goal=v;QP.tg=null;qpRender();return;}
+  if(a==='qppre'){QP.pre[v]=!QP.pre[v];qpRender();return;}
+  if(a==='qpmac'){QP.nomac=!QP.nomac;qpRender();return;}
+  if(a==='qpauto'){QP.tg=null;qpRender();return;}
+  if(a==='qppdf'){if(!QP.name.trim()){toast('Escribe el nombre');return;}try{alpPrint(qpWith(QP,()=>alpPdfHTML()));}catch(x){console.warn(x);toast('No se pudo generar el PDF');}return;}
+},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&QP)qpClose();});
+(function(){const f=cpClientsPage;cpClientsPage=function(){const h=f.apply(this,arguments);return h.replace(/(<em class="cpcount">[^<]*<\/em>)/,'$1<button class="btn" data-act="qpopen" style="margin-left:auto;width:auto;flex:none;padding:9px 14px;font-size:13px">🍽 Plan de comidas sin cuenta</button>');};})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
