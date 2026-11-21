@@ -2753,7 +2753,7 @@ const cpHas=dt=>{const i=cpDayInfo(dt);return !!i.d||cxList().some(t=>t.date===d
 function cpDayHTML(date){
   const d=CP.d;
   return cpWith(()=>withDate(date,()=>{
-    const inf=cpDayInfo(date),TL=cxList().filter(t=>t.date===date),tlh=`<div class="cpdhd"><div><b>${fmtL(date)}</b><small>${inf.d?'Entrenamiento y tareas':'Tareas del día'}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div><button class="btn solid" data-act="cptnew" data-v="${date}" style="width:100%;margin-bottom:10px">+ Tarea</button>${TL.map(t=>`<div class="cptask"><span><b>${t.type==='workout'?'Workout · '+esc(t.title||''):t.type==='rest'?'Descanso':t.type==='cardio'?'Cardio · '+esc(((typeof CMODS!=='undefined'&&CMODS[t.mod])||{n:''}).n)+(t.tier?' · '+t.tier:'')+(t.min?' · '+t.min+' min':''):t.type==='form'?(t.form==='medidas'?'Formulario · Medidas antropométricas':'Formulario · Chequeo quincenal'):'Nota'}</b>${t.type==='note'?'<small>'+esc(t.text||'')+'</small>':''}</span><button class="cpdx" data-act="cptdel" data-id="${t.id}" aria-label="Quitar">✕</button>${t.series?`<button class="lblbtn" data-act="cptdel" data-all="1" data-id="${t.id}" style="font-size:11px">Quitar serie</button>`:''}</div>`).join('')}`;
+    const inf=cpDayInfo(date),TL=cxList().filter(t=>t.date===date),tlh=`<div class="cpdhd"><div><b>${fmtL(date)}</b><small>${inf.d?'Entrenamiento y tareas':'Tareas del día'}</small></div><button class="cpdx" data-act="cpdclose" aria-label="Cerrar">✕</button></div><div class="cpdact"><button class="btn solid" data-act="cptnew" data-v="${date}">+ Tarea</button>${inf.d?`<button class="btn" data-act="cpedit" data-v="${date}" title="${inf.d.x?'Edita solo este workout asignado':'Se abre en el editor de rutinas. El cambio aplica a este día en todas las semanas.'}">✎ Editar entreno</button>`:''}</div>${TL.length?'<div class="cpdsec">Asignado</div>':''}${TL.map(t=>`<div class="cptask"><span><b>${t.type==='workout'?'Workout · '+esc(t.title||''):t.type==='rest'?'Descanso':t.type==='cardio'?'Cardio · '+esc(((typeof CMODS!=='undefined'&&CMODS[t.mod])||{n:''}).n)+(t.tier?' · '+t.tier:'')+(t.min?' · '+t.min+' min':''):t.type==='form'?(t.form==='medidas'?'Formulario · Medidas antropométricas':'Formulario · Chequeo quincenal'):'Nota'}</b>${t.type==='note'?'<small>'+esc(t.text||'')+'</small>':''}</span><button class="cpdx" data-act="cptdel" data-id="${t.id}" aria-label="Quitar">✕</button>${t.series?`<button class="lblbtn" data-act="cptdel" data-all="1" data-id="${t.id}" style="font-size:11px">Quitar serie</button>`:''}</div>`).join('')}`;
     if(!inf.d)return tlh+(TL.length?'':'<p class="lead">Ese día no tiene entrenamiento programado ni tareas.</p>');
     const dy=inf.d,st=cpSt(inf,date),pct=inf.total?Math.round(inf.done/inf.total*100):0,ec=(d.data&&d.data.excom)||d.excom||{};
     let sets=0,vol=0,fe=null;
@@ -2766,7 +2766,7 @@ function cpDayHTML(date){
         if(b.k==='warm'&&typeof warmVid==='function'&&!warmVid(dy,b,i,it))return '';
         const id=curEx(dy,b.k,i,it),e=E[id]||{},pr=presc(it),L=S.logs[ikey(dy,b.k,i)]||[],sw=id!==it.ex;
         const rows=[];for(let q=0;q<Math.max(pr.sets,L.length);q++){const l=L[q]||{};if(l.done&&b.k!=='warm'&&b.k!=='calm'){sets++;vol+=(+l.kg||0)*(+l.reps||0);}
-          rows.push(`<div class="cpsr${l.done?' d':''}"><b>${q+1}º</b><span>${l.reps!=null?l.reps+' reps':'—'}</span><span>${l.kg!=null?'× '+l.kg+' kg':''}</span>${l.rpe?`<em>RPE ${l.rpe}</em>`:''}${l.drop?'<em>drop</em>':''}<i>${l.done?'✓':''}</i></div>`);}
+          rows.push(`<span class="cpsc${l.done?' d':''}"><b>${q+1}</b>${l.reps!=null?l.reps:'—'}${l.kg!=null?' × '+l.kg+' kg':''}${l.rpe?' · RPE '+l.rpe:''}${l.drop?' · drop':''}${l.done?' ✓':''}</span>`);}
         const dn=L.filter(l=>l&&l.done).length,stt=pr.sets>0&&dn>=pr.sets?'ok':dn>0?'pa':'pe';btt++;if(stt==='ok')bdn++;
         const cm=(ec[id]||[]).filter(c=>c.d===date);
         return `<div class="cpde"><div class="cpdn"><span class="cpth">${typeof thumb==='function'?thumb(id,'sm'):''}</span><span><b>${esc(e.n||id)}</b>${sw?'<small class="cpsw">Sustituido</small>':''}<small>${pr.sets} series × ${esc(String(pr.reps))}${pr.rest&&pr.rest!=='—'?' · descanso '+esc(String(pr.rest)):''}</small></span><span class="cpdt ${stt}">${stt==='ok'?'Completado':stt==='pa'?'Parcial':'Pendiente'}</span></div>
@@ -2774,12 +2774,12 @@ function cpDayHTML(date){
       return items?{k:b.k,g:GK[b.k]||'fu',d:bdn,t:btt,h:`<div class="cpdb">${SUBT[b.k]||b.t||b.k}</div>${items}`}:null;
     }).filter(Boolean);
     const grp=['warm','fu','cardio','calm'].map(g=>{const bl=blocksA.filter(x=>x.g===g);if(!bl.length)return null;const dn=bl.reduce((a,x)=>a+x.d,0),tt=bl.reduce((a,x)=>a+x.t,0);return {g,dn,tt,st:tt>0&&dn>=tt?'ok':dn>0?'pa':'pe'};}).filter(Boolean);
-    const bsel=CP.bt&&grp.some(x=>x.g===CP.bt)?CP.bt:'all';
-    const btabs=grp.length?`<div class="cpparts"><div class="cpparts-h">Tareas del entrenamiento</div>${grp.map(x=>`<button class="cppart${bsel===x.g?' on':''}" style="--tc:${{warm:'#2E9D6B',fu:'#C0392B',cardio:'#D03A68',calm:'#5B7FC7'}[x.g]}" data-act="cpbt" data-v="${x.g}"><i>${GI[x.g]}</i><span><b>${GN[x.g]}</b><small>${x.tt} ${x.g==='cardio'?'tarea':'ejercicio'+(x.tt===1?'':'s')}</small></span><span class="cpdt ${x.st}">${x.st==='ok'?'Completado':x.st==='pa'?'Parcial':'Pendiente'}</span></button>`).join('')}${bsel!=='all'?'<button class="lblbtn" data-act="cpbt" data-v="all" style="margin-top:6px">Ver todo el entrenamiento</button>':''}</div>`:'';
-    const blocks=btabs+blocksA.filter(x=>bsel==='all'||x.g===bsel).map(x=>x.h).join('');
+    const bsel='all';
+    const COL={warm:'#2E9D6B',fu:'#C0392B',cardio:'#D03A68',calm:'#5B7FC7'};
+    const blocks=grp.map(x=>`<details class="cpdg" style="--tc:${COL[x.g]}"${x.g==='fu'?' open':''}><summary><i>${GI[x.g]}</i><b>${GN[x.g]}</b><small>${x.tt} ${x.g==='cardio'?'tarea':'ejercicio'+(x.tt===1?'':'s')}</small><span class="cpdt ${x.st}">${x.st==='ok'?'Completado':x.st==='pa'?'Parcial':'Pendiente'}</span></summary>${blocksA.filter(y=>y.g===x.g).map(y=>y.h).join('')}</details>`).join('');
     const feel=fbs.map(x=>x.f.feel).filter(Boolean)[0],notes=fbs.filter(x=>x.f.note);
-    const edb=`<button class="btn" data-act="cpedit" data-v="${date}" style="width:100%;margin:0 0 6px">✎ Editar este entrenamiento</button><div class="note" style="margin:0 0 10px">${dy.x?'Edita solo este workout asignado.':'Se abre en el editor de rutinas. El cambio aplica a este día de la rutina en todas las semanas.'}</div>`;
-    return tlh+edb+`<div class="cpdb" style="background:#C0392B">${dy.x?esc(dy.label||dy.name||'Workout'):'Día '+inf.n+' · '+esc(dy.name||'')}</div>
+    const edb='';
+    return tlh+edb+`<div class="cpdtt"><b>${dy.x?esc(dy.label||dy.name||'Workout'):'Día '+inf.n+' · '+esc(dy.name||'')}</b><span class="cpdt ${pct>=100?'ok':pct>0?'pa':'pe'}">${pct>=100?'Completado':pct>0?'Parcial':'Pendiente'}</span></div>
       <div class="cpdk"><span><b>${pct}%</b><small>Cumplimiento</small></span><span><b>${sets}</b><small>Series</small></span><span><b>${Math.round(vol).toLocaleString('es-CO')}</b><small>Volumen kg</small></span><span><b>${inf.rpe!=null?inf.rpe+'/10':'—'}</b><small>${inf.rpe!=null?INT(inf.rpe):'Esfuerzo'}</small></span></div>
       ${feel?`<div class="cpfeel">Sensación: <b>${esc(feel)}</b>${feel==='Con molestia'?' ⚠':''}</div>`:''}${notes.map(x=>`<div class="cpcm"><b>📝 Nota al terminar</b>${esc(x.f.note)}</div>`).join('')}
       ${blocks}`;
@@ -3625,12 +3625,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1434';
+const APP_VER='21nov-1438';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1434'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1438'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5624,6 +5624,30 @@ function cpHoy(d){
    <div class="cpqa">${qa.map(x=>`<button ${x[2]}><i>${x[0]}</i>${x[1]}</button>`).join('')}</div>${call}`;
 }
 
+
+/* ===== día del calendario: más limpio + cerrar tocando afuera ===== */
+(function(){const st=document.createElement('style');st.textContent=`
+.cpdhd{position:sticky;top:0;z-index:3;background:var(--card,#FBFAF8);padding-bottom:8px}
+.cpdact{display:flex;gap:8px;margin:0 0 10px}.cpdact .btn{flex:1;margin:0;padding:11px 8px;font-size:14px}
+.cpdsec{font:600 11px Archivo,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#5A554E;margin:4px 0 6px}
+.cpdtt{display:flex;align-items:center;gap:10px;justify-content:space-between;background:#1C1B19;color:#fff;border-radius:12px;padding:12px 14px;margin:6px 0 10px}.cpdtt b{font-size:15px;line-height:1.25}
+.cpdk{gap:6px!important}.cpdk span{padding:6px 4px!important}.cpdk b{font-size:16px!important}.cpdk small{font-size:10px!important}
+.cpdg{border:1px solid #DCD6CC;border-left:4px solid var(--tc);border-radius:12px;margin:8px 0;background:var(--card,#FBFAF8);overflow:hidden}
+.cpdg>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px}.cpdg>summary::-webkit-details-marker{display:none}
+.cpdg>summary i{font-style:normal;font-size:18px}.cpdg>summary b{font-size:14px}.cpdg>summary small{color:#5A554E;font-size:12px;flex:1}
+.cpdg>summary:after{content:'▾';color:#5A554E;margin-left:4px}.cpdg[open]>summary:after{content:'▴'}
+.cpdg .cpdb{background:none!important;color:#5A554E!important;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:6px 12px 2px}
+.cpdg .cpde{padding:8px 12px 10px;border-top:1px solid #EFEDE8}
+.cpsrs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cpsc{background:#EFEDE8;border-radius:8px;padding:4px 9px;font-size:12px;color:#5A554E;white-space:nowrap}.cpsc b{margin-right:5px;color:#1C1B19}.cpsc.d{background:#E4F3EA;color:#1F7A4D}
+.cptask{padding:8px 10px!important;margin-bottom:6px!important}.cptask b{font-size:14px!important}.cptask small{font-size:12px!important}
+`;document.head.appendChild(st);})();
+document.addEventListener('click',e=>{const t=e.target;if(!t||!t.id)return;
+  if(t.id==='cptm'){CP.tm=null;cpTaskModal();e.stopPropagation();}
+  else if(t.id==='cpdv'){cpDayClose();e.stopPropagation();}},true);
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
+  if(document.getElementById('cptm')){CP.tm=null;cpTaskModal();}
+  else if(document.getElementById('cpdv'))cpDayClose();});
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
