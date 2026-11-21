@@ -5277,6 +5277,31 @@ Object.assign(PV_MC,{'Trapecio':'#7A5BC4','Gemelos':'#2E9D6B','Isquios':'#2E9D6B
 pvMuscle=function(name,c){const f=PV_IMG[name]||'cuerpo';return `<img src="${new URL('mus/'+f+'.png',location.href).href}" alt="${name}" width="60" height="60" style="object-fit:contain;display:block" loading="lazy">`;};
 (function(){const st=document.createElement('style');st.textContent=`.pvmc .pvfig{width:70px;height:70px;flex:0 0 70px;background:#F4F2EE;padding:3px}`;document.head.appendChild(st);})();
 
+/* ===== Electrolitos: apartado explicativo ===== */
+(function(){
+const st=document.createElement('style');st.textContent=`#elmodal{position:fixed;inset:0;z-index:9600;background:rgba(28,27,25,.55);display:flex;align-items:flex-end;justify-content:center}
+#elmodal .elsh{background:#EFEDE8;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:16px 18px 26px;max-height:90vh;overflow-y:auto}
+#elmodal h2{font:700 26px Oswald,sans-serif;text-transform:uppercase;margin:4px 0 2px;color:#1C1B19}#elmodal .sub{color:#5A554E;font:500 14px Archivo,sans-serif;margin:0 0 12px}
+#elmodal .elc{background:#FBFAF8;border:1px solid #DCD6CC;border-left:5px solid var(--c);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+#elmodal .elc h3{margin:0 0 6px;font:700 15px Archivo,sans-serif;color:#1C1B19}#elmodal .elc p,#elmodal .elc li{margin:0;font:500 14px Archivo,sans-serif;color:#3a3732;line-height:1.35}
+#elmodal .elc ul{margin:0;padding-left:0;list-style:none;display:grid;gap:6px}#elmodal .elc li b{color:#1C1B19}
+#elmodal .elx{border:0;background:none;font:700 14px Archivo,sans-serif;color:#5A554E;padding:4px 0}
+.alelinfo{display:block;width:100%;margin-top:6px;border:0;background:none;color:#3C7FA6;font:700 13px Archivo,sans-serif;text-align:left;padding:4px 2px;text-decoration:underline}`;document.head.appendChild(st);
+const card=(c,t,b)=>`<div class="elc" style="--c:${c}"><h3>${t}</h3>${b}</div>`;
+window.elInfo=function(open){let o=document.getElementById('elmodal');if(!open){if(o)o.remove();document.body.style.overflow='';return;}
+ if(o)return;o=document.createElement('div');o.id='elmodal';document.body.appendChild(o);document.body.style.overflow='hidden';
+ o.innerHTML=`<div class="elsh"><button class="elx" data-el="close">‹ Volver</button><h2>⚡ Electrolitos</h2><p class="sub">Sales minerales que tu cuerpo usa para hidratarse, mover los músculos y que los nervios funcionen. Los pierdes con el sudor.</p>
+ ${card('#3C7FA6','Cómo tomarlos fácil (receta base)','<p><b>1 vaso grande de agua (300–500 ml) + 1 pizca de sal marina + el jugo de ½ limón o naranja.</b> Mézclalo y tómalo en sorbos. Listo en 20 segundos.</p>')}
+ ${card('#2E9D6B','Otras opciones','<ul><li>🥥 <b>Agua de coco:</b> natural, aporta potasio. Sabe rico y es fácil.</li><li>📦 <b>Sobres o tabletas de electrolitos</b> (sin azúcar): lo más práctico para llevar al gym o viajar.</li><li>🍌 <b>Desde la comida:</b> banano, papa, aguacate, espinaca y frutos secos aportan potasio y magnesio.</li><li>🧂 <b>Sal en tus comidas</b> si entrenas fuerte y sudas mucho.</li></ul>')}
+ ${card('#C7872A','Para qué sirven','<ul><li>💧 Mejor hidratación: el agua se retiene y se usa mejor.</li><li>💪 Menos calambres y mejor sensación en el entreno.</li><li>⚡ Más energía y menos cansancio, sobre todo con calor o sudor.</li><li>🧠 Ayudan a la concentración y a rendir mejor.</li></ul>')}
+ ${card('#C0392B','Cuándo y cuánto','<p><b>Ideal: todos los días, 1 vez.</b> Mejor en la mañana o antes/durante el entreno. En días muy fuertes, de mucho sudor o calor, puedes tomar una segunda porción.</p>')}
+ <p style="color:#5A554E;font:500 12px Archivo,sans-serif;margin:6px 2px 0">Información general. Si tienes la presión alta, problemas de riñón o corazón, o un tratamiento médico, consulta con tu médico antes de subir la sal o usar suplementos.</p></div>`;};
+document.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;if(t.closest('[data-elinfo]')){e.stopPropagation();elInfo(true);return;}
+ if(t.id==='elmodal'||t.closest('[data-el="close"]')){e.stopPropagation();elInfo(false);}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')elInfo(false);});
+const ab=alBoard;alBoard=function(){return ab.apply(this,arguments).replace('</span></button></div></div>\n','</span></button><button class="alelinfo" data-elinfo="1">¿Cómo tomarlos? Opciones y beneficios</button></div></div>\n');};
+})();
+
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
 const E_EXTRA={
