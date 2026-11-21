@@ -3627,12 +3627,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1303';
+const APP_VER='21nov-1307';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1303'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1307'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4830,7 +4830,7 @@ function medModal(open){let o=document.getElementById('medm');if(!open){if(o)o.r
   const inp=([k,n,u])=>`<div><label>${n}${u?' ('+u+')':''}</label><input class="fld" data-med="${k}" inputmode="decimal" placeholder="—"></div>`;
   o.innerHTML=`<div class="cpdc" style="max-width:560px"><div class="cpdhd"><div><b>Nueva medición</b><small>Llena solo lo que mediste</small></div><button class="cpdx" data-act="medclose" aria-label="Cerrar">✕</button></div><div class="cpmvb">
    <div class="medg"><div><label>Fecha</label><input class="fld" type="date" id="medD" value="${today()}"></div><div><label>Medido por (opcional)</label><input class="fld" id="medB" placeholder="Ej. fisioterapeuta, coach"></div></div>
-   ${MED_IN().map(([g,fs])=>`<div class="medh">${g}</div><div class="medg">${fs.map(inp).join('')}</div>`).join('')}
+   ${MED_IN().map(([g,fs])=>`<div class="medh">${g}</div>${/Pliegues/.test(g)?medRanges('Hombre')+medRanges('Mujer'):''}<div class="medg">${fs.map(inp).join('')}</div>`).join('')}
    <label class="pfl" style="margin-top:12px">Nota (opcional)</label><textarea class="fld" id="medN" rows="2" placeholder="Condiciones, protocolo, observaciones"></textarea>
    <button class="cpmvbt pri" data-act="medsave" style="width:100%;margin-top:10px">Guardar medición</button></div></div>`;}
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act="medopen"],[data-act="medclose"],[data-act="medsave"],[data-act="medel"]');if(!t)return;e.stopPropagation();const a=t.dataset.act;
@@ -4926,11 +4926,11 @@ function mcRender(){const s=MC.s;let ov=document.getElementById('chkov');
   if(!ov){ov=document.createElement('div');ov.id='chkov';document.body.appendChild(ov);document.body.style.overflow='hidden';}
   if(s.fin){ov.innerHTML=`<h2 class="h2" style="margin-top:40px">¡Listo, gracias!</h2><p class="wzs">Guardamos tus medidas. Tu coach las ve y compara con las anteriores.</p>${s.rev||''}<button class="chkok" data-mc="close">Volver al inicio</button>`;return;}
   const n=MED_IN().length,g=MED_IN()[s.i],last=s.i===n-1;
-  const hint={'Básicas':'Peso en ayunas si puedes. Todo es opcional.','Perímetros':'Con cinta métrica, sin apretar. Puedes dejar en blanco lo que no mediste.','Pliegues':'Solo si tienes plicómetro o te los midió un profesional.'}[g[0]]||'Todo es opcional.';
+  const hint={'Básicas':'Peso en ayunas si puedes. Todo es opcional.','Perímetros':'Con cinta métrica, sin apretar. Puedes dejar en blanco lo que no mediste.','Pliegues cutáneos':'Solo si tienes plicómetro o te los midió un profesional. Toca los rangos abajo para ver qué significa cada valor.'}[g[0]]||'Todo es opcional.';
   ov.innerHTML=`<div style="display:flex;justify-content:space-between"><button class="chkx" data-mc="prev">${s.i?'‹ Atrás':'‹ Ahora no'}</button><small style="align-self:center;color:#5A554E">Medidas</small></div>
    <div class="wzp"><div class="wzb"><i style="width:${Math.round((s.i+1)/n*100)}%"></i></div><small>Paso ${s.i+1} de ${n}</small></div>
    <h2 class="h2 wzq">${g[0]}${g[0]==='Perímetros'?' (cm)':g[0]==='Pliegues'?' (mm)':''}</h2><p class="wzs">${hint}</p>
-   <div class="chkr">${g[1].map(([k,nm,u])=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0"><label style="font-weight:600">${nm}${u?' <small style="color:#5A554E">'+u+'</small>':''}</label><input class="fld" data-mc-in="${k}" inputmode="decimal" placeholder="—" value="${s.v[k]!=null?s.v[k]:''}" style="width:110px;text-align:right"></div>`).join('')}</div>
+   <div class="chkr">${g[1].map(([k,nm,u])=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0"><label style="font-weight:600">${nm}${u?' <small style="color:#5A554E">'+u+'</small>':''}</label><span data-mcb="${k}" style="flex:1;text-align:right">${g[0]==='Pliegues'||/Pliegues/.test(g[0])?mcBadge(s.v[k]):''}</span><input class="fld" data-mc-in="${k}" inputmode="decimal" placeholder="—" value="${s.v[k]!=null?s.v[k]:''}" style="width:90px;text-align:right"></div>`).join('')}</div>${/Pliegues/.test(g[0])?medRanges(mcSex()):''}
    ${last?`<textarea data-mc-in="__note" placeholder="Nota (opcional)" style="width:100%;margin-bottom:10px">${esc(s.note||'')}</textarea>`:''}
    <button class="chkok" data-mc="${last?'send':'next'}">${last?(s.busy?'Enviando…':'Guardar mis medidas'):'Siguiente'}</button>`;}
 async function mcSend(){const s=MC.s;if(!s||s.busy)return;const data={};Object.keys(s.v).forEach(k=>{const v=medN(s.v[k]);if(v!=null)data[k]=v;});
@@ -4950,7 +4950,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(a==='next'){s.i++;mcRender();document.getElementById('chkov').scrollTop=0;return;}
   if(a==='send'){mcSend();}
 },true);
-document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.mcIn==null||!MC.s)return;if(t.dataset.mcIn==='__note')MC.s.note=t.value;else MC.s.v[t.dataset.mcIn]=t.value;});
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.mcIn==null||!MC.s)return;if(t.dataset.mcIn==='__note')MC.s.note=t.value;else{MC.s.v[t.dataset.mcIn]=t.value;const bd=document.querySelector('[data-mcb="'+t.dataset.mcIn+'"]');if(bd&&MC.s.i===MED_IN().findIndex(g=>/Pliegues/.test(g[0])))bd.innerHTML=mcBadge(t.value);}});
 (function(){const hv=homeView;homeView=function(){const h=hv.apply(this,arguments);
   try{if(S.sel!==today())return h;const d=mcDue();if(!d)return h;
     const card=`<button class="chkcard" data-mc="open" style="margin-top:8px"><span><small>Medidas</small><b>Anota tus medidas</b><em>Peso, perímetros y pliegues · todo opcional · 1 minuto</em></span><i>›</i></button>`;
@@ -5000,6 +5000,11 @@ mcReview=function(cur,prev){try{
     html+='<div class="chkt" style="font-size:12px;opacity:.8">Rangos de referencia del coach para leer cada pliegue. Varían con la técnica de quien mide: compara siempre con las mismas condiciones.</div>';}
   return html+mcReview0(cur,prev);}catch(e){return mcReview0(cur,prev);}};
 function k0(r){return r.k;}
+
+function mcSex(){return (S.user&&S.user.sex)||(PROFILE&&PROFILE.sex)||'Mujer';}
+function mcBadge(v){const n=medN(v);if(n==null)return '';const b=medBand(mcSex(),n);return `<em style="font-style:normal;font-size:12px;font-weight:700;color:#fff;background:${b.c};padding:2px 8px;border-radius:99px">${b.t}</em>`;}
+function medRanges(sex){const m=sex==='Hombre',R=m?[['Menos de 10','Muy magro','#2F7FC4'],['10 a 20','Normal','#1F8F53'],['20 a 25','Algo alto','#B87400'],['25 o más','Grande','#C0392B']]:[['Menos de 10','Muy bajo','#2F7FC4'],['10 a 20','Magro','#1F8F53'],['20 a 30','Ideal','#1F8F53'],['30 o más','Grande','#C0392B']];
+  return `<details style="margin:8px 0;background:#FBFAF8;border:1px solid #DCD6CC;border-radius:12px;padding:10px 12px"><summary style="font-weight:700;cursor:pointer">Rangos de referencia · ${m?'hombres':'mujeres'} (mm)</summary>${R.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;margin:7px 0;font-size:14px"><span>${r[0]} mm</span><em style="font-style:normal;font-size:12px;font-weight:700;color:#fff;background:${r[2]};padding:2px 10px;border-radius:99px">${r[1]}</em></div>`).join('')}<small style="color:#5A554E">Referencia por pliegue, según la experiencia del coach. Varía con la técnica de quien mide.</small></details>`;}
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
