@@ -3627,12 +3627,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1300';
+const APP_VER='21nov-1303';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1300'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1303'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4981,6 +4981,25 @@ function mcReview(cur,prev){try{
     if(cur.cintura&&cur.cadera)out+=card('Cintura / cadera',row('Relación',f1(cur.cintura/cur.cadera).replace(',','.')==='NaN'?'—':(cur.cintura/cur.cadera).toFixed(2).replace('.',',')));
     out+='<div class="chkt">Esta es tu primera medición: la base. La próxima vez verás aquí cómo cambiaste.</div>';}
   return out;}catch(e){return '';}}
+
+/* --- Pliegues: lectura por zona según rangos del coach --- */
+function medBand(sex,v){const m=sex==='Hombre';
+  if(m){if(v<10)return {t:'Muy magro',c:'#2F7FC4',r:0};if(v<20)return {t:'Normal',c:'#1F8F53',r:1};if(v<25)return {t:'Algo alto',c:'#B87400',r:2};return {t:'Grande',c:'#C0392B',r:3};}
+  if(v<10)return {t:'Muy bajo',c:'#2F7FC4',r:0};if(v<20)return {t:'Magro',c:'#1F8F53',r:1};if(v<30)return {t:'Ideal',c:'#1F8F53',r:1};return {t:'Grande',c:'#C0392B',r:3};}
+var mcReview0=mcReview;
+mcReview=function(cur,prev){try{
+  const grp=(MED_F.find(g=>/Pliegues/.test(g[0]))||[0,[]])[1],nm=Object.fromEntries(grp.map(x=>[x[0],x[1].replace(/\s*\(.*?\)/g,'')])),has=grp.filter(([k])=>cur[k]!=null);
+  let html='';
+  if(has.length){const sex=(S.user&&S.user.sex)||(PROFILE&&PROFILE.sex)||'',f1=v=>(Math.round(v*10)/10).toString().replace('.',',');
+    const rows=has.map(([k])=>({k,v:cur[k],b:medBand(sex,cur[k])}));
+    const body=rows.map(r=>{const pv=prev&&prev.data&&prev.data[k0(r)]!=null?prev.data[r.k]:null,d=pv!=null?r.v-pv:null;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:7px 0;font-size:14px"><span>${nm[r.k]}</span><span><b>${f1(r.v)} mm</b> <em style="font-style:normal;font-size:12px;font-weight:700;color:#fff;background:${r.b.c};padding:2px 8px;border-radius:99px">${r.b.t}</em>${d!=null&&Math.abs(d)>=0.5?` <small style="color:${d<0?'#1F8F53':'#B87400'};font-weight:700">${d<0?'▼ ':'▲ +'}${f1(d)}</small>`:''}</span></div>`;}).join('');
+    html+=`<div class="chkr" style="margin-bottom:10px"><b>Tus pliegues (grasa por zona)</b>${body}</div>`;
+    const sorted=rows.slice().sort((a,b)=>b.v-a.v),hi=sorted.filter(r=>r.b.r>=2).slice(0,2),lo=sorted[sorted.length-1];
+    html+=hi.length?`<div class="chkt">Donde acumulas más grasa: ${hi.map(r=>nm[r.k].toLowerCase()).join(' y ')}. Es la zona que tu coach mira con tu alimentación y tu cardio.</div>`:`<div class="chkt">Tus pliegues están en rangos buenos. Tu zona más magra: ${nm[lo.k].toLowerCase()}.</div>`;
+    html+='<div class="chkt" style="font-size:12px;opacity:.8">Rangos de referencia del coach para leer cada pliegue. Varían con la técnica de quien mide: compara siempre con las mismas condiciones.</div>';}
+  return html+mcReview0(cur,prev);}catch(e){return mcReview0(cur,prev);}};
+function k0(r){return r.k;}
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
