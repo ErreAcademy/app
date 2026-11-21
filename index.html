@@ -3621,12 +3621,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='20nov-1749';
+const APP_VER='21nov-1237';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='20nov-1749'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1237'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4703,6 +4703,90 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
     pushTo(cid,'Tu coach te pidió un chequeo','Respóndelo en 1 minuto desde Inicio','chk-ask');toast('Chequeo enviado ✓ Le aparece en Inicio');coachRender(true);}
   catch(x){console.warn(x);toast('No se pudo enviar');}},true);
 
+
+/* --- exportar rutina a PDF (con miniaturas y enlaces de YouTube) --- */
+var PDFM=null;
+const PDF_INTRO='Haz primero el calentamiento para preparar las articulaciones. En los ejercicios básicos busca una carga que te permita llegar cerca del fallo técnico dentro del rango de repeticiones, con ejecución controlada. En los accesorios prioriza la conexión mente-músculo y el rango de movimiento completo. Toca la miniatura de cada ejercicio para ver el video técnico.';
+function pdfRest(sec){if(!sec)return '';return sec>=120?(sec/60).toString().replace('.',',')+' min de descanso':sec+"'' de descanso";}
+function pdfPresc(it,wk,prog){
+  if(it.fixed)return {sets:it.fixed.sets,reps:it.fixed.reps,rest:pdfRest(it.rest)};
+  const PP=PERIOD[prog]||PERIOD.complete,P=PP[it.kind==='basic'?'basic':'acc'],w=Math.min(wk,PP.weeks)-1;
+  return {sets:P.sets[w],reps:P.reps[w],rest:pdfRest(it.rest)};}
+function pdfRow(it,wk,prog){const e=E[it.ex]||{},pr=pdfPresc(it,wk,prog),yt=e.yt,url=yt?'https://youtu.be/'+yt:'';
+  const th=yt?`<a href="${url}"><img src="https://i.ytimg.com/vi/${yt}/hqdefault.jpg" alt=""></a>`:`<div class="nov">Sin video</div>`;
+  const nm=e.n||it.ex||'Ejercicio';
+  const extra=[it.rir!=null&&it.rir!==''&&it.kind!=='warm'&&it.kind!=='calm'?'RIR '+it.rir:'',it.tempo&&it.kind==='basic'?'Tempo '+it.tempo:''].filter(Boolean).join(' · ');
+  return `<div class="row"><div class="th">${th}</div><div class="nm">${url?`<a href="${url}">${esc(nm)}</a>`:esc(nm)}${it.note?`<div class="nt">${esc(it.note)}</div>`:''}</div><div class="rx"><b>${pr.sets} series x ${esc(String(pr.reps))}</b>${pr.rest?'<br>'+esc(pr.rest):''}${extra?'<br><span>'+esc(extra)+'</span>':''}</div></div>`;}
+function pdfDay(d,o){
+  const wk=o.wk,prog=o.prog;let h=`<section class="day"><h2>${esc(o.multi?(d.label?d.label+' · ':'')+(d.name||''):(d.name||d.label||''))}</h2>`;
+  const sec=(t,body)=>body?`<div class="bar">${t}</div>${body}`:'';
+  const warmItems=((d.blocks.find(b=>b.k==='warm')||{}).items||[]);
+  let wb='';const fa=typeof faRec==='function'?faRec(d):null;
+  if(fa&&E[fa]&&E[fa].yt){const m=(E[fa].n||'').match(/\((\d+) min\)/);wb=pdfRow({ex:fa,kind:'warm',fixed:{sets:1,reps:'1'+(m?' ('+m[1]+' min)':'')}},wk,prog);}
+  else wb=warmItems.map(it=>pdfRow(it,wk,prog)).join('');
+  h+=sec('Calentamiento',wb);
+  const bl=k=>((d.blocks.find(b=>b.k===k)||{}).items||[]).map(it=>pdfRow(it,wk,prog)).join('');
+  h+=sec('Ejercicios básicos',bl('main'));h+=sec('Ejercicios accesorios',bl('acc'));
+  d.blocks.filter(b=>b.cust).forEach(b=>{h+=sec(esc(b.t||'Bloque'),(b.items||[]).map(it=>pdfRow(it,wk,prog)).join(''));});
+  const hasC=d.blocks.some(b=>b.cardio);
+  if(hasC){const tier=d.cardioTier||((CARDIO[o.goal]||CARDIO.complete)[wk-1]),mins=d.cardioMin?d.cardioMin+' min':({Base:'20-40 min',Moderado:'10-25 min',Intenso:'5-12 min'}[tier]||''),mod=d.cardioDefault&&typeof CMODS!=='undefined'&&CMODS[d.cardioDefault]?CMODS[d.cardioDefault].n:'Cardio a tu elección';
+    const feel={Base:'Puedes hablar sin problema',Moderado:'Puedes decir frases cortas',Intenso:'Esfuerzo alto (solo si tu coach lo indica)'}[tier]||'';
+    if(tier)h+=sec('Cardio',`<div class="row card"><div class="nm"><b>${esc(mod)}</b>${feel?`<div class="nt">${feel}</div>`:''}</div><div class="rx"><b>${esc(tier)}</b>${mins?'<br>'+esc(mins):''}</div></div>`);}
+  h+=sec('Estiramientos y vuelta a la calma',bl('calm'));
+  return h+'</section>';}
+function pdfHTML(o){
+  const logo=new URL('icon-192.png',location.href).href;
+  const css=`@page{size:A4;margin:12mm 13mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Archivo,Helvetica,Arial,sans-serif;color:#1C1B19;margin:0;font-size:12px}
+  .hd{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #DCD6CC;padding-bottom:8px;margin-bottom:12px}.hd img{height:26px}.hd small{color:#5A554E;letter-spacing:.08em;text-transform:uppercase;font-size:10px}
+  h1{font-family:Oswald,Archivo,sans-serif;text-transform:uppercase;font-size:21px;margin:4px 0 2px}h1 em{font-style:normal;color:#C0392B}.who{color:#5A554E;margin-bottom:8px}
+  .intro{color:#3b3833;line-height:1.5;margin:8px 0 14px}.day{page-break-after:always}.day:last-child{page-break-after:auto}
+  h2{font-family:Oswald,Archivo,sans-serif;text-transform:uppercase;font-size:15px;margin:0 0 8px;color:#C0392B}
+  .bar{background:#E9E6DF;font-weight:700;padding:6px 10px;margin:12px 0 4px;font-size:11.5px;break-after:avoid}
+  .row{display:flex;align-items:center;gap:14px;padding:7px 4px;border-bottom:1px solid #EFEDE8;break-inside:avoid}
+  .th{width:150px;flex:none}.th img{width:150px;height:84px;object-fit:cover;display:block;border-radius:3px}.nov{width:150px;height:84px;background:#EFEDE8;color:#8b867e;display:flex;align-items:center;justify-content:center;font-size:11px;border-radius:3px}
+  .nm{flex:1;font-size:13.5px;font-weight:600}.nm a{color:#1C1B19;text-decoration:none}.nt{font-weight:400;font-size:11px;color:#5A554E;margin-top:3px}
+  .rx{width:135px;flex:none;font-size:11.5px;color:#3b3833;line-height:1.5}.rx span{color:#8b867e;font-size:10.5px}.row.card{padding:12px 4px}
+  .ft{margin-top:10px;color:#8b867e;font-size:10px;text-align:center}`;
+  const days=o.days.map(d=>pdfDay(d,o)).join('');
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(o.title||'Rutina')}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet"><style>${css}</style></head><body>
+  <div class="hd"><img src="${logo}" alt=""><small>ERRE Academy · Método Complete</small></div>
+  <h1>${esc(o.title||'Tu rutina')}${o.sub?` <em>| ${esc(o.sub)}</em>`:''}</h1>${o.who?`<div class="who">Para: ${esc(o.who)} · Semana ${o.wk} del mesociclo</div>`:`<div class="who">Semana ${o.wk} del mesociclo</div>`}
+  ${o.intro?`<div class="intro">${esc(o.intro)}</div>`:''}${days}<div class="ft">ERRE Academy · Toca la miniatura de cada ejercicio para abrir el video técnico</div></body></html>`;}
+function pdfPrint(o){
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);
+  f.srcdoc=pdfHTML(o);
+  f.onload=()=>{const w=f.contentWindow;const go=()=>{try{w.focus();w.print();}catch(e){console.warn(e);}setTimeout(()=>f.remove(),60000);};
+    const imgs=[...w.document.images].filter(i=>!i.complete);let n=imgs.length,fired=false;const fin=()=>{if(fired)return;fired=true;(w.document.fonts&&w.document.fonts.ready?w.document.fonts.ready:Promise.resolve()).then(()=>setTimeout(go,200));};
+    if(!n)fin();else{imgs.forEach(i=>{const d=()=>{if(--n<=0)fin();};i.addEventListener('load',d);i.addEventListener('error',d);});setTimeout(fin,6000);}};}
+function pdfModal(){let o=document.getElementById('pdfm');if(!PDFM){if(o)o.remove();return;}
+  if(!o){o=document.createElement('div');o.id='pdfm';o.className='cpdv';document.body.appendChild(o);}
+  const m=PDFM,weeks=(PERIOD[m.prog]||PERIOD.complete).weeks;
+  o.innerHTML=`<div class="cpdc" style="max-width:520px"><div class="cpdhd"><div><b>Exportar rutina a PDF</b><small>Con miniaturas y links de los videos</small></div><button class="cpdx" data-act="pdfclose" aria-label="Cerrar">✕</button></div><div class="cpmvb">
+   <label class="pfl">Qué incluir</label><div class="chips"><button class="chip${m.scope==='all'?' on':''}" data-act="pdfscope" data-v="all">Todos los días (${m.days.length})</button><button class="chip${m.scope==='one'?' on':''}" data-act="pdfscope" data-v="one">Solo este día</button></div>
+   <label class="pfl" style="margin-top:8px">Semana del mesociclo (define series y repeticiones)</label><div class="chips">${Array.from({length:weeks},(_,i)=>`<button class="chip${m.wk===i+1?' on':''}" data-act="pdfwk" data-v="${i+1}">S${i+1}</button>`).join('')}</div>
+   <label class="pfl" style="margin-top:8px">Título</label><input class="fld" id="pdfT" value="${esc(m.title)}">
+   <label class="pfl" style="margin-top:8px">Para (opcional)</label><input class="fld" id="pdfW" value="${esc(m.who)}" placeholder="Nombre del cliente">
+   <label class="pfl" style="margin-top:8px">Mensaje de entrada (opcional)</label><textarea class="fld" id="pdfI" rows="4">${esc(m.intro)}</textarea>
+   <div class="note" style="margin-top:8px">Se abre el cuadro de impresión: elige <b>Guardar como PDF</b>. Los enlaces de los videos quedan activos en el archivo.</div>
+   <button class="cpmvbt pri" data-act="pdfgo" style="width:100%;margin-top:10px">Generar PDF</button></div></div>`;}
+function pdfSync(){const m=PDFM;if(!m)return;const g=id=>document.getElementById(id);if(g('pdfT'))m.title=g('pdfT').value;if(g('pdfW'))m.who=g('pdfW').value;if(g('pdfI'))m.intro=g('pdfI').value;}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act^="pdf"]');if(!t)return;const a=t.dataset.act;if(!/^pdf(open|close|scope|wk|go)$/.test(a))return;e.stopPropagation();
+  if(a==='pdfopen'){let days,sel=0,prog='complete',goal='complete',who='',title='',wk=1;
+    if(t.dataset.v==='rt'&&typeof RT!=='undefined'&&RT.days){days=RT.days;sel=RT.sel||0;title=RT.name||RT.title||'';try{if(RT.kind==='client'&&CP.d&&CP.d.profile){const p=CP.d.profile;prog=planOf(p);goal=['bajar','complete','aumentar'].includes(p.goal)?p.goal:'complete';who=p.full_name||'';}}catch(x){}}
+    else{days=DAYS.filter(d=>!d.x);sel=Math.max(0,days.findIndex(d=>d===DAYS[S.day]));prog=S.program==='basic'?'basic':'complete';goal=S.goal;wk=Math.min(S.week||1,(PERIOD[prog]||PERIOD.complete).weeks);who=(S.user&&S.user.name)||'';title='Mi rutina';}
+    if(!days||!days.length){toast('No hay días en la rutina para exportar');return;}
+    PDFM={days,sel,prog,goal,wk,who,title:title||'Rutina',intro:PDF_INTRO,scope:'all'};pdfModal();return;}
+  if(!PDFM)return;pdfSync();
+  if(a==='pdfclose'){PDFM=null;pdfModal();return;}
+  if(a==='pdfscope'){PDFM.scope=t.dataset.v;pdfModal();return;}
+  if(a==='pdfwk'){PDFM.wk=+t.dataset.v;pdfModal();return;}
+  if(a==='pdfgo'){const m=PDFM,days=m.scope==='one'?[m.days[Math.min(m.sel,m.days.length-1)]]:m.days;
+    pdfPrint({days,multi:days.length>1,wk:m.wk,prog:m.prog,goal:m.goal,title:m.title,who:m.who,intro:m.intro.trim()});PDFM=null;pdfModal();}
+},true);
+(function(){const pv2=profileView;profileView=function(){let h=pv2.apply(this,arguments);
+  try{const sec=`<details class="sec acc" data-pk="Mi rutina en PDF"${S.pfOpen&&S.pfOpen['Mi rutina en PDF']?' open':''}><summary><span>Mi rutina en PDF<small>Descárgala con los links de video</small></span></summary><div class="accbody"><div class="note" style="margin-bottom:8px">Tu rutina en un PDF profesional, con la miniatura de cada ejercicio y el enlace a su video técnico.</div><button class="btn solid" data-act="pdfopen" data-v="me" style="width:100%">Descargar mi rutina en PDF</button></div></details>`;
+    return h.replace(/(<details class="sec acc" data-pk="Mi plan"[\s\S]*?<\/details>)/,m=>m+sec);}catch(e){return h;}};})();
+
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
 const E_EXTRA={
@@ -4947,6 +5031,7 @@ function rtEditorHTML(){
     ${warn.length?`<div class="note" style="border-color:var(--red)"><b>Avisos del método</b><br>${warn.map(esc).join('<br>')}</div>`:''}
     ${blocks}
     <button class="btn solid" data-act="rtsave" style="width:100%;margin-top:14px;padding:14px"${RT.busy?' disabled':''}>${RT.busy?'Guardando…':(RT.kind==='template'?'Guardar plantilla':(RT.self?'Guardar mi entreno':'Guardar y publicar al cliente'))}</button>
+    <button class="btn" data-act="pdfopen" data-v="rt" style="width:100%;margin-top:8px">Exportar rutina a PDF (con links de video)</button>
     ${RT.kind==='client'?`<button class="btn" data-act="rtasday" style="width:100%;margin-top:8px">Guardar este día como workout (1 día)</button><button class="btn" data-act="rtastpl" style="width:100%;margin-top:8px">Guardar todo como programa (varios días)</button>`:`<button class="btn" data-act="rtdeltpl" style="width:100%;margin-top:8px;color:var(--red-strong)">Eliminar plantilla</button>`}`;
 }
 const RTW=()=>window.innerWidth>=1000;
