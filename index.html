@@ -3625,12 +3625,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1516';
+const APP_VER='21nov-1520';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1516'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1520'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5770,6 +5770,33 @@ const dy=alDay;alDay=function(){let h=dy.apply(this,arguments);const cur=S.alcul
 const st=document.createElement('style');st.textContent='.alcul{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}.alcul::-webkit-scrollbar{display:none}.alcul button{flex:0 0 auto;border:2px solid #DCD6CC;background:#FBFAF8;border-radius:99px;padding:8px 14px;font:700 13px Archivo,sans-serif;color:#1C1B19}.alcul button.on{background:#1C1B19;border-color:#1C1B19;color:#fff}.alfl{display:block;margin-top:4px;font-size:14px;line-height:1}';
 document.head.appendChild(st);
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-alcul]');if(!t)return;e.stopPropagation();S.alcul=t.dataset.alcul;try{save();}catch(x){}render();},true);
+})();
+
+
+/* ===== Recetario por culturas, parte 2: Perú, Europa, EE. UU., Australia (21 nov) ===== */
+(function(){
+const R=(r,e)=>({r:r,e:e});
+const add=(m,c,n,e,comp,r)=>{AL_O[m].push([n,e,comp,R(r)]);AL_CUL[n]=c;};
+/* Perú */
+add('d','pe','Quinua caliente con yogurt','🥣🌾🍎',{p:'Yogurt griego',c:'Quinua',fr:'Manzana'},'Cocina la quinua con canela y un chorrito de agua hasta que quede cremosa. Sírvela tibia con el yogurt y la manzana en cubitos.');
+add('a','pe','Lomo saltado ligero','🥩🍅🍚',{p:'Carne magra',c:'Arroz',v:'Tomate'},'Saltea la carne en tiras en sartén muy caliente con cebolla, tomate, ajo y un chorrito de salsa de soya. Sirve sobre el arroz con cilantro.');
+add('a','pe','Ceviche con camote','🐟🍋🍠',{p:'Pescado',c:'Batata',v:'Cebolla',f:'Aguacate (½)'},'Usa pescado muy fresco en cubos y báñalo 3–5 min en jugo de limón con sal, ají y cebolla morada (o cocínalo 2 min en sartén). Sirve con la batata cocida y aguacate.');
+add('c','pe','Ají de gallina ligero','🍗🥔🌶️',{p:'Pechuga de pollo',c:'Papa',v:'Ensalada',f:'Almendras / maní / nueces'},'Desmecha el pollo cocido. Licúa nueces con caldo, ají amarillo (o pimentón con una pizca de cúrcuma) y un poco de leche; calienta con el pollo. Sirve con la papa cocida y ensalada.');
+/* Europa (mediterránea / italiana / griega) */
+add('d','eu','Bruschetta de requesón y tomate','🍞🧀🍅',{p:'Queso campesino / requesón',c:'Pan integral',v:'Tomate',f:'Aceite de oliva'},'Tuesta el pan, unta el requesón y cubre con tomate picado, albahaca, sal y aceite de oliva.');
+add('a','eu','Pasta con salmón y espinaca','🍝🐟🥬',{p:'Salmón',c:'Pasta',v:'Espinaca'},'Cocina la pasta al dente. Dora el salmón en trozos con ajo, añade la espinaca y un chorrito de limón. Mezcla todo con un poco del agua de la pasta.');
+add('a','eu','Pollo griego con papas','🍗🥔🥒',{p:'Pechuga de pollo',c:'Papa',v:'Pepino',f:'Aceite de oliva'},'Marina el pollo con limón, orégano y ajo. Hornea o dora con las papas en cuñas. Sirve con pepino, tomate y yogurt si quieres.');
+add('c','eu','Merluza al horno con verduras','🐟🥒🥔',{p:'Bacalao / merluza',c:'Papa',v:'Calabacín',f:'Aceite de oliva'},'Pon la merluza sobre rodajas de papa y calabacín con ajo, limón y aceite. Hornea a 190 °C unos 20 min.');
+/* EE. UU. */
+add('d','us','Overnight oats de maní y banano','🥣🥜🍌',{p:'Yogurt griego',c:'Avena',f:'Mantequilla de maní',fr:'Banano'},'En un frasco mezcla avena, yogurt y la mantequilla de maní. Déjalo en la nevera toda la noche y termina con el banano en rodajas.');
+add('a','us','Hamburguesa casera con ensalada','🍔🥬🥑',{p:'Carne magra',c:'Pan integral',v:'Lechuga',f:'Aguacate (½)'},'Forma la carne con sal, pimienta y cebolla en polvo y dórala a la plancha. Arma con el pan, lechuga, tomate y aguacate. Sin papas fritas: ensalada al lado.');
+add('a','us','Chili de carne con fríjol','🌶️🥩🫘',{p:'Carne magra',c:'Fríjol / lenteja',v:'Pimentón'},'Sofríe cebolla, ajo y pimentón con la carne molida. Añade el fríjol, tomate triturado, comino y paprika; cocina a fuego bajo 25 min.');
+add('c','us','Salmón al horno con batata','🐟🍠🥦',{p:'Salmón',c:'Batata',v:'Brócoli'},'Hornea el salmón y la batata en cuñas a 200 °C unos 20 min con sal, pimienta y limón. Acompaña con el brócoli al vapor.');
+/* Australia */
+add('d','au','Smashed avo con huevo','🥑🍞🍳',{p:'Huevos',c:'Pan integral',v:'Tomate',f:'Aguacate (½)'},'Aplasta el aguacate con limón, sal y pimienta sobre el pan tostado. Corona con el huevo pochado y tomate en rodajas.');
+add('a','au','Pescado al horno con papas','🐟🥔🥗',{p:'Pescado',c:'Papa',v:'Ensalada',f:'Aceite de oliva'},'Hornea el pescado y las papas en cuñas con limón y un chorrito de aceite a 200 °C. Es el fish and chips en versión ligera. Sirve con ensalada.');
+add('c','au','Ensalada de camarón y aguacate','🦐🥑🌾',{p:'Camarones',c:'Quinua',v:'Lechuga',f:'Aguacate (½)'},'Saltea los camarones 2 min con ajo y limón. Sirve sobre lechuga con la quinua y el aguacate en cubos.');
+add('m','au','Yogurt con mango y maracuyá','🥣🥭',{p:'Yogurt griego',fr:'Mango'},'Mezcla el yogurt con mango en cubos y la pulpa de 1 maracuyá. Fresco y listo en 1 minuto.');
 })();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
