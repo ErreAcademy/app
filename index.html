@@ -2090,6 +2090,7 @@ function realDB(){
     async measuresOf(cid){const r=await sb.from('client_measures').select('*').eq('client_id',cid).order('date',{ascending:true});if(r.error)throw r.error;return r.data||[];},
     async measureSave(row){const r=await sb.from('client_measures').insert(row);if(r.error)throw r.error;},
     async measureDel(id){const r=await sb.from('client_measures').delete().eq('id',id);if(r.error)throw r.error;},
+    async thumbs(ids){const r=await sb.functions.invoke('yt-thumbs',{body:{ids}});if(r.error)throw r.error;return r.data||{};},
     async accessAll(){const r=await sb.from('client_access').select('*');return r.error?[]:(r.data||[]);},
     async accessOf(cid){const r=await sb.from('client_access').select('*').eq('client_id',cid).maybeSingle();return r.error?null:r.data;},
     async accessSave(row,cid){let email=row.email;if(!email){const q=await sb.rpc('client_email',{p_id:cid});email=q&&q.data;}if(!email)throw new Error('sin correo');
@@ -3624,12 +3625,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1239';
+const APP_VER='21nov-1251';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1239'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1251'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4784,7 +4785,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(a==='pdfscope'){PDFM.scope=t.dataset.v;pdfModal();return;}
   if(a==='pdfwk'){PDFM.wk=+t.dataset.v;pdfModal();return;}
   if(a==='pdfgo'){const m=PDFM,days=m.scope==='one'?[m.days[Math.min(m.sel,m.days.length-1)]]:m.days;
-    pdfPrint({days,multi:days.length>1,wk:m.wk,prog:m.prog,goal:m.goal,title:m.title,who:m.who,intro:m.intro.trim()});PDFM=null;pdfModal();}
+    const o={days,multi:days.length>1,wk:m.wk,prog:m.prog,goal:m.goal,title:m.title,who:m.who,intro:m.intro.trim()};PDFM=null;pdfModal();pdfMake(o);}
 },true);
 (function(){const pv2=profileView;profileView=function(){let h=pv2.apply(this,arguments);
   try{const sec=`<details class="sec acc" data-pk="Mi rutina en PDF"${S.pfOpen&&S.pfOpen['Mi rutina en PDF']?' open':''}><summary><span>Mi rutina en PDF<small>Descárgala con los links de video</small></span></summary><div class="accbody"><div class="note" style="margin-bottom:8px">Tu rutina en un PDF profesional, con la miniatura de cada ejercicio y el enlace a su video técnico.</div><button class="btn solid" data-act="pdfopen" data-v="me" style="width:100%">Descargar mi rutina en PDF</button></div></details>`;
@@ -4850,6 +4851,66 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
   if(!MED.rows.length)return chips+emptyCard('Aún no hay medidas','Cuando tu coach (o tu fisioterapeuta) registre tus medidas, las verás aquí con su evolución.');
   const last=MED.rows[MED.rows.length-1];
   return chips+`<h2 class="h2" style="margin-top:4px">Mis medidas</h2><div class="sub2" style="margin:0 0 8px">Última medición: ${fdate(last.date)}${last.by_name?' · '+esc(last.by_name):''}. Muestra tus últimas 3 mediciones y el cambio desde la primera.</div>${medTable(MED.rows,false)}${last.note?`<div class="note" style="margin-top:8px">${esc(last.note)}</div>`:''}`;};})();
+
+
+/* --- PDF real (jsPDF): enlaces activos, miniaturas y marca de agua --- */
+function jspdfLoad(){return window.jspdf?Promise.resolve():new Promise((res,rej)=>{const t=document.createElement('script');t.src=new URL('jspdf.umd.min.js',location.href).href;t.onload=res;t.onerror=()=>rej(new Error('No cargó jsPDF'));document.head.appendChild(t);});}
+function blobData(blob){return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(blob);});}
+var PDF_LOGO=null;
+async function pdfLogo(){if(PDF_LOGO)return PDF_LOGO;try{const r=await fetch(new URL('erre-logo-wm.png',location.href).href);PDF_LOGO=await blobData(await r.blob());}catch(e){PDF_LOGO='';}return PDF_LOGO;}
+function pdfRowData(it,wk,prog){const e=E[it.ex]||{},pr=pdfPresc(it,wk,prog);
+  const extra=[it.rir!=null&&it.rir!==''&&it.kind!=='warm'&&it.kind!=='calm'?'RIR '+it.rir:'',it.tempo&&it.kind==='basic'?'Tempo '+it.tempo:''].filter(Boolean).join(' · ');
+  return {name:e.n||it.ex||'Ejercicio',yt:e.yt||'',note:it.note||'',l1:pr.sets+' series x '+pr.reps,l2:pr.rest,l3:extra};}
+function pdfModelDay(d,o){const wk=o.wk,prog=o.prog,secs=[];
+  const items=k=>((d.blocks.find(b=>b.k===k)||{}).items||[]);
+  const warmItems=items('warm');let w=[];const fa=typeof faRec==='function'?faRec(d):null;
+  if(fa&&E[fa]&&E[fa].yt){const m=(E[fa].n||'').match(/\((\d+) min\)/);w=[pdfRowData({ex:fa,kind:'warm',fixed:{sets:1,reps:'1'+(m?' ('+m[1]+' min)':'')}},wk,prog)];}else w=warmItems.map(it=>pdfRowData(it,wk,prog));
+  secs.push({t:'Calentamiento',rows:w});
+  secs.push({t:'Ejercicios básicos',rows:items('main').map(it=>pdfRowData(it,wk,prog))});
+  secs.push({t:'Ejercicios accesorios',rows:items('acc').map(it=>pdfRowData(it,wk,prog))});
+  d.blocks.filter(b=>b.cust).forEach(b=>secs.push({t:b.t||'Bloque',rows:(b.items||[]).map(it=>pdfRowData(it,wk,prog))}));
+  if(d.blocks.some(b=>b.cardio)){const tier=d.cardioTier||((CARDIO[o.goal]||CARDIO.complete)[wk-1]);
+    if(tier){const mins=d.cardioMin?d.cardioMin+' min':({Base:'20-40 min',Moderado:'10-25 min',Intenso:'5-12 min'}[tier]||''),mod=d.cardioDefault&&typeof CMODS!=='undefined'&&CMODS[d.cardioDefault]?CMODS[d.cardioDefault].n:'Cardio a tu elección';
+      secs.push({t:'Cardio',rows:[{name:mod,yt:'',noimg:1,note:{Base:'Puedes hablar sin problema',Moderado:'Puedes decir frases cortas',Intenso:'Esfuerzo alto (solo si tu coach lo indica)'}[tier]||'',l1:tier,l2:mins,l3:''}]});}}
+  secs.push({t:'Estiramientos y vuelta a la calma',rows:items('calm').map(it=>pdfRowData(it,wk,prog))});
+  return {title:o.multi?((d.label?d.label+' · ':'')+(d.name||'')):(d.name||d.label||''),secs:secs.filter(x=>x.rows.length)};}
+async function pdfMake(o){
+  try{toast('Generando PDF…');
+    await jspdfLoad();const {jsPDF}=window.jspdf,logo=await pdfLogo();
+    const model=o.days.map(d=>pdfModelDay(d,o));
+    const ids=[...new Set(model.flatMap(d=>d.secs.flatMap(s=>s.rows.map(r=>r.yt)).filter(Boolean)))];
+    let th={};try{if(ids.length)th=await DB.thumbs(ids);}catch(e){console.warn('miniaturas',e);}
+    const doc=new jsPDF({unit:'mm',format:'a4'}),W=210,H=297,M=13,CW=W-2*M;let y=0,first=true;
+    const gs=(a)=>{try{doc.setGState(new doc.GState({opacity:a}));}catch(e){}};
+    const page=()=>{if(!first)doc.addPage();first=false;
+      if(logo){gs(0.07);doc.addImage(logo,'PNG',W/2-55,H/2-62,110,123);gs(1);
+        doc.addImage(logo,'PNG',M,10,7.5,8.4);}
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(90,85,78);doc.text('ERRE ACADEMY · MÉTODO COMPLETE',W-M,15,{align:'right'});
+      doc.setDrawColor(220,214,204);doc.setLineWidth(.3);doc.line(M,21,W-M,21);y=28;};
+    const need=h=>{if(y+h>H-16)page();};
+    page();
+    doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(28,27,25);doc.text(String(o.title||'Tu rutina').toUpperCase(),M,y);y+=7;
+    doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(90,85,78);doc.text((o.who?'Para: '+o.who+' · ':'')+'Semana '+o.wk+' del mesociclo',M,y);y+=6;
+    if(o.intro){doc.setTextColor(60,56,51);const ls=doc.splitTextToSize(o.intro,CW);doc.text(ls,M,y);y+=ls.length*4.4+4;}
+    model.forEach((d,di)=>{if(di>0)page();need(14);doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(192,57,43);doc.text(String(d.title).toUpperCase(),M,y);y+=7;
+      d.secs.forEach(sc=>{need(7+30);doc.setFillColor(233,230,223);doc.rect(M,y,CW,7,'F');doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(28,27,25);doc.text(sc.t,M+3,y+4.8);y+=9;
+        sc.rows.forEach(r=>{const hasImg=!r.noimg,RH=hasImg?31:16;need(RH+2);const url=r.yt?'https://youtu.be/'+r.yt:'';
+          let nx=M;
+          if(hasImg){const im=th[r.yt];
+            if(im){try{doc.addImage(im,'JPEG',M,y,50,28);}catch(e){doc.setFillColor(239,237,232);doc.rect(M,y,50,28,'F');}}
+            else{doc.setFillColor(239,237,232);doc.rect(M,y,50,28,'F');if(url){doc.setFillColor(192,57,43);doc.triangle(M+22,y+9,M+22,y+19,M+30,y+14,'F');}else{doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(139,134,126);doc.text('Sin video',M+25,y+15,{align:'center'});}}
+            if(url)doc.link(M,y,50,28,{url});nx=M+54;}
+          doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.setTextColor(28,27,25);const nl=doc.splitTextToSize(r.name,hasImg?88:100),ny=y+(hasImg?(r.note?9:12):6);doc.text(nl,nx,ny);
+          if(url)doc.link(nx,ny-4,88,nl.length*4.6+1,{url});
+          let ty=ny+nl.length*4.6;if(r.note){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(90,85,78);const ns=doc.splitTextToSize(r.note,88);doc.text(ns.slice(0,3),nx,ty);}
+          const rx=W-M-38;let ry=y+(hasImg?10:5);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(60,56,51);doc.text(r.l1,rx,ry);
+          doc.setFont('helvetica','normal');doc.setFontSize(8.5);if(r.l2){ry+=4.6;doc.text(r.l2,rx,ry);}if(r.l3){ry+=4.4;doc.setTextColor(139,134,126);doc.setFontSize(8);doc.text(r.l3,rx,ry);}
+          y+=RH;doc.setDrawColor(239,237,232);doc.setLineWidth(.2);doc.line(M,y-1,W-M,y-1);});
+        y+=2;});});
+    const n=doc.getNumberOfPages();for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(139,134,126);doc.text('Toca la miniatura de cada ejercicio para abrir el video técnico · '+i+'/'+n,W/2,H-8,{align:'center'});}
+    const name=String(o.title||'Rutina').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'')||'Rutina';
+    doc.save('ERRE_'+name+'.pdf');toast('PDF listo ✓ Revisa tus descargas');
+  }catch(e){console.warn(e);toast('No se pudo generar el PDF. Intenta de nuevo.');}}
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
