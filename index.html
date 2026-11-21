@@ -3182,7 +3182,7 @@ document.addEventListener('click',e=>{
   if(a==='done'){const L=S.logs[t.dataset.k]||[],s=+t.dataset.s,l=L[s]||{};if(!l.done&&!l.rpe){e.stopPropagation();e.preventDefault();rpeOpen(t.dataset.k,s,true);return;}}
   else if(a==='prestart'){const k=t.dataset.b;if(S.tw!==k||S.tgD!==today()){S.tw=k;S.tgAt=Date.now();S.tgD=today();}}
   else if(a==='ipgo'){e.stopPropagation();S.tab='entrenar';S.tg=S.tw;save();render();window.scrollTo(0,0);}
-  else if(a==='ipdel'){e.stopPropagation();{const nn=gRstN(S.tw);if(!confirm(nn?'Llevas '+nn+(nn===1?' serie registrada':' series registradas')+'. Si descartas el entrenamiento las pierdes. Para seguir después, toca "Volver" o sal de la pantalla: tu progreso queda guardado.\n\n¿Descartar y borrar?':'¿Descartar este entrenamiento en curso?'))return;}
+  else if(a==='ipdel'){e.stopPropagation();{const nn=gRstN(S.tw);if(!confirm(nn?'Llevas '+nn+(nn===1?' serie registrada':' series registradas')+'. Si descartas el entrenamiento se perderá todo tu progreso y no se puede recuperar. Para seguir después, toca "Volver": tu progreso queda guardado.\n\n¿Descartar y perder el progreso?':'¿Descartar este entrenamiento en curso?\n\nSe perderá el progreso de esta sesión y no se puede recuperar.'))return;}
     const d=DAYS[S.day];if(d){const pre=S.sel+'|'+d.id+'|';S._logsDel=true;Object.keys(S.logs).forEach(k=>{if(k.indexOf(pre)===0)delete S.logs[k];});}
     S.tw=null;S.tgAt=null;if(S.tg===S.tw)S.tg=null;S.tg=null;save();render();}
 },true);
