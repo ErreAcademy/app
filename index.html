@@ -2384,7 +2384,7 @@ function cardioWrap(h,d){
   return h.slice(0,k)+log+cirEntry(d)+`<button class="cdet" data-act="exp" data-k="cardio.det">${open?'Ocultar detalles del cardio':'Ver detalles del cardio'} <i>${open?'⌃':'⌄'}</i></button>`+(open?`<div class="cdetb">${inner}</div>`:'')+h.slice(h.lastIndexOf(tail));
 }
 const cpW=()=>window.innerWidth>=1000;
-const cpWideNow=()=>CP.wide!==undefined?!!CP.wide:true;
+const cpWideNow=()=>!!CP.wide;
 function cpWideCls(el){el.classList.toggle('cpwide',cpW());el.style.maxWidth=(cpWideNow()&&CP.view==='client'&&cpW())?'none':'';}
 function cpShell(inner){
   const nav=[['inicio','Inicio'],['clientes','Clientes'],['chat','Chat'],['lecc','Lecciones'],['editor','Programas y workouts'],['pagos','Suscripciones']].map(([k,n])=>`<button class="cpn${CP.sec===k&&(CP.view==='list'||k==='clientes')?' on':''}" data-act="cpnav" data-v="${k}">${n}</button>`).join('');
@@ -2684,7 +2684,7 @@ function cpPlanBody(){
         +L.filter(t=>t.type==='cardio'&&!inf.d).map(t=>`<button class="cpp card" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>🏃</i><span>Cardio${t.min?' · '+t.min+' min':''}</span></button>`).join('')
         +L.filter(t=>t.type==='note').map(t=>`<button class="cpp note" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>✎</i><span>${esc(t.text||'Nota')}</span></button>`).join('')
         +L.filter(t=>t.type==='form').map(t=>{const md=t.form==='medidas',dn=md?((CP.med&&CP.med.rows)||[]).some(x=>x.task_id==='f-'+t.id):(CP.chk||[]).some(x=>x.client_id===CP.cid&&x.period==='f-'+t.id);return `<button class="cpp form" draggable="true" data-dg="${t.id}" data-act="cpday" data-v="${dt}"><i>${dn?'✓':md?'📏':'▤'}</i><span>${md?'Medidas':'Chequeo'}${dn?' · listo':''}</span></button>`;}).join('');
-      return `<div class="cpc${inM?'':' out'}${dt===tdy?' tdy':''}${big?' big':''}" data-act="cptnew" data-v="${dt}"><button class="cpcn" data-act="cptnew" data-v="${dt}">${big?fdate(dt)+' ':''}${+dt.slice(8)}</button>${pills}${cpDefs(dt,big||vw==='sem'||(cpWideNow()&&cpW()))}</div>`;
+      return `<div class="cpc${inM?'':' out'}${dt===tdy?' tdy':''}${big?' big':''}" data-act="cptnew" data-v="${dt}"><button class="cpcn" data-act="cptnew" data-v="${dt}">${big?fdate(dt)+' ':''}${+dt.slice(8)}</button>${pills}${cpDefs(dt,big||vw==='sem')}</div>`;
     };
     let main='';
     if(vw==='mes'){main=`<div class="cpdow">${['L','M','X','J','V','S','D'].map(x=>`<span>${x}</span>`).join('')}</div><div class="cpgrid">${ds.map(x=>cell(x)).join('')}</div>`;}
@@ -3625,12 +3625,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1431';
+const APP_VER='21nov-1433';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1431'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1433'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5624,25 +5624,6 @@ function cpHoy(d){
    <div class="cpqa">${qa.map(x=>`<button ${x[2]}><i>${x[0]}</i>${x[1]}</button>`).join('')}</div>${call}`;
 }
 
-/* ===== calendario grande (estilo Harbiz): pantalla completa, celdas altas, textos legibles ===== */
-(function(){const st=document.createElement('style');st.textContent=`
-.cpfull .cpmain{padding:0 18px}
-.cpfull .cpnar{max-width:1000px;margin:0}
-.cpfull .cpnavx{max-width:1000px}.cpfull .cpseg{max-width:none}
-.cpfull .cpgrid{gap:6px}
-.cpfull .cpdow{font-size:13px;font-weight:700;letter-spacing:.04em;margin-bottom:6px}
-.cpfull .cpgrid:not(.cpwk) .cpc{min-height:max(150px,calc((100vh - 380px)/5));padding:8px;gap:5px;border-radius:12px}
-.cpfull .cpgrid.cpwk .cpc{min-height:max(320px,calc(100vh - 340px))}
-.cpfull .cpcn{font-size:15px;font-weight:700}
-.cpfull .cpp{font-size:13px;padding:7px 9px;border-radius:8px;line-height:1.25}
-.cpfull .cpp span{white-space:normal}
-.cpfull .cpks,.cpfull .cpc>div{gap:4px}
-.cpfull button.cpk{font-size:12px;padding:4px 8px;border-radius:7px;width:100%;text-align:left}
-.cpfull .cpbl{font-size:22px;font-weight:700}.cpfull .cpbl::first-letter{text-transform:uppercase}
-.cpfull .cpbar .arr{width:40px;height:40px;font-size:20px}
-.cpfull .cpkpi b{font-size:26px}.cpfull .cpkpi small{font-size:13px}
-.cpfull .cpvw .chip,.cpfull .cpvw button{font-size:14px;padding:8px 16px}
-`;document.head.appendChild(st);})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
