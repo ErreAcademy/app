@@ -2455,7 +2455,7 @@ function cpClientsPage(){
   return `<div class="cphead"><h2 class="h2" style="margin:0">Clientes</h2><em class="cpcount">${all.length}</em></div>
    <div class="cptabs">${['todos','basic','complete','elite'].map(k=>`<button class="cptab${CP.pf===k?' on':''}" data-act="cppf" data-v="${k}">${k==='todos'?'Todos':PNAME[k]} <em>${cnt(k)}</em></button>`).join('')}</div>
    <input class="fld" id="cpQ" placeholder="Buscar cliente…" value="${esc(CP.q)}" autocomplete="off" style="margin:10px 0">
-   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Programa</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<button class="cptr" data-act="cpopen" data-id="${c.id}"><span class="cpcl"><i class="cpav">${esc(ini)}</i><span class="cpnm"><b>${esc(c.full_name||'Sin nombre')}</b><small class="cpem">${esc(((CP.info&&CP.info[c.id])||{}).email||'')}</small>${regTag((CP.info&&CP.info[c.id])||{},c)}</span>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em>${c.status==='pending'?' <em class="cpwarn">Pendiente</em>':''}</span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin programa</em>'}</span><span>${dAgo(m.last[c.id])}</span></button>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
+   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Programa</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<div class="cptr cprow"><span class="cpcl" data-act="cpopen" data-id="${c.id}" style="cursor:pointer"><i class="cpav">${esc(ini)}</i><span class="cpnm"><b>${esc(c.full_name||'Sin nombre')}</b><small class="cpem">${esc(((CP.info&&CP.info[c.id])||{}).email||'')}</small>${regTag((CP.info&&CP.info[c.id])||{},c)}</span>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em>${c.status==='pending'?' <em class="cpwarn">Pendiente</em>':''}</span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin programa</em>'}</span><span>${dAgo(m.last[c.id])}</span><button class="cpkb" data-act="cpmenu" data-id="${c.id}" aria-label="Más acciones">⋮</button></div>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
 }
 async function coachLive(m){try{
   if(CP.sec==='chat'&&CP.view==='list'){cpInboxLoad();}else{DB.chatInbox().then(r=>{CP.inbox=r;badgeCalc();}).catch(()=>{});}
@@ -3629,12 +3629,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='21nov-1410';
+const APP_VER='21nov-1414';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1410'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='21nov-1414'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5433,6 +5433,38 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
   else if(a==='excopy'&&EXM){const tx=EXM.txt||'';try{await navigator.clipboard.writeText(tx);toast('Copiado ✓ Pégalo en tu chat con la IA');}catch(x){const ta=document.getElementById('exTxt');if(ta){ta.removeAttribute('readonly');ta.select();try{document.execCommand('copy');toast('Copiado ✓');}catch(y){toast('Selecciona el texto y cópialo');}ta.setAttribute('readonly','');}}}
   else if(a==='exdl'&&EXM){const b=new Blob([EXM.txt||''],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(b),l=document.createElement('a');l.href=url;l.download='cliente-erre-'+new Date().toISOString().slice(0,10)+'.txt';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 },true);
+
+
+/* ===== Menú ⋮ de atajos en la lista de Clientes ===== */
+(function(){const st=document.createElement('style');st.textContent=`.cprow{position:relative;padding-right:56px!important;cursor:default}.cptr.head{padding-right:56px!important}.cprow:hover{background:none}
+.cpkb{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:0;background:none;font-size:24px;line-height:1;color:#5A554E;cursor:pointer}.cpkb:hover{background:#EFEDE8}
+#cpmn{position:fixed;inset:0;z-index:9700;background:rgba(28,27,25,.35);display:flex;align-items:flex-end;justify-content:center}
+#cpmn .cpmnc{background:#FBFAF8;width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:8px 8px 14px;box-shadow:0 -6px 30px rgba(0,0,0,.2)}
+#cpmn .cpmnh{padding:10px 12px 6px;font:700 15px Archivo,sans-serif;color:#1C1B19}#cpmn .cpmnh small{display:block;font-weight:500;color:#5A554E;font-size:12px}
+#cpmn button.cpmi{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;text-align:left;padding:13px 12px;border-radius:10px;font:600 15px Archivo,sans-serif;color:#1C1B19}#cpmn button.cpmi:hover{background:#EFEDE8}#cpmn button.cpmi i{font-style:normal;width:24px;text-align:center;font-size:18px}
+@media(min-width:700px){#cpmn{background:transparent;align-items:flex-start;justify-content:flex-start}#cpmn .cpmnc{position:absolute;width:260px;border-radius:14px;padding:6px;border:1px solid #DCD6CC;box-shadow:0 8px 28px rgba(0,0,0,.18)}}`;document.head.appendChild(st);})();
+function cpMenu(id,btn){let o=document.getElementById('cpmn');if(o)o.remove();if(!id)return;
+  const c=(CP.clients||[]).find(x=>x.id===id)||{},nm=c.full_name||'Cliente',chat=c.plan==='complete'||c.plan==='elite',med=(c.modules||[]).includes('medidas');
+  const items=[['open','👤','Abrir ficha'],['exp','📋','Exportar datos'],chat?['chat','💬','Abrir chat']:null,['task','🗓️','Asignar tarea / workout'],['pdf','📄','Exportar rutina a PDF'],med?['meas','📏','Nueva medición']:null,['acc','💳','Acceso y pago']].filter(Boolean);
+  o=document.createElement('div');o.id='cpmn';o.innerHTML=`<div class="cpmnc"><div class="cpmnh">${esc(nm)}<small>Atajos</small></div>${items.map(([k,ic,t])=>`<button class="cpmi" data-act="cpmact" data-k="${k}" data-id="${id}"><i>${ic}</i>${t}</button>`).join('')}</div>`;
+  document.body.appendChild(o);
+  if(window.innerWidth>=700&&btn){const r=btn.getBoundingClientRect(),bx=o.firstChild;bx.style.left=Math.max(8,Math.min(window.innerWidth-268,r.right-260))+'px';const h=bx.offsetHeight;bx.style.top=Math.max(8,Math.min(window.innerHeight-h-8,r.bottom+4))+'px';}}
+document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act="cpmenu"],[data-act="cpmact"],#cpmn');
+  if(!t){return;}
+  if(t.id==='cpmn'){if(e.target.id==='cpmn'){cpMenu(null);e.stopPropagation();}return;}
+  e.stopPropagation();e.preventDefault();
+  if(t.dataset.act==='cpmenu'){cpMenu(t.dataset.id,t);return;}
+  const k=t.dataset.k,id=t.dataset.id,c=(CP.clients||[]).find(x=>x.id===id)||{};cpMenu(null);
+  if(k==='open'){CP.err='';coachOpen(id);}
+  else if(k==='exp'){const b=document.createElement('button');b.dataset.act='exdata';b.dataset.id=id;b.style.display='none';document.body.appendChild(b);b.click();b.remove();}
+  else if(k==='chat'){CP.err='';coachOpen(id,'chat');}
+  else if(k==='task'){CP.err='';coachOpen(id,'plan');}
+  else if(k==='acc'){CP.err='';coachOpen(id,'resumen');}
+  else if(k==='meas'){CP.cid=id;CP.med=null;medModal(true);}
+  else if(k==='pdf'){try{const rt=await DB.routine(id);if(!rt||!rt.days||!rt.days.length){toast('Este cliente aún no tiene rutina para exportar');return;}
+      let prog='complete';try{prog=planOf(c);}catch(x){}PDFM={days:rt.days.filter(d=>!d.x),sel:0,prog,goal:['bajar','complete','aumentar'].includes(c.goal)?c.goal:'complete',wk:1,who:c.full_name||'',title:rt.name||'Rutina',intro:PDF_INTRO,scope:'all'};pdfModal();}catch(x){console.warn(x);toast('No se pudo cargar la rutina');}}
+},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cpMenu(null);});
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
