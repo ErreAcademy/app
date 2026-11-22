@@ -4776,6 +4776,7 @@ function wrapC(h,d){
 const cw0=cardioWrap;cardioWrap=function(h,d){return wrapC(cw0.apply(this,arguments),d);};
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-cvv]');if(!t)return;e.stopPropagation();const x=E[t.dataset.cvv];if(!x||!x.yt)return;
   sheet(`<h3 style="font-size:16px">${esc(x.n.replace(/\|[^|]*(CASA|RESET)[^|]*/gi,''))}</h3><div class="video" style="padding:0;overflow:hidden;position:relative"><iframe src="https://www.youtube.com/embed/${x.yt}?rel=0&playsinline=1" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy" title="${esc(x.n)}"></iframe></div><div class="note" style="margin-top:10px">Mantén un ritmo en el que puedas hablar. Si algo molesta, para.</div><button class="btn" data-act="close" style="width:100%;margin-top:8px">Cerrar</button>`);},true);
+window.__cv={icon,TALK};
 const st=document.createElement('style');st.textContent=`
 .cvh{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;margin:10px 0;padding:12px;border-radius:18px;background:color-mix(in srgb,var(--zc) 14%,var(--card,#fff));border:1.5px solid color-mix(in srgb,var(--zc) 45%,var(--line,#ddd))}
 .cvi{flex:0 0 112px;color:var(--zc)}.cvsvg{width:100%;height:auto;display:block}.cvsvg.sm{width:56px}
@@ -4863,4 +4864,38 @@ document.head.appendChild(st);
   if(DB.archiveClient){const ar=DB.archiveClient.bind(DB);DB.archiveClient=async(cid,on)=>{const r=await ar(cid,on);try{DB.logAct(cid,'cli',on?'Archivó al cliente':'Restauró al cliente');}catch(e){}return r;};}
   if(DB.deleteClient){const dc=DB.deleteClient.bind(DB);DB.deleteClient=async cid=>{const n=nmOf(cid);const r=await dc(cid);try{DB.logAct(null,'cli','Eliminó la cuenta de '+n);}catch(e){}return r;};}
   if(DB.resetProfile){const rp=DB.resetProfile.bind(DB);DB.resetProfile=async cid=>{const r=await rp(cid);try{DB.logAct(cid,'cli','Reinició el perfil del cliente');}catch(e){}return r;};}
+})();
+
+
+/* ---------- PREVISUAL CARDIO / VUELTA A LA CALMA + CHECK-IN SIN ENTRAR (22 nov) ---------- */
+(function(){
+const st=document.createElement('style');st.textContent=`
+.pcv{padding:2px 0 4px}.pcv .cvh{margin:6px 0 12px}.pcv .pcs{display:flex;gap:8px;margin:0 0 12px}.pcv .pcs div{flex:1;background:var(--card,#FBFAF8);border:1.5px solid var(--line,#DCD6CC);border-radius:14px;padding:9px 6px;text-align:center}.pcv .pcs small{display:block;font:500 11px Archivo,sans-serif;color:var(--gray,#5A554E)}.pcv .pcs b{display:block;font:700 15px Archivo,sans-serif;margin-top:2px}
+.pcv .pct{font-size:13.5px;color:var(--gray,#5A554E);margin:0 0 12px;line-height:1.4}.pcv .pcb{width:100%;padding:15px;font-size:16px}.pcv .pcc{width:100%;margin-top:8px;padding:13px;border:2px solid #1F8F53;color:#1F7A52;background:#EAF6EF;border-radius:99px;font:700 15px Archivo,sans-serif}.pcv .pcl{display:block;width:100%;margin-top:6px;background:none;border:0;color:var(--gray,#5A554E);font:600 14px Archivo,sans-serif;padding:8px}
+.cqh{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;margin:6px 0 12px;padding:12px;border-radius:18px;background:linear-gradient(135deg,#E8E4F4,#DDEBF2);color:#3B3A6B}
+.cqh .cqi{flex:0 0 96px;color:#5B4B9A}.cqh svg{width:96px;height:80px;display:block}.cqx small{display:block;font:600 12px Archivo,sans-serif;opacity:.8;text-transform:uppercase;letter-spacing:.06em}.cqx b{display:block;font:700 20px/1.15 Archivo,sans-serif;margin:2px 0}.cqx span{display:block;font:500 13.5px Archivo,sans-serif}.cqx em{display:block;font-style:normal;font:600 13px Archivo,sans-serif;margin-top:4px}
+.cqring{transform-origin:60px 46px;animation:cqb 5s ease-in-out infinite}.cqa1{transform-origin:58px 34px;animation:cqs 5s ease-in-out infinite}.cqa2{transform-origin:62px 34px;animation:cqs2 5s ease-in-out infinite}
+@keyframes cqb{0%,100%{transform:scale(.78);opacity:.25}50%{transform:scale(1.05);opacity:.55}}@keyframes cqs{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}@keyframes cqs2{0%,100%{transform:rotate(12deg)}50%{transform:rotate(-12deg)}}
+.pcv .cql{margin:0 0 10px}.pcv .cql .prerow{margin-bottom:6px}
+@media (prefers-reduced-motion:reduce){.cqring,.cqa1,.cqa2{animation:none!important}}`;document.head.appendChild(st);
+const early=k=>{if(S.fb&&S.fb[fbKey(k)])return true;if(ipActive()&&S.tw===k&&S.tgD===today())return true;return !DAYS[S.day];};
+function actBtns(k,start){return `<button class="btn solid pcb" data-act="prestart" data-b="${k}">${start}</button><button class="pcc" data-act="precheck" data-b="${k}">✓ Ya lo hice · Hacer check-in</button>`;}
+function cardioPrev(){
+  const d=DAYS[S.day],P=PERIOD[S.program],wk=Math.min(S.week,P.weeks),t=cxTier(cTier(d,wk)),c=(S.cardio||{})[cKey(d)]||{},mod=c.mod||d.cardioDefault||'camin_cam',m=CMODS[mod]||CMODS.camin_cam,z=t?TIERZONE[t]:2,Z=ZONES[z-1];
+  const hero=`<div class="cvh" style="--zc:${ZC[z]}"><div class="cvi">${__cv.icon(mod)}</div><div class="cvx"><small>${t?'Hoy haces':'Movimiento suave'}</small><b>${esc(m.n)}</b><span>${t?cDur(d,t):'15–35 min'}</span><em>🗣 ${__cv.TALK[z]}</em></div><svg class="cvecg" viewBox="0 0 240 24" preserveAspectRatio="none"><path d="M0 12 H60 l6 -9 l8 20 l8 -16 l6 5 H130 l6 -9 l8 20 l8 -16 l6 5 H240"/></svg></div>`;
+  const stats=`<div class="pcs"><div><small>Zona</small><b>${z}</b></div><div><small>Ritmo</small><b>${esc(String(Z.s).replace(/^Zona \d\s*[·-]?\s*/i,'')||Z.s)}</b></div><div><small>Semana</small><b>${wk}/${P.weeks}</b></div></div>`;
+  const txt=t?`${t}. Un ritmo en el que puedas mantener el control de tu respiración.`:'Semana de movimiento suave: zonas 1–2, sin buscar intensidad.';
+  sheet(`<div class="pcv"><div class="prehd"><small>Cardio de hoy</small></div>${hero}${stats}<p class="pct">${esc(txt)}</p>${actBtns('g_cardio','Comenzar cardio')}<button class="pcl" data-act="prelist" data-b="g_cardio">Ver opciones de cardio</button></div>`);}
+const FIG=`<circle class="cqring" cx="60" cy="46" r="30" fill="currentColor" stroke="none"/><g stroke="currentColor" stroke-width="3.6" stroke-linecap="round" fill="none"><circle cx="60" cy="18" r="6.5"/><path d="M60 26 L60 54 M60 54 L50 72 M60 54 L70 72"/><g class="cqa1"><path d="M58 34 L44 16"/></g><g class="cqa2"><path d="M62 34 L76 16"/></g><path d="M20 76 H100" opacity=".4"/></g>`;
+function calmPrev(){
+  const d=DAYS[S.day],P=PERIOD[S.program],wk=Math.min(S.week,P.weeks),b=d.blocks.find(x=>x.k==='calm'),its=(b&&b.items)||[],n=its.length,mn=Math.max(3,Math.round((n||4)*0.75));
+  const hero=`<div class="cqh"><div class="cqi"><svg viewBox="0 0 120 90" aria-hidden="true">${FIG}</svg></div><div class="cqx"><small>Vuelta a la calma</small><b>Bajamos revoluciones</b><span>${n?n+(n===1?' estiramiento':' estiramientos'):'Estiramientos'} · ~${mn} min</span><em>🫁 Respira profundo en cada posición</em></div></div>`;
+  const rows=its.map((it,i)=>{const id=curEx(d,'calm',i,it),e=E[id]||{},mm=(it.fixed&&it.fixed.reps)||'';return `<div class="prerow">${typeof thumb==='function'?thumb(id):''}<span><b>${esc(e.n||id)}</b><small>${esc(mm)}</small></span></div>`;}).join('');
+  sheet(`<div class="pcv">${hero}${rows?`<div class="cql">${rows}</div>`:'<p class="pct">Estiramientos suaves y respiración para empezar a recuperar. Sin prisa.</p>'}${actBtns('g_calm','Comenzar vuelta a la calma')}</div>`);}
+const po=preOpen;preOpen=function(k){
+  try{if(k==='g_cardio'||k==='g_calm'){if(early(k))return po.apply(this,arguments);if(k==='g_cardio')cardioPrev();else calmPrev();return true;}}catch(e){console.warn('prev',e);}
+  return po.apply(this,arguments);};
+/* check-in directo desde el previsual */
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#sheet [data-act="precheck"]');if(!t)return;e.stopPropagation();e.preventDefault();const g=t.dataset.b;closeSheet();try{fbd={};}catch(x){}openFinish(g);
+  setTimeout(()=>{try{if(g==='g_fuerza')return;const sb=document.querySelector('#sheet .celeb .sub');if(sb&&/^Te falta/.test(sb.textContent))sb.textContent=g==='g_calm'?'Cuéntanos cómo te sentiste.':'Cuéntanos cómo te fue en tu cardio.';}catch(x){}},30);},true);
 })();
