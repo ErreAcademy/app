@@ -1,10 +1,12 @@
-import re,sys
-src=open('/home/claude/erre-app/prototype.html').read()
-glue=open('/home/claude/erre-real/glue.js').read()+'\n'+open('/home/claude/erre-real/routine.js').read()
-bundle=open('/home/claude/erre-real/supabase.bundle.js').read()
+import re,sys,os
+HERE=os.path.dirname(os.path.abspath(__file__))
+P=lambda f:os.path.join(HERE,f)
+src=open(P('prototype.html')).read()
+glue=open(P('glue.js')).read()+'\n'+open(P('routine.js')).read()
+bundle=open(P('supabase.bundle.js')).read()
 import datetime
 glue=glue.replace('__APP_VER__',(datetime.datetime.utcnow()-datetime.timedelta(hours=5)).strftime('%d%b-%H%M').lower())
-cfg=open('/home/claude/erre-real/config.js').read()
+cfg=open(P('config.js')).read()
 def rep(a,b):
     global src
     assert a in src,a[:70]
@@ -328,5 +330,5 @@ rep("${swapped?`<div class=\"note\"><b>Original:</b> ${E[it.ex].n}.${warm?'':' R
 rep("${swapped?`<button class=\"btn\" data-act=\"restore\"","${swapped&&!pgAuto?`<button class=\"btn\" data-act=\"restore\"")
 
 src=themeify(src)
-open('/home/claude/erre-real/index.html','w').write(src)
+open(os.path.join(HERE,'..','index.html'),'w').write(src)
 print(len(src))
