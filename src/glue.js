@@ -4951,3 +4951,5 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 .zmb{display:flex;gap:5px;align-items:flex-end;height:34px}.zmb i{flex:1;height:14px;border-radius:6px;background:var(--c);opacity:.28}.zmb i.on{height:34px;opacity:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 30%,transparent)}
 .zml{display:flex;justify-content:space-between;margin-top:5px}.zml small{font:500 10.5px Archivo,sans-serif;color:var(--gray,#5A554E)}
 @media(min-width:1000px){.cpside{display:flex;flex-direction:column;max-height:calc(100vh - 24px);overflow-y:auto}.cpside .cpfoot{position:static;margin-top:auto;padding-top:16px}.cpside .cpnav{flex:0 0 auto}}`;document.head.appendChild(st);})();
+
+(function(){const st=document.createElement('style');st.textContent=`.cpbadge.basic{background:#3B82C4!important;color:#fff!important}.cpbadge.complete{background:#1C1B19!important;color:#fff!important}.cpbadge.elite{background:linear-gradient(135deg,#F0CB5B,#C99A1E)!important;color:#2A2108!important;box-shadow:0 0 0 1.5px #E3B93C}`;document.head.appendChild(st);})();
