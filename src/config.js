@@ -1,0 +1,1 @@
+window.ERRE_CFG={url:"https://nftdguodcrafjatujxwh.supabase.co",key:"sb_publishable_HFrC0RornMPte2FMKxt4tw_lEedHgJS",ph:"phc_uX7tRKxiqukYGxdNBvCkcNiWBxFa9T5owGphSwzxYEgA",phHost:"https://us.i.posthog.com"};
