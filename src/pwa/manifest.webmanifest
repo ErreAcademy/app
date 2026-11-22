@@ -9,7 +9,7 @@
   "orientation": "portrait",
   "background_color": "#F7F6F3",
   "theme_color": "#1C1B19",
-  "related_applications": [{"platform": "webapp", "url": "https://erreacademy.github.io/app/manifest.webmanifest"}],
+  "related_applications": [{"platform": "webapp", "url": "https://erre-complete.github.io/app/manifest.webmanifest"}],
   "prefer_related_applications": false,
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
