@@ -81,7 +81,7 @@ header.top .who small{display:block;color:var(--gray);font-size:12px}
 .setwrap{margin-bottom:10px}
 .set{display:grid;grid-template-columns:24px 1fr 1fr 1fr 40px;gap:6px;align-items:center}
 .set .n{font-weight:600;color:var(--gray);text-align:center}
-.set input[type=number],.drop input[type=number]{width:100%;padding:9px 4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);text-align:center}
+.set input[type=number],.drop input[type=number],.set input[data-f=kg],.drop input[data-f=dkg]{width:100%;padding:9px 4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);text-align:center}
 .set button{height:38px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:16px}
 .setwrap.done .set button{background:var(--red);border-color:var(--red);color:#fff}
 .setwrap.done .set input{background:var(--red-tint)}
@@ -629,7 +629,20 @@ button.cptr:hover{background:var(--bg)}.cptr:last-child{border-bottom:0}
 .cprep{display:flex;align-items:center;gap:8px;margin:4px 0 10px;font-size:14px}.cprep span{flex:1}.cprepb{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.cpal{padding:0;gap:0;align-items:stretch}.cpalb{flex:1;display:flex;gap:10px;align-items:flex-start;text-align:left;background:none;border:0;padding:10px 12px;cursor:pointer;color:inherit;font-family:inherit;min-width:0}.cpalb>span{flex:1;min-width:0}.cpalb b{display:block;font-size:14px}.cpalb small{display:block;color:var(--mut,var(--gray2,#777));font-size:12px;margin-top:2px}.cpok{flex:none;align-self:center;margin-right:10px;background:none;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:11px;cursor:pointer;color:inherit;font-family:inherit}.cpok:hover{border-color:#2E9D6B;color:#2E9D6B}.cpc.cpdrop{outline:2px dashed #D03A68;outline-offset:-2px;background:color-mix(in srgb,#FDECF1 var(--tm,100%),var(--card,#FBFAF8))}.cpp[draggable=true]{cursor:grab}.cpmvb{padding:4px 2px 2px;color:#1a1a1a}.cpmvb p{margin:0 0 14px;font-size:14px;line-height:1.4;color:#1a1a1a}.cpmvb>div{display:flex;gap:8px;flex-wrap:wrap}.cpmvbt{flex:1;min-width:90px;padding:11px 14px;border-radius:10px;border:1px solid #d5d5d5;background:var(--wh,#fff);color:#1a1a1a;font:600 14px inherit;font-family:inherit;cursor:pointer}.cpmvbt.pri{background:#111;border-color:#111;color:#fff}.rttabs{display:flex;gap:4px;overflow-x:auto;margin:14px 0 8px;padding-bottom:2px;border-bottom:1px solid var(--line,#e3e3e3);position:sticky;top:0;background:var(--bg,#fff);z-index:3}.rttab{flex:none;padding:10px 12px;border:0;background:none;font:600 14px inherit;font-family:inherit;color:var(--gray2,#777);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}.rttab.on{color:var(--red,#C0392B);border-bottom-color:var(--red,#C0392B)}.rttab em{font-style:normal;font-size:11px;background:#eee;color:var(--gray,#555);border-radius:9px;padding:1px 6px;margin-left:5px}.rttab.on em{background:color-mix(in srgb,#FDECF1 var(--tm,100%),var(--card,#FBFAF8));color:var(--red,#C0392B)}.cpbt{margin:0 0 10px;display:flex;gap:6px;flex-wrap:wrap}.rttab i{font-style:normal;margin-right:5px}.rttab span{display:inline}.rtsec{border-left:4px solid #bbb;border-radius:12px;margin-top:16px;padding-left:12px}.rt-main{border-left-color:var(--red,#C0392B)}.rt-acc{border-left-color:#E08A2E}.rt-warm{border-left-color:#2E9D6B}.rt-calm{border-left-color:#5B7FC7}.rt-cardio{border-left-color:#D03A68}.rtsec .sec-h{margin-bottom:10px}.cpparts{margin:0 0 12px}.cpparts-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gray2,#777);margin-bottom:6px}.cppart{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line,#e3e3e3);border-radius:12px;background:var(--wh,#fff);padding:10px 12px;margin-bottom:6px;cursor:pointer;font-family:inherit;color:inherit}.cppart.on{border-color:var(--red,#C0392B);background:color-mix(in srgb,#FDF3F1 var(--tm,100%),var(--card,#FBFAF8))}.cppart i{font-style:normal;font-size:20px}.cppart>span:nth-child(2){flex:1;min-width:0}.cppart b{display:block;font-size:14px}.cppart small{color:var(--gray2,#777);font-size:12px}.cpwk2{display:flex;gap:8px;margin:8px 0}.cpwk2 .btn{flex:1}.pkrow2{display:flex;align-items:stretch;gap:4px}.pkrow2 .pkrow{flex:1;min-width:0}.pkeye{flex:none;width:44px;border:1px solid var(--line,#e3e3e3);border-radius:12px;background:var(--wh,#fff);cursor:pointer;font-size:18px}.pkeye:hover{background:color-mix(in srgb,#F2F2F2 var(--tm,100%),var(--card,#FBFAF8))}.pkfav{color:#D03A68}.exfav{display:flex;align-items:center;gap:8px;border:0;background:none;font:600 15px inherit;font-family:inherit;cursor:pointer;padding:4px 0 10px}.exfav b{font-size:24px;color:#D03A68;font-weight:400}.expv{position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000}.expv iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.extag{display:inline-flex;align-items:center;gap:4px;background:color-mix(in srgb,#EEF3FB var(--tm,100%),var(--card,#FBFAF8));color:#2A5BA8;border-radius:14px;padding:4px 6px 4px 10px;margin:0 6px 6px 0;font-size:13px}.extag button{border:0;background:none;cursor:pointer;color:inherit;font-size:12px}.pkt .chip{white-space:nowrap}.rttabs{display:grid!important;grid-template-columns:repeat(4,1fr);gap:6px;overflow:visible;border-bottom:0!important}.rttab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 4px!important;border:2px solid #e3e3e3!important;border-radius:12px;background:var(--wh,#fff)!important;color:var(--gray,#555)!important;font-size:13px!important;white-space:normal!important;position:relative}.rttab i{font-size:18px;margin:0!important}.rttab em{position:absolute;top:4px;right:6px;margin:0!important}.rttab.on{background:color-mix(in srgb,var(--tc) 12%,#fff)!important;border-color:var(--tc)!important;color:var(--tc)!important}.chip.tc{border-color:color-mix(in srgb,var(--tc) 45%,#fff)}.chip.tc.on{background:var(--tc)!important;border-color:var(--tc)!important;color:#fff!important}.pkchips.pkt{flex-wrap:wrap!important;overflow:visible!important}.pkrow2{border-left:5px solid var(--tc);border-radius:12px}.pktag{font-style:normal;font-size:11px;font-weight:700;color:var(--tc);margin-right:4px}.libhd{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--tc);padding-bottom:8px}.libhd span{font-size:12px;font-weight:700;color:var(--tc);background:color-mix(in srgb,var(--tc) 12%,#fff);border-radius:12px;padding:3px 10px}.exname{font-size:17px;font-weight:700}.exsec{margin:14px 0 6px;padding-top:10px;border-top:1px solid #e3e3e3;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--gray2,#777)}.cppart{border-left:5px solid var(--tc)!important}.cppart.on{background:color-mix(in srgb,var(--tc) 10%,#fff)!important;border-color:var(--tc)!important}.mini.ok{border-color:#2E9D6B!important;background:color-mix(in srgb,#EAF6F0 var(--tm,100%),var(--card,#FBFAF8))!important}.mini.ok em{color:#1F7A52!important;font-weight:700}.mini.ok b{color:#1F7A52}.mini.ok::after{content:'✓';position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:#2E9D6B;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;animation:none}.mini.ok .mbar{background:color-mix(in srgb,#cfe9dc var(--tm,100%),var(--card,#FBFAF8))}.mbar i{transition:width .5s,background .5s}.progress i{transition:width .4s,background .4s}.stepok{text-align:center;font-weight:700;color:#2E9D6B;margin:0 0 10px}.tcard.tdone2{background:color-mix(in srgb,#F1FAF5 var(--tm,100%),var(--card,#FBFAF8))!important;border-color:#BFE3D0!important}.tcard.tdone2 .bar{background:#2E9D6B!important}.vidbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 4px}.vidbar>span{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gray2,#777);margin-right:2px}.vb{border:1px solid #ddd;background:var(--wh,#fff);border-radius:99px;padding:6px 11px;font-weight:600;font-size:12px;font-family:inherit;color:#444;cursor:pointer}.vb em{font-style:normal;opacity:.7;margin-left:3px}.vb.on{background:var(--btn,var(--ink,#1C1B19));border-color:var(--ink,#1C1B19);color:#fff}.vb-sin.on{background:#E08A2E;border-color:#E08A2E}.pkchips{flex-wrap:wrap!important;overflow-x:visible!important}.pwab{display:flex;align-items:center;gap:12px;background:var(--btn,var(--ink,#1C1B19));color:#fff;border-radius:16px;padding:12px 14px;margin:0 0 12px}.pwab img{width:42px;height:42px;border-radius:10px;flex:none}.pwab span{flex:1;font-size:13px;line-height:1.35}.pwab b{display:block;font-size:14px}.pwab button{border:0;border-radius:99px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer}.pwab .pwai{background:var(--red,#C0392B);color:#fff}.pwab .pwax{background:transparent;color:#bbb;padding:6px}.plwrap{margin-top:22px;padding-top:6px}.pltitle{font-weight:700;font-size:15px;margin:0 0 8px;text-align:center}.plall{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:0 12px}.plall>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 2px;cursor:pointer;list-style:none}.plall>summary::-webkit-details-marker{display:none}.plall>summary b{display:block;font-size:15px}.plall>summary small{display:block;color:var(--gray);font-size:12px;margin-top:2px}.plall>summary i{font-style:normal;transition:transform .2s}.plall[open]>summary i{transform:rotate(180deg)}.plc{border:1px solid var(--line);border-left:5px solid var(--pc);border-radius:14px;background:var(--wh,#fff);margin:0 0 10px;padding:0 12px}.plc>summary{display:flex;align-items:center;gap:10px;padding:12px 0;cursor:pointer;list-style:none}.plc>summary::-webkit-details-marker{display:none}.plic{width:38px;height:38px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:19px;background:color-mix(in srgb,var(--pc) 14%,#fff);flex:none}.plt{flex:1;min-width:0}.plt b{display:block;font-size:15px;color:var(--pc)}.plt small{display:block;font-size:12px;color:var(--gray);line-height:1.3}.plp{font-size:11px;font-weight:700;color:var(--pc);text-align:right;flex:none;max-width:84px;line-height:1.25}.plc ul{margin:0 0 10px;padding-left:18px;font-size:13px;line-height:1.5}.plc li{margin:2px 0}.plgo{display:block;text-align:center;text-decoration:none;padding:12px;margin:0 0 12px;background:var(--pc)!important;border-color:var(--pc)!important;color:#fff!important}.plcmp{margin:2px 0 12px}.plcmp>summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--red-strong);padding:6px 0}.pkedit{margin-left:auto;padding:2px 8px;color:var(--gray);cursor:pointer;font-size:14px}.pkedit:hover{color:var(--ink)}.cphito{font-style:normal;margin-left:6px}
 </style>
 </head>
-<body>
+<body><div id="erresp"><style>
+#erresp{position:fixed;inset:0;z-index:9999;background:#121418;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease,visibility .45s}
+#erresp.out{opacity:0;visibility:hidden}
+#erresp svg{width:132px;height:auto;overflow:visible}
+#erresp .r1{fill:#fff;fill-opacity:0;stroke:#fff;stroke-width:3;stroke-linejoin:round;stroke-dasharray:2400;stroke-dashoffset:2400;animation:esdraw .95s ease-out forwards,esfill .5s ease .75s forwards}
+#erresp .r2{fill:#B98A3C;opacity:0;transform:translate(34px,34px);animation:esslide .55s cubic-bezier(.2,.9,.3,1.2) .95s forwards,escol 1.1s linear .95s forwards}
+#erresp .tx{font:700 15px Oswald,Archivo,sans-serif;letter-spacing:.42em;color:#fff;text-transform:uppercase;opacity:0;animation:esup .5s ease 1.25s forwards;padding-left:.42em}
+#erresp .tx2{font:600 11px Archivo,sans-serif;letter-spacing:.22em;color:#B98A3C;text-transform:uppercase;opacity:0;margin-top:-10px;animation:esup .5s ease 1.4s forwards}
+@keyframes esdraw{to{stroke-dashoffset:0}}@keyframes esfill{to{fill-opacity:1}}
+@keyframes esslide{to{opacity:1;transform:none}}
+@keyframes escol{0%{fill:var(--red,#C0392B)}30%{fill:#4E7D63}60%{fill:#3F6B86}100%{fill:#B98A3C}}
+@keyframes esup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style><svg viewBox="270 270 590 540" aria-hidden="true"><polygon class="r1" points="283,280 722,280 845,402 650,583 448,583 672,395 411,395 411,676 283,795"/><polygon class="r2" points="445,598 641,598 838,795 637,795"/></svg><div class="tx">ERRE</div><div class="tx2">Academy</div>
+<script>(function(){var e=document.getElementById('erresp');try{if(sessionStorage.getItem('erre_sp')){e.remove();return;}sessionStorage.setItem('erre_sp','1');}catch(x){}setTimeout(function(){e.className='out';},2150);setTimeout(function(){if(e.parentNode)e.remove();},2700);})();</script></div>
 <div class="app" id="app"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:10px;font-family:system-ui,sans-serif;color:var(--ink,#1C1B19)"><div style="width:56px;height:56px;border-radius:16px;background:var(--red,#C0392B);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:28px">R</div><b style="letter-spacing:.12em;font-size:14px">ERRE COMPLETE</b><small style="color:#8a8780">Cargando…</small></div></div>
 <div class="sheet-bg" id="bg"></div>
 <div class="sheet" id="sheet"></div>
@@ -1164,6 +1177,8 @@ const PIL={
  pasos:{n:'Pasos diarios',c:'#5A554E',verbo:''}
 };
 const isC=()=>S.program==='complete';
+const fkg=v=>(v==null||v==='')?'':String(v).replace('.',',');
+const numES=v=>{v=parseFloat(String(v).replace(',','.'));return isFinite(v)?v:undefined;};
 const tier=()=>isC()?(S.elite?'elite':'complete'):'basic';
 const TN={basic:'Basic',complete:'Complete',elite:'Elite'};
 const CH=t=>isC()?t:t.replace(' y cuéntaselo a tu coach','').replace(' con tu coach','').replace(' Tu coach lo ajusta contigo.','').replace('; tu coach lo ajusta contigo','');
@@ -1208,7 +1223,7 @@ function homeView0(){
     else rows.push({p:'entrenar',t:'Día de descanso',s:'Camina y muévete suave',rest:true,done:0,total:0}); }
   ['recovery','habitos','alim'].filter(modOn).forEach(p=>{const k=tcount(p);rows.push({p,t:{recovery:'Tu respiración',habitos:'Tus hábitos',alim:'Tu conducta de alimentación'}[p],s:`${k.done} de ${k.total} listas`,done:k.done,total:k.total});});
   const wv=S.weights[S.sel], wst=weightStats(S.sel), wdd=(wst&&wst.prev&&wv!=null)?wv-wst.prev.w:null, stk=(S.sel===today())?wStreak():0;
-  rows.push({p:'peso',t:wv!=null?`${wv.toFixed(1)} kg registrado`:(S.sel===today()?'Pésate hoy':'Registra tu peso'),s:wv!=null?((wdd!=null?`${wdd>0?'+':''}${wdd.toFixed(1)} kg vs tu registro anterior`:'Primer registro')+(stk>=2?` · Racha de ${stk} días`:'')):'10 segundos · mejor en la mañana y en las mismas condiciones',done:wv!=null?1:0,total:1});
+  rows.push({p:'peso',t:wv!=null?`${wv.toFixed(1).replace('.',',')} kg registrado`:(S.sel===today()?'Pésate hoy':'Registra tu peso'),s:wv!=null?((wdd!=null?`${wdd>0?'+':''}${wdd.toFixed(1).replace('.',',')} kg vs tu registro anterior`:'Primer registro')+(stk>=2?` · Racha de ${stk} días`:'')):'10 segundos · mejor en la mañana y en las mismas condiciones',done:wv!=null?1:0,total:1});
   const sv=S.steps[S.sel]||0;
   rows.push({p:'pasos',t:sv?`${sv.toLocaleString('es-CO')} pasos`:'Registra tus pasos',s:sv?(sv>=S.stepGoal?'Meta cumplida. Excelente.':`Te faltan ${(S.stepGoal-sv).toLocaleString('es-CO')} para tu meta`):`Meta: ${S.stepGoal.toLocaleString('es-CO')} · a mano o desde tu reloj (pronto)`,done:sv>=S.stepGoal?1:0,total:1});
   const act=rows.filter(r=>!r.rest&&r.p!=='peso'&&r.p!=='pasos'), full=act.filter(r=>r.total&&r.done>=r.total).length, isT=S.sel===today();
@@ -1369,11 +1384,11 @@ function exHTML(d,b,i,it,pr,key,L){
     const l=L[s]||{}; const low=parseInt(pr.reps);
     return `<div class="setwrap${l.done?' done':''}"><div class="set"><span class="n">${s+1}</span>
       <input type="number" inputmode="numeric" placeholder="${low||''}" value="${l.reps??''}" data-k="${key}" data-s="${s}" data-f="reps">
-      <input type="number" inputmode="decimal" placeholder="${showRef?it.ref:'kg'}" value="${l.kg??''}" data-k="${key}" data-s="${s}" data-f="kg">
+      <input type="text" inputmode="decimal" autocomplete="off" placeholder="${showRef?fkg(it.ref):'kg'}" value="${fkg(l.kg)}" data-k="${key}" data-s="${s}" data-f="kg">
       <button class="rpeb${l.rpe?' on':''}" data-act="rpeo" data-k="${key}" data-s="${s}" aria-label="Esfuerzo">${rpeFace(l.rpe)}</button>
       <button data-act="done" data-k="${key}" data-s="${s}" data-rest="${restSecs(it)}" aria-label="Serie hecha">✓</button></div>
       <label class="dropt"><input type="checkbox" data-act="drop" data-k="${key}" data-s="${s}" ${l.drop?'checked':''}> Dropset <button class="lblbtn" data-act="info" data-v="dropset" style="margin-left:2px">ⓘ</button></label>
-      ${l.drop?`<div class="drop"><span>↳ Dropset</span><input type="number" inputmode="numeric" placeholder="reps" value="${l.dreps??''}" data-k="${key}" data-s="${s}" data-f="dreps"><input type="number" inputmode="decimal" placeholder="kg" value="${l.dkg??''}" data-k="${key}" data-s="${s}" data-f="dkg"></div>`:''}
+      ${l.drop?`<div class="drop"><span>↳ Dropset</span><input type="number" inputmode="numeric" placeholder="reps" value="${l.dreps??''}" data-k="${key}" data-s="${s}" data-f="dreps"><input type="text" inputmode="decimal" autocomplete="off" placeholder="kg" value="${fkg(l.dkg)}" data-k="${key}" data-s="${s}" data-f="dkg"></div>`:''}
     </div>`;
   }).join(''):'';
   const summ=it.extra?`${pr.sets} ${pr.sets===1?'serie':'series'}`:`${pr.sets} ${pr.sets===1?'serie':'series'} · ${pr.reps}${/^[\d\-–]+$/.test(String(pr.reps))?' reps':''}`;
@@ -1387,7 +1402,7 @@ function exHTML(d,b,i,it,pr,key,L){
     </div>
     ${open?`<div class="exb">
       ${meta}${typeof gripRow==='function'?gripRow(exId):''}
-      ${showRef?`<div class="ref">Peso de referencia de tu coach: <b>${it.ref} kg</b></div>`:(!isC()&&!it.fixed&&!warm&&!it.extra&&!swapped?invl('Con Complete: peso de referencia de tu coach'):'')}
+      ${showRef?`<div class="ref">Peso de referencia de tu coach: <b>${fkg(it.ref)} kg</b></div>`:(!isC()&&!it.fixed&&!warm&&!it.extra&&!swapped?invl('Con Complete: peso de referencia de tu coach'):'')}
       ${swapped?`<div class="note"><b>Original:</b> ${E[it.ex].n}.${warm?'':' Registra tu peso real, no hay referencia para este ejercicio.'}</div>`:(it.note?`<div class="note"><b>${isC()?'Nota del coach':'Tip'}:</b> ${it.note}</div>`:'')}
       ${logging?prevLine(exId):''}
       ${logging?`<div class="sets"><div class="setlabels"><span>#</span><span>Reps</span><span>Kg</span><button class="lblbtn" data-act="info" data-v="rpe">Esfuerzo ⓘ</button><span></span></div>${sets}</div>`:''}
@@ -1552,7 +1567,7 @@ document.addEventListener('input',e=>{
   if(i.dataset.chr){return;}
   if(i.dataset.cmin){const k=cKey(DAYS[S.day]);S.cardio[k]=S.cardio[k]||{};S.cardio[k].min=i.value===''?undefined:+i.value;save();return;}
   if(!i.dataset.k||!i.dataset.f) return;
-  const L=S.logs[i.dataset.k]=S.logs[i.dataset.k]||[]; const s=+i.dataset.s; L[s]=L[s]||{}; L[s][i.dataset.f]=i.value===''?undefined:+i.value; save();
+  const L=S.logs[i.dataset.k]=S.logs[i.dataset.k]||[]; const s=+i.dataset.s; L[s]=L[s]||{}; L[s][i.dataset.f]=i.value===''?undefined:numES(i.value); save();
   S.t0=S.t0||{};if(!S.t0[S.sel]){S.t0[S.sel]=Date.now();save();}
 });
 document.addEventListener('change',e=>{
@@ -1581,10 +1596,10 @@ function weightFeedback(st){
   if(!st.prev){out.push('Primer registro guardado. Con unos días más empezamos a ver tu tendencia.');return out;}
   const dd=st.last.w-st.prev.w;
   if(Math.abs(dd)>=2.5){out.push('Hay un cambio grande desde tu último registro. Revisa si te pesaste en condiciones distintas (hora, ropa, antes o después de comer) y cuéntaselo a tu coach. Mientras lo confirmamos, no sacamos conclusiones de este dato.');return out;}
-  else if(Math.abs(dd)>=0.6) out.push(`Cambió ${dd>0?'+':''}${dd.toFixed(1)} kg respecto a tu último registro. Es normal: de un día a otro el peso sube y baja por agua, sal, comidas y digestión. Lo que importa es la tendencia.`);
+  else if(Math.abs(dd)>=0.6) out.push(`Cambió ${dd>0?'+':''}${dd.toFixed(1).replace('.',',')} kg respecto a tu último registro. Es normal: de un día a otro el peso sube y baja por agua, sal, comidas y digestión. Lo que importa es la tendencia.`);
   const g=S.goal, p=st.pct;
   if(p==null){out.push('Pésate al menos 2 veces por semana para ver tu tendencia semanal.');return out;}
-  const d=`${st.delta>0?'+':''}${st.delta.toFixed(1)} kg`;
+  const d=`${st.delta>0?'+':''}${st.delta.toFixed(1).replace('.',',')} kg`;
   if(g==='bajar'){
     if(p<-1) out.push(`Tu promedio semanal bajó ${d}: estás bajando más rápido de lo recomendable. Revisa que estés comiendo suficiente y que tu energía y rendimiento estén bien, y coméntalo con tu coach.`);
     else if(p<=-0.25) out.push(`Excelente: tu promedio semanal bajó ${d}. Es un ritmo sostenible y vas bien con tu alimentación. Sigamos así.`);
@@ -1634,13 +1649,13 @@ function loggedLifts(){
 }
 function weightCard(){
   const v=S.weights[S.sel], st=weightStats(S.sel), dd=(st&&st.prev&&v!=null)?v-st.prev.w:null;
-  return `<h2 class="h2">Peso corporal</h2><div class="wcard"><div class="wl"><b>${v!=null?v.toFixed(1)+' kg':'Sin registrar'}</b><em>${v!=null?(dd!=null?`${dd>0?'+':''}${dd.toFixed(1)} kg vs tu registro anterior`:'Primer registro'):(S.sel===today()?'Registra tu peso de hoy':'Registra tu peso de este día')}</em></div>
+  return `<h2 class="h2">Peso corporal</h2><div class="wcard"><div class="wl"><b>${v!=null?v.toFixed(1)+' kg':'Sin registrar'}</b><em>${v!=null?(dd!=null?`${dd>0?'+':''}${dd.toFixed(1).replace('.',',')} kg vs tu registro anterior`:'Primer registro'):(S.sel===today()?'Registra tu peso de hoy':'Registra tu peso de este día')}</em></div>
    <div class="wr"><input id="wIn" type="text" inputmode="decimal" placeholder="kg" value="${v!=null?v:''}"><button class="btn solid" data-act="wsave">${v!=null?'Actualizar':'Guardar'}</button></div>
    <button class="lblbtn" data-act="prog" style="color:var(--red-strong);margin-top:8px">Ver progreso y feedback ›</button></div>`;
 }
 function openWeightFeedback(){
   const st=weightStats(S.sel), fb=weightFeedback(st), g=S.user?GN[S.user.main]:GN[S.goal];
-  sheet(`<h3>Peso guardado</h3><div class="sub">${S.weights[S.sel].toFixed(1)} kg · ${fmtL(S.sel)}</div>${fb.map(t=>`<div class="note">${CH(t)}</div>`).join('')}<div class="sub" style="margin-top:8px">Orientación general según tu objetivo (${g}).${isC()?' Tu coach lo ajusta contigo.':''}</div><button class="btn solid" data-act="prog" style="width:100%;margin-bottom:8px">Ver progreso</button><button class="btn" data-act="close" style="width:100%">Cerrar</button>`);
+  sheet(`<h3>Peso guardado</h3><div class="sub">${S.weights[S.sel].toFixed(1).replace('.',',')} kg · ${fmtL(S.sel)}</div>${fb.map(t=>`<div class="note">${CH(t)}</div>`).join('')}<div class="sub" style="margin-top:8px">Orientación general según tu objetivo (${g}).${isC()?' Tu coach lo ajusta contigo.':''}</div><button class="btn solid" data-act="prog" style="width:100%;margin-bottom:8px">Ver progreso</button><button class="btn" data-act="close" style="width:100%">Cerrar</button>`);
 }
 function progresoView(){
   const seg=S.prog.seg, t=today();
@@ -1678,17 +1693,17 @@ function progresoView(){
     const st=weightStats(t), all=wlist(), rg=S.prog.range, L=rg?all.filter(p=>p.d>=addD(t,-rg)):all;
     if(!all.length) return h+emptyCard('Aún no tienes registros','Registra tu peso en el Inicio. Con unos días vas a ver tu gráfica y tu tendencia.');
     const tot=st.last.w-st.first.w, fb=weightFeedback(st);
-    h+=`<div class="big"><small>Peso actual</small><b>${st.last.w.toFixed(1)} kg</b><em>${fshort(st.last.d)} · objetivo: ${S.user?GN[S.user.main]:GN[S.goal]}</em></div>
+    h+=`<div class="big"><small>Peso actual</small><b>${st.last.w.toFixed(1).replace('.',',')} kg</b><em>${fshort(st.last.d)} · objetivo: ${S.user?GN[S.user.main]:GN[S.goal]}</em></div>
      <div class="chips">${[[14,'2 semanas'],[30,'1 mes'],[0,'Todo']].map(r=>`<button class="chip${rg===r[0]?' on':''}" data-act="prange" data-v="${r[0]}">${r[1]}</button>`).join('')}</div>
      ${lineChart(L)}<div class="legend"><span><i style="background:var(--red,#C0392B)"></i>Tendencia (promedio de 7 días)</span><span><i style="background:var(--gray);opacity:.55;border-radius:99px"></i>Cada registro</span></div>
      <div class="stats"><div><small>Inicio</small><b>${st.first.w.toFixed(1)}</b></div><div><small>Cambio total</small><b>${tot>0?'+':''}${tot.toFixed(1)}</b></div><div><small>Semana vs anterior</small><b>${st.delta==null?'—':(st.delta>0?'+':'')+st.delta.toFixed(1)}</b></div></div>
      <h2 class="h2">Feedback</h2>${fb.map(x=>`<div class="note">${CH(x)}</div>`).join('')}<div class="sub2">${isC()?'Orientación general según tu objetivo; tu coach lo ajusta contigo.':'Orientación general según tu objetivo.'}</div>
-     <h2 class="h2">Últimos registros</h2>${all.slice(-7).reverse().map((p,i,arr)=>{const q=all[all.indexOf(p)-1],dl=q?p.w-q.w:null;return `<div class="wrow"><span>${cap(pd(p.d).toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'}))}</span><b>${p.w.toFixed(1)} kg</b><em>${dl==null?'':(dl>0?'+':'')+dl.toFixed(1)}</em><button class="x" data-act="wdel" data-v="${p.d}" aria-label="Borrar">×</button></div>`;}).join('')}`;
+     <h2 class="h2">Últimos registros</h2>${all.slice(-7).reverse().map((p,i,arr)=>{const q=all[all.indexOf(p)-1],dl=q?p.w-q.w:null;return `<div class="wrow"><span>${cap(pd(p.d).toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'}))}</span><b>${p.w.toFixed(1).replace('.',',')} kg</b><em>${dl==null?'':(dl>0?'+':'')+dl.toFixed(1)}</em><button class="x" data-act="wdel" data-v="${p.d}" aria-label="Borrar">×</button></div>`;}).join('')}`;
   } else {
     return h+fuerzaNew();const m=loggedLifts(), ks=Object.keys(m).sort((a,b)=>m[b].length-m[a].length);
     if(!ks.length) return h+emptyCard('Aún no hay pesos levantados','Marca tus series con peso en Entrenar y aquí verás cómo va subiendo cada ejercicio.');
     h+=`<div class="sub2" style="margin:6px 0 10px">Tu mejor serie por sesión en cada ejercicio.</div>`+ks.map(id=>{const a=m[id],f=a[0],l=a[a.length-1],d=l.kg-f.kg;
-      return `<div class="lrow"><div class="lt"><b>${E[id].n}</b><small>${E[id].eq} · ${a.length} sesión${a.length>1?'es':''}</small><em>Última: ${l.kg} kg${l.reps?' × '+l.reps:''}</em><em style="color:${d>0?'var(--red-strong)':'var(--gray)'}">${a.length<2?'Primera sesión registrada':d>0?`+${d} kg desde que empezaste`:d===0?'Mismo peso: mira si subiste reps':`${d} kg vs el inicio (puede ser deload o un mal día)`}</em></div>${spark(a.map(x=>x.kg))}</div>`;}).join('');
+      return `<div class="lrow"><div class="lt"><b>${E[id].n}</b><small>${E[id].eq} · ${a.length} sesión${a.length>1?'es':''}</small><em>Última: ${fkg(l.kg)} kg${l.reps?' × '+l.reps:''}</em><em style="color:${d>0?'var(--red-strong)':'var(--gray)'}">${a.length<2?'Primera sesión registrada':d>0?`+${fkg(d)} kg desde que empezaste`:d===0?'Mismo peso: mira si subiste reps':`${fkg(d)} kg vs el inicio (puede ser deload o un mal día)`}</em></div>${spark(a.map(x=>x.kg))}</div>`;}).join('');
   }
   return h;
 }
@@ -1809,8 +1824,8 @@ function wDelta(live){
   const last=lastWeight(S.sel);
   if(last==null)return 'Primer registro';
   const d=live-last;
-  if(Math.abs(d)<0.05)return `Igual que tu último registro (<b>${last.toFixed(1)} kg</b>)`;
-  return `<b>${d>0?'+':'−'}${Math.abs(d).toFixed(1)} kg</b> vs tu último registro (${last.toFixed(1)})`;
+  if(Math.abs(d)<0.05)return `Igual que tu último registro (<b>${last.toFixed(1).replace('.',',')} kg</b>)`;
+  return `<b>${d>0?'+':'−'}${Math.abs(d).toFixed(1).replace('.',',')} kg</b> vs tu último registro (${last.toFixed(1)})`;
 }
 let wLo=40,wBusy=false;
 function wSetScroll(v,smooth){const sc=document.getElementById('rsc');if(!sc)return;wBusy=true;sc.scrollTo({left:(v-wLo)*100,behavior:smooth?'smooth':'auto'});setTimeout(()=>{wBusy=false;},smooth?380:60);}
@@ -1830,7 +1845,7 @@ function showWeight(){
    <div class="wfine"><button data-act="wstep" data-d="-0.1">−0.1</button><button data-act="wstep" data-d="0.1">+0.1</button>${last!=null?`<button data-act="wlast" style="width:auto;padding:0 12px">Igual que la última vez</button>`:''}</div>
    <div class="wspark" id="wspark">${wSpark(tw)}</div>
    <div class="wweek"><small>Esta semana</small>${weekDots()}</div>
-   <div class="wr" style="margin:8px 0 6px"><input id="wtype" inputmode="decimal" placeholder="O escríbelo: 72.6"></div>
+   <div class="wr" style="margin:8px 0 6px"><input id="wtype" inputmode="decimal" placeholder="O escríbelo: 72,6"></div>
    ${wnHTML()}<button class="btn solid" data-act="wok" style="width:100%;padding:14px;margin-top:6px">Registrar ✓</button>`);
   const sc=document.getElementById('rsc');document.getElementById('rtk').style.left=(sc.clientWidth/2)+'px';
   sc.addEventListener('scroll',()=>{if(wBusy)return;const v=Math.round((wLo+sc.scrollLeft/100)*10)/10;if(v!==tw){const crossed=Math.floor(v*2)!==Math.floor(tw*2);tw=v;wRefresh();if(crossed&&navigator.vibrate)try{navigator.vibrate(4)}catch(e){}}},{passive:true});
@@ -1840,7 +1855,7 @@ function countUp(el,from,to){if(!el)return;const t0=performance.now();(function 
 function celebrate(){
   const n=S.sel===today()?wStreak():0, st=weightStats(S.sel), fb=weightFeedback(st), g=S.user?GN[S.user.main]:GN[S.goal];
   const lines=['Un dato más para ver tu tendencia.','Constancia: así se ve el progreso.','Registrado. Tu yo del futuro lo agradece.','Listo. Lo importante es la tendencia, no un solo día.'];
-  sheet(`<div class="celeb"><div class="okc">✓</div><h3>Peso registrado</h3><div class="wbigv">${S.weights[S.sel].toFixed(1)} kg</div><div class="sub">${lines[(n+pd(S.sel).getDate())%4]}</div>${n>=2?`<div class="streak">Racha de ${n} días pesándote</div>`:''}${weekDots()}</div>
+  sheet(`<div class="celeb"><div class="okc">✓</div><h3>Peso registrado</h3><div class="wbigv">${S.weights[S.sel].toFixed(1).replace('.',',')} kg</div><div class="sub">${lines[(n+pd(S.sel).getDate())%4]}</div>${n>=2?`<div class="streak">Racha de ${n} días pesándote</div>`:''}${weekDots()}</div>
    ${fb.map(t=>`<div class="note">${CH(t)}</div>`).join('')}<div class="sub" style="margin-top:8px">Orientación general según tu objetivo (${g}). Tu coach lo ajusta contigo.</div>
    <button class="btn solid" data-act="prog" style="width:100%;margin-bottom:8px">Ver mi progreso</button><button class="btn" data-act="close" style="width:100%">Cerrar</button>`);
   countUp(document.querySelector('.wbigv'),lastWeight(S.sel)!=null?lastWeight(S.sel):S.weights[S.sel],S.weights[S.sel]);
@@ -2516,7 +2531,7 @@ function coachRender(keepInput){
         <div class="pfrow"><span><b>Días</b><small>${(p.train_days||[]).map(i=>DAYL[i]).join(' · ')||'—'}</small></span><span><b>Edad</b><small>${edad!=null?edad+' años':'—'}</small></span></div>
         <div class="pfrow"><span><b>Estatura / peso inicial</b><small>${p.height_cm||'—'} cm · ${p.start_weight_kg||'—'} kg</small></span></div>
         <div class="pfrow"><span><b>Molestias o lesiones</b><small>${esc(p.injuries||'Ninguna')}</small></span></div></section>
-<!--M1--><section class="sec"><div class="sec-h"><b>Peso</b><em>${last!=null?last.toFixed(1)+' kg':'Sin registros'}</em></div>${sparkOf(w7)}${delta!=null?`<div class="note">${delta>0?'+':delta<0?'−':''}${Math.abs(delta).toFixed(1)} kg en sus últimos registros</div>`:''}</section>
+<!--M1--><section class="sec"><div class="sec-h"><b>Peso</b><em>${last!=null?last.toFixed(1)+' kg':'Sin registros'}</em></div>${sparkOf(w7)}${delta!=null?`<div class="note">${delta>0?'+':delta<0?'−':''}${Math.abs(delta).toFixed(1).replace('.',',')} kg en sus últimos registros</div>`:''}</section>
        ${(()=>{const wn=d.wnotes||{},ks=Object.keys(wn).sort().reverse().slice(0,10);return ks.length?`<section class="sec"><div class="sec-h"><b>Notas de pesaje</b><em>${ks.length}</em></div>${ks.map(k=>{const n=wn[k]||{};return `<div class="pfrow"><span><b>${fdate(k)}${n.w?' · '+(+n.w).toFixed(1)+' kg':''}</b><small>${(n.tags||[]).map(esc).join(' · ')}${n.note?'<br>“'+esc(n.note)+'”':''}</small></span></div>`;}).join('')}</section>`:'';})()}
        ${(()=>{const sl=d.sleep||{},ks=Object.keys(sl).sort().reverse().slice(0,10);if(!ks.length)return '';const hs=ks.map(k=>sl[k].h).filter(h=>h!=null),av=hs.length?hs.reduce((a,b)=>a+b,0)/hs.length:null;return `<section class="sec"><div class="sec-h"><b>Sueño</b><em>${av!=null?fmtHM(av)+' prom.':'—'}</em></div>${ks.map(k=>{const n=sl[k]||{};return `<div class="pfrow"><span><b>${n.h!=null||n.q?'<i class="sdot" style="background:'+(n.q?SLC[n.q]:slHC(n.h))+'"></i>':''}${fdate(k)}${n.h!=null?' · '+fmtHM(n.h):''}</b><small>${[n.q?'Calidad '+n.q:'',n.e?'Energía '+n.e:'',...(n.tags||[])].filter(Boolean).map(esc).join(' · ')}${n.note?'<br>“'+esc(n.note)+'”':''}</small></span></div>`;}).join('')}</section>`;})()}
 <!--M2-->${(()=>{const ec=d.excom||{},rows=[];Object.keys(ec).forEach(id=>(ec[id]||[]).forEach(c=>rows.push({id,d:c.d,t:c.t})));rows.sort((a,b)=>a.d<b.d?1:-1);return rows.length?`<section class="sec"><div class="sec-h"><b>Comentarios en ejercicios</b><em>${rows.length}</em></div>${rows.slice(0,12).map(c=>`<div class="pfrow"><span><b>${esc((E[c.id]||{}).n||c.id)} · ${fdate(c.d)}</b><small>“${esc(c.t)}”</small></span></div>`).join('')}</section>`:'';})()}
@@ -2770,7 +2785,7 @@ function cpDayHTML(date){
         if(b.k==='warm'&&typeof warmVid==='function'&&!warmVid(dy,b,i,it))return '';
         const id=curEx(dy,b.k,i,it),e=E[id]||{},pr=presc(it),L=S.logs[ikey(dy,b.k,i)]||[],sw=id!==it.ex;
         const rows=[];for(let q=0;q<Math.max(pr.sets,L.length);q++){const l=L[q]||{};if(l.done&&b.k!=='warm'&&b.k!=='calm'){sets++;vol+=(+l.kg||0)*(+l.reps||0);}
-          rows.push(`<span class="cpsc${l.done?' d':''}"><b>${q+1}</b>${l.reps!=null?l.reps:'—'}${l.kg!=null?' × '+l.kg+' kg':''}${l.rpe?' · RPE '+l.rpe:''}${l.drop?' · drop':''}${l.done?' ✓':''}</span>`);}
+          rows.push(`<span class="cpsc${l.done?' d':''}"><b>${q+1}</b>${l.reps!=null?l.reps:'—'}${l.kg!=null?' × '+fkg(l.kg)+' kg':''}${l.rpe?' · RPE '+l.rpe:''}${l.drop?' · drop':''}${l.done?' ✓':''}</span>`);}
         const dn=L.filter(l=>l&&l.done).length,stt=pr.sets>0&&dn>=pr.sets?'ok':dn>0?'pa':'pe';btt++;if(stt==='ok')bdn++;
         const cm=(ec[id]||[]).filter(c=>c.d===date);
         return `<div class="cpde"><div class="cpdn"><span class="cpth">${typeof thumb==='function'?thumb(id,'sm'):''}</span><span><b>${esc(e.n||id)}</b>${sw?'<small class="cpsw">Sustituido</small>':''}<small>${pr.sets} series × ${esc(String(pr.reps))}${pr.rest&&pr.rest!=='—'?' · descanso '+esc(String(pr.rest)):''}</small></span><span class="cpdt ${stt}">${stt==='ok'?'Completado':stt==='pa'?'Parcial':'Pendiente'}</span></div>
@@ -3192,7 +3207,7 @@ setInterval(()=>{try{const b=document.querySelector('.ipbar em');if(b&&S.tgAt)b.
 /* ---- última vez (ANTERIOR) por ejercicio ---- */
 function prevLine(exId){
   try{const m=loggedLifts()[exId];if(!m)return '';const p=m.filter(x=>x.date<S.sel).pop();if(!p)return '';
-    return `<div class="prevl">Última vez: <b>${p.kg} kg${p.reps?' × '+p.reps:''}</b> · ${fshort(p.date)}</div>`;}catch(e){return '';}
+    return `<div class="prevl">Última vez: <b>${fkg(p.kg)} kg${p.reps?' × '+p.reps:''}</b> · ${fshort(p.date)}</div>`;}catch(e){return '';}
 }
 
 /* ======== Guía de técnica del ejercicio ======== */
@@ -3274,7 +3289,7 @@ function guideHTML(){
     body=yt+mus+`<h2 class="h2" style="margin-top:18px">Instrucciones del ejercicio</h2>${inf.tip?`<div class="gtip">${ICON('bulb',20)}<span>${esc(inf.tip)}</span></div>`:''}<ol class="gst">${inf.steps.map((t,i)=>`<li><b>${String(i+1).padStart(2,'0')}</b><span>${esc(t)}</span></li>`).join('')}</ol>`;
   }else{
     const h=gdHist(id);
-    body=h.length?h.map(x=>`<div class="ghs"><b>${cap(pd(x.date).toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'}))}</b>${x.sets.map((s,i)=>`<div class="ghr"><span>Serie ${i+1}</span><em>${s.kg>0?s.kg+' kg':'—'}${s.reps?' × '+s.reps:''}${s.rpe?' · '+(rpeLv(Math.round(s.rpe))||{n:''}).n:''}</em></div>`).join('')}</div>`).join(''):`<div class="note" style="margin-top:14px">Aún no hay registros de este ejercicio. Cuando lo entrenes, aquí verás cada sesión.</div>`;
+    body=h.length?h.map(x=>`<div class="ghs"><b>${cap(pd(x.date).toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'}))}</b>${x.sets.map((s,i)=>`<div class="ghr"><span>Serie ${i+1}</span><em>${s.kg>0?fkg(s.kg)+' kg':'—'}${s.reps?' × '+s.reps:''}${s.rpe?' · '+(rpeLv(Math.round(s.rpe))||{n:''}).n:''}</em></div>`).join('')}</div>`).join(''):`<div class="note" style="margin-top:14px">Aún no hay registros de este ejercicio. Cuando lo entrenes, aquí verás cada sesión.</div>`;
   }
   return `<div class="ghd"><button data-act="gdclose" aria-label="Volver">←</button><b>${esc(e.n||'')}</b></div>${tabs}<div class="gbody">${body}</div>`;
 }
@@ -3382,7 +3397,7 @@ function wnHTML(){const e=(S.wnotes||{})[S.sel]||{};WN.tags=(e.tags||[]).slice()
    <div class="chips wnc">${WNT.map(t=>`<button class="chip sl${WN.tags.includes(t)?' on':''}" data-act="wnt" data-v="${esc(t)}">${t}</button>`).join('')}</div>
    <textarea id="wnote" placeholder="Notas adicionales: por ejemplo, esta semana tuve malestar estomacal y comí poco.">${esc(e.note||'')}</textarea></details>`;}
 function wnHint(){const h=document.getElementById('wnhint');if(!h)return;const l=lastWeight(S.sel);if(l==null||!(tw>0)){h.innerHTML='';return;}
-  const dd=tw-l;if(Math.abs(dd)>=1){h.innerHTML=`<div class="note" style="border-color:#5B4B9A">Cambió ${dd>0?'+':'−'}${Math.abs(dd).toFixed(1)} kg frente a tu registro anterior. ¿Quieres contarle a tu coach por qué?</div>`;const d=document.getElementById('wnd');if(d&&!d.dataset.auto){d.open=true;d.dataset.auto='1';}}else h.innerHTML='';}
+  const dd=tw-l;if(Math.abs(dd)>=1){h.innerHTML=`<div class="note" style="border-color:#5B4B9A">Cambió ${dd>0?'+':'−'}${Math.abs(dd).toFixed(1).replace('.',',')} kg frente a tu registro anterior. ¿Quieres contarle a tu coach por qué?</div>`;const d=document.getElementById('wnd');if(d&&!d.dataset.auto){d.open=true;d.dataset.auto='1';}}else h.innerHTML='';}
 {const _wR=wRefresh;wRefresh=function(){_wR.apply(this,arguments);wnHint();};}
 
 const SLQ=[['mala','Mala'],['regular','Regular'],['buena','Buena'],['excelente','Excelente']];
@@ -3629,12 +3644,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-0933';
+const APP_VER='22nov-0939';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-0933'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-0939'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -6457,6 +6472,7 @@ const X=()=>window.__bsx,KEY='erre_bmix';
 let mix={guide:.9,amb:{}};try{const m=JSON.parse(localStorage.getItem(KEY)||'{}');if(typeof m.guide==='number')mix.guide=m.guide;if(m.amb&&typeof m.amb==='object')mix.amb=m.amb;}catch(e){}
 const save2=()=>{try{localStorage.setItem(KEY,JSON.stringify(mix));}catch(e){}};
 const AMB=[['lluvia','🌧️','Lluvia'],['mar','🌊','Mar'],['viento','🌬️','Viento'],['bosque','🦗','Noche de grillos'],['blanco','⚪','Ruido blanco'],['marron','🟤','Ruido marrón']];
+const MIX_ARCHIVED=true; /* archivado 22 nov: los sonidos sintetizados no convencen; volver a false para reactivar */
 let live={},open=false,bw=null,bb=null;
 function bufs(ctx){if(bw)return;const sr=ctx.sampleRate,len=sr*4;bw=ctx.createBuffer(1,len,sr);bb=ctx.createBuffer(1,len,sr);const a=bw.getChannelData(0),b=bb.getChannelData(0);let l=0;
   for(let i=0;i<len;i++){const w=Math.random()*2-1;a[i]=w;l=(l+.02*w)/1.02;b[i]=l*3.5;}
@@ -6489,8 +6505,8 @@ function panel(){const n=Object.keys(mix.amb).filter(k=>mix.amb[k]>0).length;
   </div>`:''}</div>`;}
 const dw=drawBreath;drawBreath=function(){dw.apply(this,arguments);try{const B=BR,e=document.getElementById('bre');if(!B||!e)return;
   if(B.st==='ready'){const ch=e.querySelector('[data-act=bdur]');if(ch){const par=ch.parentElement;par.style.flexWrap='wrap';[10,15,20].forEach(m=>par.insertAdjacentHTML('beforeend',`<button class="chip${B.dur===m*60?' on':''}" data-act="bdur" data-v="${m}">${m} min</button>`));}}
-  const sn=e.querySelector('.bsnd');if(sn&&B.st!=='done')sn.insertAdjacentHTML('afterend',panel());
-  if(B.st==='done')stopAll();else playSaved();
+  if(!MIX_ARCHIVED){const sn=e.querySelector('.bsnd');if(sn&&B.st!=='done')sn.insertAdjacentHTML('afterend',panel());
+  if(B.st==='done')stopAll();else playSaved();}
  }catch(x){console.warn('bmx',x);}};
 const bc=breathClose;breathClose=function(){stopAll();return bc.apply(this,arguments);};
 function refresh(){const e=document.querySelector('#bre .bmx');if(e)e.outerHTML=panel();}
@@ -6508,6 +6524,35 @@ const st=document.createElement('style');st.textContent=`#bre{overflow-y:auto;-w
 .bmxr input[type=range]{flex:1;min-width:0;accent-color:var(--bc,#3F6B86);opacity:.55}.bmxr.on input[type=range],.bmxr>span+input[type=range]{opacity:1}`;
 document.head.appendChild(st);
 window.__bmix={mix,startAmb,stopAll};
+})();
+
+
+/* ===== Cronómetro de la sesión + duración al finalizar (22 nov) ===== */
+(function(){
+const fmt=ms=>{const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60,p=n=>String(n).padStart(2,'0');return h?`${h}:${p(m)}:${p(r)}`:`${p(m)}:${p(r)}`;};
+const t0=g=>(S.tw===g&&S.tgD===today()&&S.tgAt)||(g==='g_fuerza'?((S.t0||{})[S.sel]||0):0);
+const long=ms=>{const m=Math.round(ms/60000);if(m<1)return 'menos de 1 min';return m>=60?`${Math.floor(m/60)} h ${m%60?String(m%60).padStart(2,'0')+' min':''}`.trim():m+' min';};
+function ensure(){
+  const g=S.tg;if(!g||S.sel!==today()||g==='g_calm')return null;
+  const fe=S.fb&&S.fb[fbKey(g)];if(fe)return {done:true,dur:fe.dur};
+  if(!S.tw){S.tw=g;S.tgAt=Date.now();S.tgD=today();save();}
+  return S.tw===g?{t:S.tgAt}:null;}
+function inject(){
+  const r=document.querySelector('.sesh .sesr');if(!r||r.querySelector('.sesclk'))return;
+  const st=ensure();if(!st)return;
+  const el=document.createElement('div');el.className='sesclk';
+  el.innerHTML=st.done?`<small>Duración</small><b>${st.dur?st.dur+' min':'—'}</b>`:`<small>Tiempo</small><b id="sesclk" data-t="${st.t}">${fmt(Date.now()-st.t)}</b>`;
+  r.appendChild(el);}
+const r0=render;render=function(){const x=r0.apply(this,arguments);try{inject();}catch(e){console.warn('clk',e);}return x;};
+setInterval(()=>{const b=document.getElementById('sesclk');if(b)b.textContent=fmt(Date.now()-(+b.dataset.t||Date.now()));},1000);
+/* al finalizar: duración en la hoja y en el aviso */
+const of=openFinish;openFinish=function(g){of.apply(this,arguments);try{const t=t0(g);if(!t||S.sel!==today()||g==='g_calm')return;
+  const sub=document.querySelector('#sheet .celeb .sub');if(sub&&!document.querySelector('#sheet .fdur'))sub.insertAdjacentHTML('afterend',`<div class="fdur"><span>⏱</span><div><small>Duración de la sesión</small><b>${long(Date.now()-t)}</b></div></div>`);}catch(e){console.warn('fdur',e);}};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="fbsave"]');if(!t)return;try{const g=t.dataset.g,s=t0(g);window.__lastDur=(s&&g!=='g_calm'&&S.sel===today())?long(Date.now()-s):null;}catch(x){window.__lastDur=null;}},true);
+const ts=toast;toast=function(m){if(window.__lastDur&&typeof m==='string'&&m.indexOf('Sesión guardada')===0){m=m.replace(/ ✓$/,'')+' · '+window.__lastDur+' ✓';window.__lastDur=null;}return ts.call(this,m);};
+const st=document.createElement('style');st.textContent=`.sesclk{flex:none;text-align:right;background:rgba(255,255,255,.18);border-radius:12px;padding:4px 10px;line-height:1.1}.sesclk small{display:block;font:700 9px Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;opacity:.8}.sesclk b{font:700 16px Oswald,Archivo,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.fdur{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px auto 4px;background:var(--paper,var(--paper,#EFEDE8));border-radius:14px;padding:10px 16px;width:max-content;max-width:100%}.fdur span{font-size:24px}.fdur small{display:block;font:700 10px Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--gray,var(--gray,#5A554E))}.fdur b{font:700 20px Oswald,Archivo,sans-serif}`;
+document.head.appendChild(st);
 })();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
