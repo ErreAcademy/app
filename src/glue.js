@@ -4991,3 +4991,115 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 .cptable .cptr.cprow>span:nth-child(2) small{display:none!important}
 .cptable .cptr.cprow .cpkb{position:absolute;right:6px;top:12px}
 }`;document.head.appendChild(st);})();
+
+/* ===== Crear programa con IA (copiar y pegar) =====
+   El coach escribe su rutina, copia un texto listo para ChatGPT/Claude (con el catálogo de ejercicios y el formato),
+   pega la respuesta (JSON) y la app monta los días en el editor como borrador. No necesita clave de IA en la app. */
+(function(){
+const AI={rt:'',ans:'',step:'write',err:'',plan:null};
+const aiCat=()=>{const L=[];Object.keys(E).forEach(k=>{const e=E[k];if(!e||!e.n||/\(ANTIGUO\)/i.test(e.n))return;if(e.yt||k.slice(0,2)==='x_'||/^(mov_|band_|est_|resp_)/.test(k))L.push([k,e.n,e.g||''].join('|'));});return L.join('\n');};
+const aiCardio=()=>Object.keys(typeof CMODS!=='undefined'?CMODS:{}).filter(k=>!['trot_aire','bici','senderismo'].includes(k)).join(', ');
+function aiPrompt(){
+  const one=!!(RT.self||(RT.kind==='template'&&RT.tkind==='workout'));
+  return `Eres el asistente de programación de ERRE Complete (Método Complete). Te voy a escribir mi rutina con mis palabras y quiero que la conviertas en un ${one?'workout de UN día':'programa'} para mi app.
+
+REGLAS
+- Cada día tiene 4 bloques, en este orden: "warm" (calentamiento específico, 2 a 3 ejercicios de movilidad o activación), "main" (rutina central: 2 a 3 ejercicios básicos multiarticulares), "acc" (accesorios, 3 a 5 ejercicios) y "calm" (vuelta a la calma: 2 a 3 estiramientos y, al final, una respiración si existe en el catálogo).
+- Usa SOLO ids del CATÁLOGO que está al final. No inventes ids. Si un ejercicio mío no existe, elige el más parecido del catálogo.
+- Respeta mi orden y mis ejercicios. Si no dije calentamiento o vuelta a la calma, complétalos tú de forma coherente con lo que trabajo ese día.
+- No pongas series ni repeticiones si yo no las escribí: las define el mesociclo de la app. Si yo las escribí, ponlas en ese ejercicio.
+- Responde SOLO con un bloque de código JSON, sin explicaciones.
+
+FORMATO
+{"name":"Nombre del programa","days":[{"name":"Día 1 · Pecho y tríceps","cardio":"camin_cam","warm":["id1","id2"],"main":["id3",{"id":"id4","sets":4,"reps":"6-8","rest":120,"note":"pausa abajo"}],"acc":["id5","id6","id7"],"calm":["id8","id9"]}]}
+Cada ejercicio puede ser solo el id (texto) o un objeto con "id" y, si hace falta, "sets", "reps", "rest" (segundos), "rir" y "note". "cardio" es opcional; valores posibles: ${aiCardio()}.
+
+MI RUTINA:
+${AI.rt.trim()||'(escribe aquí tu rutina: días, ejercicios, series y repeticiones si las tienes)'}
+
+CATÁLOGO (id | nombre | grupo):
+${aiCat()}`;
+}
+const aiNrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+let _byName=null;
+function aiFind(x){
+  if(typeof x!=='string'||!x)return null;if(E[x]&&E[x].n)return x;
+  if(!_byName){_byName={};Object.keys(E).forEach(k=>{const e=E[k];if(e&&e.n&&!/\(ANTIGUO\)/i.test(e.n))_byName[aiNrm(e.n)]=_byName[aiNrm(e.n)]||k;});}
+  const n=aiNrm(x);if(_byName[n])return _byName[n];
+  const ks=Object.keys(_byName).filter(q=>q.includes(n)||n.includes(q));if(ks.length){ks.sort((a,b)=>Math.abs(a.length-n.length)-Math.abs(b.length-n.length));return _byName[ks[0]];}
+  return null;}
+function aiParse(txt){
+  let t=String(txt||'').trim();if(!t)throw new Error('Pega primero la respuesta de la IA.');
+  t=t.replace(/```(?:json)?/gi,'');
+  const a=t.search(/[\{\[]/),z=Math.max(t.lastIndexOf('}'),t.lastIndexOf(']'));
+  if(a<0||z<a)throw new Error('No encontré el bloque de código en lo que pegaste. Copia la respuesta completa de la IA.');
+  let o;try{o=JSON.parse(t.slice(a,z+1));}catch(e){throw new Error('El texto pegado está cortado o tiene un error. Pídele a la IA: «Repite solo el JSON completo».');}
+  const days=Array.isArray(o)?o:(o.days||o.dias||[]);
+  if(!Array.isArray(days)||!days.length)throw new Error('No vi ningún día en la respuesta.');
+  const one=!!(RT.self||(RT.kind==='template'&&RT.tkind==='workout')),miss=[],out=[];let n=0;
+  days.slice(0,one?1:7).forEach((dd,i)=>{
+    const d=cpBlankDay(String(dd.name||dd.nombre||('Día '+(i+1))).slice(0,60)),seen={},B=k=>d.blocks.find(b=>b.k===k);
+    const cm=dd.cardio;if(typeof CMODS!=='undefined'&&cm&&CMODS[cm])d.cardioDefault=cm;
+    ['warm','main','acc','calm'].forEach(k=>{
+      (Array.isArray(dd[k])?dd[k]:[]).forEach(it=>{
+        const raw=(it&&typeof it==='object')?(it.id||it.ex||it.name||it.nombre):it,id=aiFind(String(raw||''));
+        if(!id){if(raw)miss.push(String(raw));return;}
+        if(seen[id])return;seen[id]=1;const o2=(it&&typeof it==='object')?it:{},sets=+o2.sets||0,reps=o2.reps!=null&&o2.reps!==''?String(o2.reps).slice(0,14):'';
+        if(k==='warm'||k==='calm'){B(k).items.push({ex:id,kind:k,fixed:{sets:String(sets||2),reps:reps||(k==='calm'?(/^resp_/.test(id)?'2 min':'30 s'):'10-12')},note:String(o2.note||'').slice(0,160)});}
+        else{const it2={ex:id,kind:k==='main'?'basic':'acc',ref:0,tempo:String(o2.tempo||(k==='main'?'3-0-1-0':RDEF.tempo)).slice(0,10),rir:String(o2.rir!=null?o2.rir:RDEF.rir).slice(0,4),rest:+o2.rest||(k==='main'?120:RDEF.rest),note:String(o2.note||'').slice(0,160)};
+          if(sets||reps){it2.ov={};if(sets)it2.ov.sets=sets;if(reps)it2.ov.reps=reps;}B(k).items.push(it2);}
+        n++;});});
+    out.push(d);});
+  if(!n)throw new Error('Ninguno de los ejercicios coincide con tu biblioteca. Usa el texto que copia la app, que trae el catálogo.');
+  return {name:String((Array.isArray(o)?'':(o.name||o.nombre))||'').slice(0,80),days:out,miss:[...new Set(miss)],n,cut:!one?false:days.length>1};
+}
+function aiClip(txt){
+  const ok=()=>toast('Copiado ✓ Pégalo en ChatGPT o Claude');
+  const fb=()=>{const t=document.createElement('textarea');t.value=txt;t.style.cssText='position:fixed;opacity:0;top:0';document.body.appendChild(t);t.focus();t.select();try{document.execCommand('copy');ok();}catch(e){toast('No se pudo copiar. Mantén presionado y copia.');}t.remove();};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok).catch(fb);else fb();}
+function aiModal(open){
+  let o=document.getElementById('cpaiprog');if(!open){if(o)o.remove();return;}
+  if(!o){o=document.createElement('div');o.id='cpaiprog';o.className='cpdv';document.body.appendChild(o);}
+  const P=AI.plan,one=!!(RT.self||(RT.kind==='template'&&RT.tkind==='workout'));
+  const step=(n,t)=>`<div style="display:flex;align-items:center;gap:8px;margin:14px 0 6px"><i style="flex:none;width:24px;height:24px;border-radius:50%;background:var(--btn,#1C1B19);color:#fff;font:700 12px Archivo,sans-serif;display:flex;align-items:center;justify-content:center;font-style:normal">${n}</i><b style="flex:1;min-width:0;font-size:14px">${t}</b></div>`;
+  const body=P?`<div class="note" style="margin-top:4px"><b style="display:inline">${esc(P.name||'Programa')}</b> · ${P.days.length} ${P.days.length===1?'día':'días'} · ${P.n} ejercicios</div>
+     ${P.days.map(d=>`<div class="pfrow" style="margin:6px 0"><span><b>${esc(d.name)}</b><small>${d.blocks.filter(b=>!b.cardio).map(b=>b.items.length).join(' · ')} <span style="opacity:.7">(calent. · central · acces. · calma)</span></small></span></div>`).join('')}
+     ${P.cut?'<div class="note" style="margin-top:6px">Este editor es de un solo día: usé el primer día de la respuesta.</div>':''}
+     ${P.miss.length?`<div class="note" style="margin-top:6px;border-color:var(--red);color:var(--red-strong)"><b style="display:inline">No encontré en tu biblioteca:</b> ${P.miss.map(esc).join(', ')}.<br>Se dejaron fuera. Puedes agregarlos en «Ejercicios propios» y sumarlos a mano.</div>`:''}
+     <div class="note" style="margin-top:6px">Se monta como <b style="display:inline">borrador</b> en el editor: lo revisas y tú lo guardas.</div>
+     <button class="cpmvbt pri" data-act="aiapply" style="width:100%;margin-top:10px">Montar en el editor</button>
+     <button class="cpmvbt" data-act="aiback" style="width:100%;margin-top:8px">‹ Volver</button>`
+  :`${step(1,'Cuéntale tu rutina')}
+     <textarea class="fld" id="aiRt" rows="5" placeholder="Ej. 4 días. Día 1: pecho y tríceps: press banca 4x6-8, press inclinado con mancuernas, aperturas, fondos. Día 2: espalda y bíceps…">${esc(AI.rt)}</textarea>
+     <div class="note" style="margin-top:4px;font-size:12px">Puedes dictarla por voz. Si prefieres, déjalo en blanco y la escribes directo en ChatGPT o Claude.</div>
+     ${step(2,'Copia el texto y pégalo en ChatGPT o Claude')}
+     <button class="cpmvbt pri" data-act="aicopy" style="width:100%">📋 Copiar para la IA</button>
+     <div class="note" style="margin-top:4px;font-size:12px">Trae tu rutina, las reglas del Método Complete y tu biblioteca de ejercicios. La IA te responde con un bloque de código.</div>
+     ${step(3,'Pega aquí lo que te respondió')}
+     <textarea class="fld" id="aiAns" rows="5" placeholder="Pega aquí la respuesta de la IA">${esc(AI.ans)}</textarea>
+     <button class="lblbtn" data-act="aipaste" style="margin-top:6px">📥 Pegar del portapapeles</button>
+     ${AI.err?`<div class="note" style="border-color:var(--red);color:var(--red-strong);margin-top:8px">${esc(AI.err)}</div>`:''}
+     <button class="cpmvbt pri" data-act="aibuild" style="width:100%;margin-top:10px">Armar programa</button>`;
+  o.innerHTML=`<div class="cpdc" style="max-width:560px"><div class="cpdhd"><div><b>✨ Crear con IA</b><small>Copia, pega en ChatGPT o Claude y trae la respuesta</small></div><button class="cpdx" data-act="aipx" aria-label="Cerrar">✕</button></div><div class="cpmvb">${body}</div></div>`;}
+const sync=()=>{const a=document.getElementById('aiRt'),b=document.getElementById('aiAns');if(a)AI.rt=a.value;if(b)AI.ans=b.value;};
+document.addEventListener('input',e=>{if(e.target&&(e.target.id==='aiRt'||e.target.id==='aiAns'))sync();},true);
+document.addEventListener('click',async e=>{
+  const t=e.target.closest&&e.target.closest('[data-act^="ai"]');if(!t)return;const a=t.dataset.act;
+  if(!/^(aipo|aipx|aicopy|aipaste|aibuild|aiapply|aiback|aiprognew)$/.test(a))return;
+  e.stopPropagation();e.preventDefault();sync();
+  if(a==='aiprognew'){rtOpen('template',{name:'',tkind:RT.lb.kind,folder:RT.lb.folder,days:[RD.torsoC(1)]});AI.plan=null;AI.err='';AI.step='write';aiModal(true);return;}
+  if(a==='aipo'){AI.plan=null;AI.err='';aiModal(true);return;}
+  if(a==='aipx'){aiModal(false);return;}
+  if(a==='aiback'){AI.plan=null;aiModal(true);return;}
+  if(a==='aicopy'){aiClip(aiPrompt());return;}
+  if(a==='aipaste'){try{const s=await navigator.clipboard.readText();if(s){AI.ans=s;AI.err='';aiModal(true);}else toast('El portapapeles está vacío');}catch(x){toast('Mantén presionado en el cuadro y elige Pegar');}return;}
+  if(a==='aibuild'){try{AI.plan=aiParse(AI.ans);AI.err='';}catch(x){AI.plan=null;AI.err=x.message||'No se pudo leer la respuesta.';}aiModal(true);return;}
+  if(a==='aiapply'){const P=AI.plan;if(!P)return;
+    const has=RT.days.some(d=>(d.blocks||[]).some(b=>!b.cardio&&b.items&&b.items.length));
+    if(has&&!confirm('Esto reemplaza los días que hay ahora en el editor (todavía no están guardados). ¿Continuar?'))return;
+    if(P.name&&!(RT.name||'').trim())RT.name=P.name;RT.days=P.days;RT.sel=0;RT.dirty=true;rtFixIds();rtShow();AI.plan=null;AI.ans='';aiModal(false);toast('Borrador montado. Revísalo y guárdalo ✓');window.scrollTo(0,0);}
+},true);
+/* botones de entrada */
+const re=rtEditorHTML;rtEditorHTML=function(){let h=re.apply(this,arguments);const m='<div class="note">Series y repeticiones de básicos';const i=h.indexOf(m);return i<0?h:h.slice(0,i)+'<button class="btn" data-act="aipo" style="width:100%;margin:10px 0 0">✨ Crear con IA (copiar y pegar)</button>'+h.slice(i);};
+const rl=rtTplList;rtTplList=function(){let h=rl.apply(this,arguments);const m='<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-act="rtlbnewf"';const i=h.indexOf(m);return i<0?h:h.slice(0,i)+'<button class="btn" data-act="aiprognew" style="width:100%;margin-top:10px">✨ Crear '+(RT.lb&&RT.lb.kind==='workout'?'workout':'programa')+' con IA</button>'+h.slice(i);};
+})();
