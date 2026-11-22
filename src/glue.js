@@ -3164,6 +3164,8 @@ const PV_SPL={'Pecho':{Pecho:1},'Pectoral':{Pecho:1},'Aperturas de pecho':{Pecho
  'Dominante de cadera':{Isquios:.55,Glúteos:.45},'Bisagra de cadera':{Isquios:.55,Glúteos:.45},'Curl femoral':{Isquios:1},'Flexión de rodilla':{Isquios:1},'Isquiotibiales':{Isquios:1},
  'Puente de glúteo':{Glúteos:1},'Patada de glúteo':{Glúteos:1},'Glúteo aislado':{Glúteos:1},'Glúteo':{Glúteos:1},'Glúteo mayor':{Glúteos:1},'Abducción':{Glúteos:1},'Gemelos':{Gemelos:1}};
 const PV_GSPL={'Espalda':{Espalda:1},'Pecho':{Pecho:1},'Hombro':{Hombros:1},'Pierna':{Piernas:.6,Glúteos:.4},'Glúteo':{Glúteos:1},'Core':{Abdomen:1}};
+/* peso por tamaño del músculo: los grupos grandes (espalda, pecho, piernas) pesan más que los pequeños */
+var PV_SZ={Espalda:1.4,Pecho:1.4,Piernas:1.4,Glúteos:1.2,Isquios:1,Hombros:.9,Trapecio:.8,Bíceps:.7,Tríceps:.7,Abdomen:.7,Gemelos:.6,Antebrazo:.5};
 function pvSplit(e){if(!e)return null;const nm=String(e.n||'').toLowerCase();
   if(/pantorrilla|talón|talon/.test(nm))return [['Gemelos',1]];
   const o=PV_SPL[e.mus]||PV_SPL[e.pat]||PV_GSPL[e.g]||null;if(!o)return null;return Object.entries(o);}
@@ -3171,7 +3173,7 @@ Object.assign(PV_MC,{'Isquios':'#1E8A8A','Gemelos':'#6B9F2E','Trapecio':'#3A5E9C
 function pvData(){const d=DAYS[S.day],P=PERIOD[S.program],wk=Math.min(S.week,P.weeks),rows=[],mg={};
   ['main','acc'].concat(d.blocks.filter(b=>b.cust).map(b=>b.k)).forEach(bk=>{const b=d.blocks.find(x=>x.k===bk);if(!b)return;
     itemsOf(d,b).forEach((it,i)=>{const id=curEx(d,bk,i,it),e=E[id]||{};let p={};try{p=presc(it);}catch(x){}
-      rows.push({id,n:e.n||id,sets:p.sets||it.sets||0,reps:p.reps});const sp=pvSplit(e);if(sp)sp.forEach(([g,w])=>{mg[g]=(mg[g]||0)+w*(p.sets||1);});});});
+      rows.push({id,n:e.n||id,sets:p.sets||it.sets||0,reps:p.reps});const sp=pvSplit(e);if(sp)sp.forEach(([g,w])=>{mg[g]=(mg[g]||0)+w*(p.sets||1)*(bk==='main'?1.5:1)*(PV_SZ[g]||1);});});});
   const tot=Object.values(mg).reduce((a,b)=>a+b,0)||1,top=Object.entries(mg).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([n,v])=>[n,Math.round(v/tot*100)]);
   return {d,wk,P,rows,top};}
 function pvHTML(){const {d,wk,P,rows,top}=pvData();
@@ -4615,6 +4617,7 @@ milestones=function(g){
   ];
   CAT0.forEach(([c,a,b])=>{for(let i=a;i<b;i++)L[i].c=c;});
   return L.concat([
+   P('🏆','9 meses con ERRE',g.ten,270,250,'te'),P('🥇','1 año con ERRE',g.ten,365,400,'te'),P('💫','18 meses con ERRE',g.ten,540,500,'te'),P('🌟','2 años con ERRE',g.ten,730,700,'te'),P('👑','3 años con ERRE',g.ten,1095,1000,'te'),
    P('🔥','Racha de fuerza: 3 seguidos',g.bF,3,20,'fu'),P('⚡','Racha de fuerza: 7 seguidos',g.bF,7,50,'fu'),P('👑','Racha de fuerza: 15 seguidos',g.bF,15,120,'fu'),
    P('🔥','Racha de cardio: 3 seguidos',g.bC,3,15,'ca'),P('⚡','Racha de cardio: 7 seguidos',g.bC,7,40,'ca'),P('👑','Racha de cardio: 14 seguidos',g.bC,14,90,'ca'),
    P('🧘','Primera vuelta a la calma',g.nQ,1,10,'vc'),P('🌙','10 vueltas a la calma',g.nQ,10,40,'vc'),P('🕊️','25 vueltas a la calma',g.nQ,25,80,'vc'),
@@ -4899,6 +4902,7 @@ document.head.appendChild(st);
 (function(){
 const st=document.createElement('style');st.textContent=`
 .pcv{padding:2px 0 4px}.pcv .cvh{margin:6px 0 12px}.pcv .pcs{display:flex;gap:8px;margin:0 0 12px}.pcv .pcs div{flex:1;background:var(--card,#FBFAF8);border:1.5px solid var(--line,#DCD6CC);border-radius:14px;padding:9px 6px;text-align:center}.pcv .pcs small{display:block;font:500 11px Archivo,sans-serif;color:var(--gray,#5A554E)}.pcv .pcs b{display:block;font:700 15px Archivo,sans-serif;margin-top:2px}
+.pcv .pcs .pcz{background:color-mix(in srgb,var(--zc) 18%,var(--card,#fff));border-color:var(--zc)}.pcv .pcs .pcz small{color:var(--zc);font-weight:700}.pcv .pcs .pcz b{color:var(--zc);filter:brightness(.8)}
 .pcv .pct{font-size:13.5px;color:var(--gray,#5A554E);margin:0 0 12px;line-height:1.4}.pcv .pcb{width:100%;padding:15px;font-size:16px}.pcv .pcc{width:100%;margin-top:8px;padding:13px;border:2px solid #1F8F53;color:#1F7A52;background:#EAF6EF;border-radius:99px;font:700 15px Archivo,sans-serif}.pcv .pcl{display:block;width:100%;margin-top:6px;background:none;border:0;color:var(--gray,#5A554E);font:600 14px Archivo,sans-serif;padding:8px}
 .cqh{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;margin:6px 0 12px;padding:12px;border-radius:18px;background:linear-gradient(135deg,#E8E4F4,#DDEBF2);color:#3B3A6B}
 .cqh .cqi{flex:0 0 96px;color:#5B4B9A}.cqh svg{width:96px;height:80px;display:block}.cqx small{display:block;font:600 12px Archivo,sans-serif;opacity:.8;text-transform:uppercase;letter-spacing:.06em}.cqx b{display:block;font:700 20px/1.15 Archivo,sans-serif;margin:2px 0}.cqx span{display:block;font:500 13.5px Archivo,sans-serif}.cqx em{display:block;font-style:normal;font:600 13px Archivo,sans-serif;margin-top:4px}
@@ -4911,7 +4915,7 @@ function actBtns(k,start){return `<button class="btn solid pcb" data-act="presta
 function cardioPrev(){
   const d=DAYS[S.day],P=PERIOD[S.program],wk=Math.min(S.week,P.weeks),t=cxTier(cTier(d,wk)),c=(S.cardio||{})[cKey(d)]||{},mod=c.mod||d.cardioDefault||'camin_cam',m=CMODS[mod]||CMODS.camin_cam,z=t?TIERZONE[t]:2,Z=ZONES[z-1];
   const hero=`<div class="cvh" style="--zc:${ZC[z]}"><div class="cvi">${__cv.icon(mod)}</div><div class="cvx"><small>${t?'Hoy haces':'Movimiento suave'}</small><b>${esc(m.n)}</b><span>${t?cDur(d,t):'15–35 min'}</span><em>🗣 ${__cv.TALK[z]}</em></div><svg class="cvecg" viewBox="0 0 240 24" preserveAspectRatio="none"><path d="M0 12 H60 l6 -9 l8 20 l8 -16 l6 5 H130 l6 -9 l8 20 l8 -16 l6 5 H240"/></svg></div>`;
-  const stats=`<div class="pcs"><div><small>Zona</small><b>${z}</b></div><div><small>Ritmo</small><b>${esc(String(Z.s).replace(/^Zona \d\s*[·-]?\s*/i,'')||Z.s)}</b></div><div><small>Semana</small><b>${wk}/${P.weeks}</b></div></div>`;
+  const stats=`<div class="pcs"><div class="pcz" style="--zc:${ZC[z]}"><small>Zona ${z}</small><b>${({1:'Muy suave',2:'Ligero',3:'Moderado',4:'Intenso',5:'Máximo'})[z]}</b></div><div><small>Ritmo</small><b>${esc(String(Z.s).replace(/^Zona \d\s*[·-]?\s*/i,'')||Z.s)}</b></div><div><small>Semana</small><b>${wk}/${P.weeks}</b></div></div>`;
   const txt=t?`${t}. Un ritmo en el que puedas mantener el control de tu respiración.`:'Semana de movimiento suave: zonas 1–2, sin buscar intensidad.';
   sheet(`<div class="pcv"><div class="prehd"><small>Cardio de hoy</small></div>${hero}${stats}<p class="pct">${esc(txt)}</p>${actBtns('g_cardio','Comenzar cardio')}<button class="pcl" data-act="prelist" data-b="g_cardio">Ver opciones de cardio</button></div>`);}
 const FIG=`<circle class="cqring" cx="60" cy="46" r="30" fill="currentColor" stroke="none"/><g stroke="currentColor" stroke-width="3.6" stroke-linecap="round" fill="none"><circle cx="60" cy="18" r="6.5"/><path d="M60 26 L60 54 M60 54 L50 72 M60 54 L70 72"/><g class="cqa1"><path d="M58 34 L44 16"/></g><g class="cqa2"><path d="M62 34 L76 16"/></g><path d="M20 76 H100" opacity=".4"/></g>`;
