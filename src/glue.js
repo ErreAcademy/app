@@ -1109,7 +1109,13 @@ function progBody(g,ms,nxt){
    <div class="stats"><div><small>Esta semana</small><b>${g.wt}/${g.wp}</b></div><div><small>Días cumplidos</small><b>${g.okDays}</b></div><div><small>Días con meta de pasos</small><b>${g.stepsOk}</b></div></div>`;
   const nx=nxt?`<div class="nxt"><span class="mi">${nxt.i}</span><div><b>${nxt.t}</b><div class="progress" style="margin:6px 0 2px"><i style="width:${Math.round(nxt.v/nxt.n*100)}%"></i></div><small>${nxt.v} de ${nxt.n} · +${nxt.p||0} pts</small></div></div>`:'';
   const doneN=ms.filter(m=>m.v>=m.n).length;
-  const msx=MS_CATS.map(([n,a,b])=>{const L=ms.slice(a,b),d=L.filter(m=>m.v>=m.n).length;return pgSec('pg.m.'+n,n,`${d} de ${L.length}`,`<div class="ms">${L.map(m=>`<div class="m${m.v>=m.n?' on':''}"${m.v>=m.n?` data-act="mshare" data-t="${esc(m.t)}" data-i="${m.i}" data-k="Hito logrado"`:''}><span class="mi">${m.i}</span><b>${m.t}</b>${m.v>=m.n?`<small>Logrado ✓ · +${m.p||0} pts · Compartir ↗</small>`:`<small>+${m.p||0} pts · ${m.v} de ${m.n}</small>`}</div>`).join('')}</div>`,false);}).join('');
+  const MAC=[['🏋️ Entrenamiento',[['Fuerza','fu'],['Cardio','ca'],['Vuelta a la calma','vc']]],['🥗 Alimentación',[['Alimentación','al']]],['🌿 Hábitos',[['Hábitos','ha'],['Pasos diarios','pa'],['Peso','pe'],['Check-ins','ck']]],['🫁 Respiración',[['Respiración','re']]],['⭐ Adicionales',[['Semanas completas','sw'],['Rachas generales','rg'],['Día perfecto','dp'],['Fotos','fo'],['Tiempo con ERRE','te']]]];
+  const RK={fu:[g.sF,g.bF],ca:[g.sC,g.bC],re:[g.sR,g.bR],ha:[g.sH,g.bH],al:[g.sA,g.bA],rg:[g.streak,g.best]};
+  const item=m=>`<div class="m${m.v>=m.n?' on':''}"${m.v>=m.n?` data-act="mshare" data-t="${esc(m.t)}" data-i="${m.i}" data-k="Hito logrado"`:''}><span class="mi">${m.i}</span><b>${m.t}</b>${m.v>=m.n?`<small>Logrado ✓ · +${m.p||0} pts · Compartir ↗</small>`:`<small>+${m.p||0} pts · ${Math.min(m.v,m.n)} de ${m.n}</small>`}</div>`;
+  const msx=MAC.map(([mn,subs])=>{const all=ms.filter(m=>subs.some(x=>x[1]===m.c)),d=all.filter(m=>m.v>=m.n).length;
+    const inner=subs.map(([sn,ck])=>{const L=ms.filter(m=>m.c===ck);if(!L.length)return '';const r=RK[ck];
+      return `<div class="mcat"><b>${sn}</b>${r?`<span>🔥 Racha ${r[0]||0} · mejor ${r[1]||0}</span>`:''}</div><div class="ms">${L.map(item).join('')}</div>`;}).join('');
+    return pgSec('pg.m.'+mn,mn,`${d} de ${all.length}`,inner,false);}).join('');
   return `${nxt?`<h2 class="h2">Siguiente hito</h2>${nx}`:''}
    ${fidSince()&&PROFILE&&S.role!=='coach'?pgSec('pg.fid','Mi tiempo con ERRE',fidSpan(fidMonths(fidSince())),fidBody(),false):''}
    ${pgSec('pg.lv','Niveles',`Nivel ${g.li+1} de ${LEVELS.length} · ${g.name}`,lv,false)}
@@ -4589,10 +4595,11 @@ add('au','Fruta con yogurt y coco','🥣🥭🥥',{p:'Yogurt griego',fr:'Mango'}
 
 /* ===== Más hitos con puntos + sistema de puntos revisado (22 nov) ===== */
 (function(){
-const P=(i,t,v,n,p)=>({i,t,v,n,p});
+const P=(i,t,v,n,p,c)=>({i,t,v,n,p,c});
+const CAT0=[['fu',0,6],['sw',6,9],['rg',9,15],['dp',15,18],['re',18,21],['ha',21,24],['al',24,27],['pe',27,30],['pa',30,33],['ca',33,36],['fo',36,38],['te',38,41]];
 milestones=function(g){
-  const wN=wlist().length,zN=Object.values(S.cardio).filter(c=>c&&c.done).length,pm=photoMonths().length;
-  return [
+  const wN=wlist().length,zN=Math.max(Object.values(S.cardio).filter(c=>c&&c.done).length,g.nC||0),pm=photoMonths().length;
+  const L=[
    P('🏁','Primer entrenamiento',g.nT,1,10),P('💪','5 entrenamientos',g.nT,5,25),P('🔥','10 entrenamientos',g.nT,10,40),P('🏋️','25 entrenamientos',g.nT,25,75),P('🏆','50 entrenamientos',g.nT,50,150),P('🥇','100 entrenamientos',g.nT,100,300),
    P('🗓️','Primera semana completa',g.wkOk,1,30),P('📅','4 semanas completas',g.wkOk,4,100),P('🎯','12 semanas completas',g.wkOk,12,250),
    P('📆','Racha de 3 días',g.best,3,15),P('🔥','Racha de 7 días',g.best,7,30),P('⚡','Racha de 14 días',g.best,14,60),P('👑','Racha de 30 días',g.best,30,120),P('🚀','Racha de 60 días',g.best,60,150),P('💎','Racha de 100 días',g.best,100,250),
@@ -4606,12 +4613,24 @@ milestones=function(g){
    P('📸','Fotos de inicio',pm,1,20),P('🖼️','3 meses de fotos',pm,3,40),
    P('🎂','Un mes con ERRE',g.ten,30,30),P('🎉','3 meses con ERRE',g.ten,90,100),P('🏅','6 meses con ERRE',g.ten,180,200)
   ];
+  CAT0.forEach(([c,a,b])=>{for(let i=a;i<b;i++)L[i].c=c;});
+  return L.concat([
+   P('🔥','Racha de fuerza: 3 seguidos',g.bF,3,20,'fu'),P('⚡','Racha de fuerza: 7 seguidos',g.bF,7,50,'fu'),P('👑','Racha de fuerza: 15 seguidos',g.bF,15,120,'fu'),
+   P('🔥','Racha de cardio: 3 seguidos',g.bC,3,15,'ca'),P('⚡','Racha de cardio: 7 seguidos',g.bC,7,40,'ca'),P('👑','Racha de cardio: 14 seguidos',g.bC,14,90,'ca'),
+   P('🧘','Primera vuelta a la calma',g.nQ,1,10,'vc'),P('🌙','10 vueltas a la calma',g.nQ,10,40,'vc'),P('🕊️','25 vueltas a la calma',g.nQ,25,80,'vc'),
+   P('🔥','Racha de respiración: 3 días',g.bR,3,15,'re'),P('⚡','Racha de respiración: 7 días',g.bR,7,40,'re'),P('👑','Racha de respiración: 21 días',g.bR,21,100,'re'),
+   P('🔥','Racha de hábitos: 3 días',g.bH,3,15,'ha'),P('⚡','Racha de hábitos: 7 días',g.bH,7,40,'ha'),P('👑','Racha de hábitos: 21 días',g.bH,21,100,'ha'),
+   P('🔥','Racha de alimentación: 3 días',g.bA,3,15,'al'),P('⚡','Racha de alimentación: 7 días',g.bA,7,40,'al'),P('👑','Racha de alimentación: 21 días',g.bA,21,100,'al'),
+   P('📝','Primer chequeo quincenal',g.nK,1,15,'ck'),P('📋','3 chequeos quincenales',g.nK,3,40,'ck'),P('🗂️','6 chequeos quincenales',g.nK,6,80,'ck')
+  ]);
 };
 gam=function(){
   const t=today(),from=(S.start&&S.start>addD(t,-180))?S.start:addD(t,-180);
   let xp=0,best=0,cur=0,nT=0,okDays=0,stepsOk=0,perf=0,rec=0,hab=0,ali=0,wkOk=0;const wk={};
+  const fbD={g_cardio:new Set(),g_calm:new Set()};Object.keys(S.fb||{}).forEach(k=>{const q=k.split('|');if(fbD[q[2]])fbD[q[2]].add(q[0]);});Object.keys(S.cardio||{}).forEach(k=>{const c=S.cardio[k];if(c&&c.done)fbD.g_cardio.add(k.split('|')[0]);});
+  let sF=0,bF=0,sC=0,bC=0,sR=0,bR=0,sH=0,bH=0,sA=0,bA=0;
   for(let d=from;d<=t;d=addD(d,1)){
-    const pr=dayProgress(d),tr=trained(d),hasD=!!ctxFor(d).d;
+    const pr=dayProgress(d),tr=trained(d),dd=ctxFor(d).d,hasD=!!dd;
     if(tr)nT++;
     xp+=Math.round(pr*20)+(tr?10:0);
     if(pr>=0.5){cur++;okDays++;best=Math.max(best,cur);}else if(d!==t&&hasD){cur=0;}
@@ -4619,18 +4638,27 @@ gam=function(){
     if(pr>=0.999)perf++;
     const c=withDate(d,()=>({r:tcount('recovery'),h:tcount('habitos'),a:tcount('alim')}));
     if(c.r.total&&c.r.done>=c.r.total)rec++;if(c.h.total&&c.h.done>=c.h.total)hab++;if(c.a.total&&c.a.done>=c.a.total)ali++;
+    /* rachas por categoría: los días de descanso no rompen la racha */
+    if(tr){sF++;bF=Math.max(bF,sF);}else if(d!==t&&hasD)sF=0;
+    const hasC=!!(dd&&dd.blocks&&dd.blocks.some(b=>b.cardio));
+    if(fbD.g_cardio.has(d)){sC++;bC=Math.max(bC,sC);}else if(d!==t&&hasC)sC=0;
+    if(c.r.total){if(c.r.done>=c.r.total){sR++;bR=Math.max(bR,sR);}else if(d!==t)sR=0;}
+    if(c.h.total){if(c.h.done>=c.h.total){sH++;bH=Math.max(bH,sH);}else if(d!==t)sH=0;}
+    if(c.a.total){if(c.a.done>=c.a.total){sA++;bA=Math.max(bA,sA);}else if(d!==t)sA=0;}
     const wm=monOf(d);wk[wm]=wk[wm]||{s:0,t:0};if(hasD){wk[wm].s++;if(tr)wk[wm].t++;}
   }
   Object.values(wk).forEach(w=>{if(w.s>0&&w.t>=w.s)wkOk++;});
   let ten=0;try{const s0=fidSince();if(s0){const a=pd(s0),b=pd(t);ten=Math.max(0,Math.floor((b-a)/864e5));}}catch(e){}
   const mon=monOf(t);let wp=0,wt=0;
   for(let i=0;i<7;i++){const d=addD(mon,i);if(ctxFor(d).d){wp++;if(d<=t&&trained(d))wt++;}}
-  const g0={xp,best,nT,okDays,stepsOk,perf,rec,hab,ali,wkOk,ten};
+  const nC=fbD.g_cardio.size,nQ=fbD.g_calm.size,nK=(typeof CHK!=='undefined'&&CHK.done)?CHK.done.size:0;
+  const EX={sF,bF,sC,bC,sR,bR,sH,bH,sA,bA,nC,nQ,nK};
+  const g0=Object.assign({xp,best,nT,okDays,stepsOk,perf,rec,hab,ali,wkOk,ten},EX);
   let bonus=0;try{milestones(g0).forEach(m=>{if(m.v>=m.n)bonus+=m.p||0;});}catch(e){}
   const base=xp;xp+=bonus;
   let li=0;LEVELS.forEach((l,i)=>{if(xp>=l[0])li=i;});
   const nx=LEVELS[li+1]||null;
-  return {xp,base,bonus,li,name:LEVELS[li][1],nx,streak:cur,best,nT,okDays,stepsOk,wp,wt,perf,rec,hab,ali,wkOk,ten};
+  return Object.assign({xp,base,bonus,li,name:LEVELS[li][1],nx,streak:cur,best,nT,okDays,stepsOk,wp,wt,perf,rec,hab,ali,wkOk,ten},EX);
 };
 const st=document.createElement('style');st.textContent=`.mspts{display:inline-block;margin:8px 0 2px;background:color-mix(in srgb,#1F8F53 16%,var(--card,#fff));color:#1F8F53;font:700 15px Archivo,sans-serif;border-radius:99px;padding:5px 14px}`;
 document.head.appendChild(st);
@@ -4899,3 +4927,5 @@ const po=preOpen;preOpen=function(k){
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#sheet [data-act="precheck"]');if(!t)return;e.stopPropagation();e.preventDefault();const g=t.dataset.b;closeSheet();try{fbd={};}catch(x){}openFinish(g);
   setTimeout(()=>{try{if(g==='g_fuerza')return;const sb=document.querySelector('#sheet .celeb .sub');if(sb&&/^Te falta/.test(sb.textContent))sb.textContent=g==='g_calm'?'Cuéntanos cómo te sentiste.':'Cuéntanos cómo te fue en tu cardio.';}catch(x){}},30);},true);
 })();
+
+(function(){const st=document.createElement('style');st.textContent=`.mcat{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 6px}.mcat b{font:700 13px Archivo,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--gray,#5A554E)}.mcat span{font:700 12px Archivo,sans-serif;color:#C0392B;background:color-mix(in srgb,#C0392B 10%,var(--card,#fff));border-radius:99px;padding:3px 10px;white-space:nowrap}`;document.head.appendChild(st);})();
