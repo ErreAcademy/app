@@ -3671,12 +3671,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-1350';
+const APP_VER='22nov-1354';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1350'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1354'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -3950,7 +3950,7 @@ function msCard(i,title,kick,name){
 async function msShare(t,i,kick){
   toast('Preparando tu imagen…');
   const nm=(S.user&&S.user.name||'').split(' ')[0],blob=await msCard(i,t,kick,nm);
-  const txt=i+' '+(kick||'Hito logrado')+': '+t+' en ERRE Academy 💪';
+  const txt=i+' '+(kick||'Hito logrado')+': '+t+' en ERRE Complete 💪';
   if(blob){
     const f=new File([blob],'erre-hito.png',{type:'image/png'});
     try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:txt});return;}}catch(e){if(e&&e.name==='AbortError')return;}
@@ -4434,7 +4434,7 @@ details.acc>summary small{display:block;font-family:inherit;font-stretch:100%;fo
   renderOnboarding=function(){
     const o=S.ob;if(!o||o.step!=='form')return rend0.apply(this,arguments);
     const L=steps(o),n=L.length;o.fi=Math.max(0,Math.min(o.fi||0,n-1));const s=L[o.fi],last=o.fi===n-1;
-    const head=`<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Academy</h1><small>Método Complete</small></div></header>`;
+    const head=`<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Complete</h1><small>Método Complete</small></div></header>`;
     $('#app').innerHTML=head+`<button class="lblbtn" data-act="obprev" style="color:var(--gray);margin:6px 0 0">‹ Atrás</button>
      <div class="wzp"><div class="wzb"><i style="width:${Math.round((o.fi+1)/n*100)}%"></i></div><small>Paso ${o.fi+1} de ${n}</small></div>
      <h2 class="h2 wzq">${s.t}</h2>${s.s?`<p class="wzs">${s.s}</p>`:''}${s.b()}
@@ -4800,9 +4800,9 @@ function pdfHTML(o){
   .ft{margin-top:10px;color:var(--gray2,#8b867e);font-size:10px;text-align:center}`;
   const days=o.days.map(d=>pdfDay(d,o)).join('');
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(o.title||'Rutina')}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet"><style>${css}</style></head><body><img class="wm" src="${logo}" alt="">
-  <div class="hd"><img src="${logo}" alt=""><small>ERRE Academy · Método Complete</small></div>
+  <div class="hd"><img src="${logo}" alt=""><small>ERRE Complete · Método Complete</small></div>
   <h1>${esc(o.title||'Tu rutina')}${o.sub?` <em>| ${esc(o.sub)}</em>`:''}</h1>${o.who?`<div class="who">Para: ${esc(o.who)} · Semana ${o.wk} del mesociclo</div>`:`<div class="who">Semana ${o.wk} del mesociclo</div>`}
-  ${o.intro?`<div class="intro">${esc(o.intro)}</div>`:''}${days}<div class="ft">ERRE Academy · Toca la miniatura de cada ejercicio para abrir el video técnico</div></body></html>`;}
+  ${o.intro?`<div class="intro">${esc(o.intro)}</div>`:''}${days}<div class="ft">ERRE Complete · Toca la miniatura de cada ejercicio para abrir el video técnico</div></body></html>`;}
 function pdfPrint(o){
   const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);
   f.srcdoc=pdfHTML(o);
@@ -5433,7 +5433,7 @@ function exBuild(R,o){
   const age=p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null;
   const ws=(d.weights||[]),wNow=ws.length?ws[ws.length-1].kg:(p.start_weight_kg||u.weight);
   const DL=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],GNm={bajar:'Bajar peso',complete:'Complete (recomposición)',aumentar:'Aumentar (superávit)',salud:'Salud'};
-  L.push('Datos de un cliente de ERRE Academy (Método Complete). Úsalos para sugerir un plan; no diagnostiques. Marca todo lo que requiera criterio del coach o del médico.');
+  L.push('Datos de un cliente de ERRE Complete (Método Complete). Úsalos para sugerir un plan; no diagnostiques. Marca todo lo que requiera criterio del coach o del médico.');
   L.push('Generado: '+exF(new Date().toISOString())+(o.health?'  |  ⚠ Contiene datos de salud. Pégalo solo en una herramienta que tengas aprobada.':''));
   L.push('','# Cliente'+(o.name?': '+(p.full_name||'Sin nombre'):''));
   sec('Perfil');
@@ -5588,10 +5588,10 @@ function alpPdfHTML(){const p=CP.d.profile,g=(S.goal==='bajar'||S.goal==='aument
       return `<div class="op"><b>${esc(O.n)}</b>${show?`<em>≈ ${Math.round(X.kc)} kcal · P ${Math.round(X.P)} · C ${Math.round(X.C)} · G ${Math.round(X.F)}</em>`:''}${rows}${O.recipe?`<div class="rc">Cómo prepararlo: ${esc(O.recipe)}</div>`:''}</div>`;}).join('');
     return `<h2>${ic} ${n}</h2>${cards||'<div class="nt">Sin opciones definidas.</div>'}`;}).join('');
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Plan de alimentación</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet"><style>${css}</style></head><body><img class="wm" src="${logo}" alt="">
-   <div class="hd"><img src="${logo}" alt=""><small>ERRE Academy · Método Complete</small></div><h1>Plan de alimentación</h1><div class="who">Para: ${esc(p.full_name||'')} · ${esc(P.t)}</div>
+   <div class="hd"><img src="${logo}" alt=""><small>ERRE Complete · Método Complete</small></div><h1>Plan de alimentación</h1><div class="who">Para: ${esc(p.full_name||'')} · ${esc(P.t)}</div>
    ${show?`<div class="tg"><div><b>${T.kc}</b><small>kcal</small></div><div><b>${T.P} g</b><small>proteína</small></div><div><b>${T.C} g</b><small>carbo</small></div><div><b>${T.F} g</b><small>grasa</small></div><div><b>${(T.water/1000).toFixed(1).replace('.',',')} L</b><small>agua</small></div></div>`:`<div class="tg"><div><b>${(T.water/1000).toFixed(1).replace('.',',')} L</b><small>agua al día</small></div></div>`}
    <div class="nt" style="margin-top:0">${esc(P.rule)}</div>${body}
-   ${ex.length?`<div class="nt">Alimentos excluidos: ${ex.map(esc).join(', ')}.</div>`:''}<div class="nt">Cantidades en gramos cocidos (avena y granola en seco). Valores aproximados. Elige una opción por comida; puedes cambiar un alimento por otro del mismo grupo.</div><div class="ft">ERRE Academy</div></body></html>`;}
+   ${ex.length?`<div class="nt">Alimentos excluidos: ${ex.map(esc).join(', ')}.</div>`:''}<div class="nt">Cantidades en gramos cocidos (avena y granola en seco). Valores aproximados. Elige una opción por comida; puedes cambiar un alimento por otro del mismo grupo.</div><div class="ft">ERRE Complete</div></body></html>`;}
 function alpPrint(html){const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);f.srcdoc=html;
   f.onload=()=>{const w=f.contentWindow,go=()=>{try{w.focus();w.print();}catch(e){console.warn(e);}setTimeout(()=>f.remove(),60000);};(w.document.fonts&&w.document.fonts.ready?w.document.fonts.ready:Promise.resolve()).then(()=>setTimeout(go,300));};}
 
@@ -5915,7 +5915,7 @@ function calc(){const sh=SH(),por=AL_PORC[goal()],tot={};
       if(f[1]&&f[1][0]){const u=Math.max(1,Math.ceil(g/f[1][0]-0.01));txt=u+' '+(u>1?f[1][2]:f[1][1]);}
       else{const r=Math.max(50,Math.ceil(g/50)*50);txt=r>=1000?(r/1000).toString().replace('.',',')+' kg':r+' g';}
       return {key:k,food,txt,e:AL_FE[food]||(food==='Pechuga de pollo'?'🍗':'')};}).sort((a,b)=>a.food.localeCompare(b.food,'es'))})).filter(c=>c.rows.length);}
-function asText(){const sh=SH(),L=calc();return '🛒 Lista de compras · '+sh.days+' días · según mi plan\n\n'+L.map(c=>c.ic+' '+c.n+'\n'+c.rows.map(r=>'• '+r.food.replace(/ \(½\)/,'')+': '+r.txt).join('\n')).join('\n\n')+'\n\n(Cantidades aproximadas, en crudo. ERRE Academy)';}
+function asText(){const sh=SH(),L=calc();return '🛒 Lista de compras · '+sh.days+' días · según mi plan\n\n'+L.map(c=>c.ic+' '+c.n+'\n'+c.rows.map(r=>'• '+r.food.replace(/ \(½\)/,'')+': '+r.txt).join('\n')).join('\n\n')+'\n\n(Cantidades aproximadas, en crudo. ERRE Complete)';}
 function view(){const sh=SH(),L=calc();
   const days=[3,5,7].map(d=>`<button class="${sh.days===d?'on':''}" data-alshop="days" data-v="${d}">${d} días</button>`).join('');
   const cul=S.alcul&&S.alcul!=='all'&&AL_CULS?(AL_CULS.find(c=>c[0]===S.alcul)||[])[1]:'';
@@ -5930,7 +5930,7 @@ function view(){const sh=SH(),L=calc();
 function pdfHTML(){const sh=SH(),L=calc(),logo=new URL('erre-logo.png',location.href).href,nm=(S.user&&S.user.name)||'';
   const css=`@page{size:A4;margin:12mm 13mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Archivo,Helvetica,Arial,sans-serif;color:var(--ink,#1C1B19);margin:0;font-size:13px}.wm{position:fixed;top:50%;left:50%;width:430px;transform:translate(-50%,-50%);opacity:.07}.hd{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line,#DCD6CC);padding-bottom:8px;margin-bottom:12px}.hd img{height:38px}.hd small{color:var(--gray,#5A554E)}h1{font-family:Oswald,Arial,sans-serif;text-transform:uppercase;font-size:24px;margin:0 0 2px}.who{color:var(--gray,#5A554E);margin-bottom:10px}.g{break-inside:avoid;margin-bottom:12px}h2{font-family:Oswald,Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:15px;margin:0 0 4px;padding-bottom:3px;border-bottom:2px solid var(--c);color:var(--c)}.r{display:flex;align-items:center;gap:8px;padding:5px 2px;border-bottom:1px solid var(--paper,#EFEDE8)}.r i{width:13px;height:13px;border:1.5px solid var(--gray2,#8b867e);border-radius:3px}.r span{flex:1}.r b{font-weight:700}.nt{color:var(--gray,#5A554E);font-size:11px;margin-top:10px}`;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Lista de compras</title><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet"><style>${css}</style></head><body><img class="wm" src="${logo}" alt="">
-   <div class="hd"><img src="${logo}" alt=""><small>ERRE Academy · Método Complete</small></div><h1>Lista de compras</h1><div class="who">${nm?esc(nm)+' · ':''}${sh.days} días · según tu plan de alimentación</div>
+   <div class="hd"><img src="${logo}" alt=""><small>ERRE Complete · Método Complete</small></div><h1>Lista de compras</h1><div class="who">${nm?esc(nm)+' · ':''}${sh.days} días · según tu plan de alimentación</div>
    ${L.map(c=>`<div class="g" style="--c:${c.c}"><h2>${c.ic} ${c.n}</h2>${c.rows.map(r=>`<div class="r"><i></i><span>${r.e} ${esc(r.food.replace(/ \(½\)/,''))}</span><b>${r.txt}</b></div>`).join('')}</div>`).join('')}
    <div class="nt">Cantidades aproximadas, en crudo, según las porciones de tu plan. Reparte entre las opciones que más te gusten.</div></body></html>`;}
 function show(){let o=document.getElementById('alshopm');if(!o){o=document.createElement('div');o.id='alshopm';o.style.cssText='position:fixed;inset:0;z-index:9600;background:rgba(28,27,25,.55);display:flex;align-items:flex-end;justify-content:center';document.body.appendChild(o);document.body.style.overflow='hidden';
@@ -6051,14 +6051,14 @@ function pdfHTML(){const d=VL.d,logo=new URL('erre-logo.png',location.href).href
    <table><tr><th>Prueba</th><th>Izq.</th><th>Der.</th></tr>${T[l].map(([k,n,,ns])=>{const b=s=>{const st=get(k,s);return `<span class="bd" style="background:${C[st][0]}${st?'':';color:var(--gray,#5A554E)'}">${C[st][1]}</span>`;};return `<tr><td>${n}</td>${ns===2?`<td>${b('i')}</td><td>${b('d')}</td>`:`<td colspan="2">${b('u')}</td>`}</tr>`;}).join('')}</table>${VL.nt[l]?`<div class="tx"><small>Notas</small>${esc(VL.nt[l]).replace(/\n/g,'<br>')}</div>`:''}`:'<div class="tx">No evaluada.</div>'}</div>`;}).join(''),
   pr=prio();
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Valoración inicial</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet"><style>${css}</style></head><body><img class="wm" src="${logo}" alt="">
-  <div class="hd"><img src="${logo}" alt=""><small>ERRE Academy · Método Complete</small></div><h1>Valoración inicial</h1><div class="who">${esc(d.name||'')} · ${fdate(VL.date)}</div>
+  <div class="hd"><img src="${logo}" alt=""><small>ERRE Complete · Método Complete</small></div><h1>Valoración inicial</h1><div class="who">${esc(d.name||'')} · ${fdate(VL.date)}</div>
   <h2>Datos</h2><div class="kv">${cell('Edad',d.age?d.age+' años':'')}${cell('Sexo',d.sex)}${cell('Estatura',d.h?d.h+' cm':'')}${cell('Peso',d.w?d.w+' kg':'')}${imc?cell('IMC',fm(imc)):''}</div>
   ${d.goal?`<div class="tx"><small>Objetivo</small>${esc(d.goal)}</div>`:''}${[['Lesiones o molestias',d.les],['Alergias',d.ale],['Medicación',d.med],['Observaciones',d.obs]].map(([l,v])=>v?`<div class="tx"><small>${l}</small>${esc(v).replace(/\n/g,'<br>')}</div>`:'').join('')}
   ${per||pli?`<h2>Medidas antropométricas</h2><div class="two">${per?`<div><h3>Perímetros (cm)</h3><table>${per}</table></div>`:'<div></div>'}${pli?`<div><h3>Pliegues (mm)</h3><table>${pli}</table></div>`:''}</div>${dv.length?`<div class="kv">${dv.map(([n,v,u])=>`<div><small>${n}</small><b>${fm(v)}${u?' '+u:''}</b></div>`).join('')}</div>`:''}`:''}
   ${photos.length?`<h2>Fotos de progreso · punto de partida</h2><div class="ph">${photos.map(([k,n])=>`<div><img src="${VL.ph[k]}"><small>${n}</small></div>`).join('')}</div>`:''}
   ${evalSec}
   ${pr.length?`<h2>Prioridades para tu programa</h2>${pr.map(x=>`<div class="pr" style="border-color:${C[x.st][0]}"><b>${esc(x.txt)}</b> · ${C[x.st][1].toLowerCase()} <span style="color:var(--gray,#5A554E)">(${x.l==='mov'?'movilidad':'estabilidad'})</span></div>`).join('')}`:''}
-  <div class="ft">Valoración realizada por ${esc((PROFILE&&PROFILE.full_name)||'tu coach')} · ERRE Academy. Es una evaluación funcional de entrenamiento y no reemplaza un diagnóstico médico.</div></body></html>`;}
+  <div class="ft">Valoración realizada por ${esc((PROFILE&&PROFILE.full_name)||'tu coach')} · ERRE Complete. Es una evaluación funcional de entrenamiento y no reemplaza un diagnóstico médico.</div></body></html>`;}
 function render(){if(!VL)return;let o=document.getElementById('vlv');if(!o){o=document.createElement('div');o.id='vlv';document.body.appendChild(o);document.body.style.overflow='hidden';}
   const sv=o.querySelector('.vlbody'),sy=sv?sv.scrollTop:0,tab=VL.tab,list=VL.view==='list';
   const tabs=[['datos','📋 Datos'],['med','📏 Medidas'],['fotos','📷 Fotos'],['mov','🧍 Movilidad y estabilidad']];
