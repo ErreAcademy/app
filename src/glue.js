@@ -4953,3 +4953,37 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 @media(min-width:1000px){.cpside{display:flex;flex-direction:column;max-height:calc(100vh - 24px);overflow-y:auto}.cpside .cpfoot{position:static;margin-top:auto;padding-top:16px}.cpside .cpnav{flex:0 0 auto}}`;document.head.appendChild(st);})();
 
 (function(){const st=document.createElement('style');st.textContent=`.cpbadge.basic{background:#3B82C4!important;color:#fff!important}.cpbadge.complete{background:#1C1B19!important;color:#fff!important}.cpbadge.elite{background:linear-gradient(135deg,#F0CB5B,#C99A1E)!important;color:#2A2108!important;box-shadow:0 0 0 1.5px #E3B93C}`;document.head.appendChild(st);})();
+
+/* Panel del coach en celular (≤ 699 px): menú en una fila deslizable, barra de cuenta ordenada, clientes como tarjetas.
+   Solo afecta pantallas angostas; el computador queda igual. */
+(function(){const st=document.createElement('style');st.id='cpMobileCss';st.textContent=`@media(max-width:699px){
+.cpshell{display:block}
+.cpside{display:block;position:static;border:0;padding:0;min-height:0}
+.cpmain{min-width:0}
+.cpnav{display:flex;flex-direction:row;flex-wrap:nowrap;gap:6px;overflow-x:auto;margin:8px 0 10px;padding:2px 0 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.cpnav::-webkit-scrollbar{display:none}
+.cpnav .cpn{flex:0 0 auto;white-space:nowrap;padding:9px 14px;font-size:13px;border-radius:99px}
+.cpfoot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.cpfoot .coavb{order:1;margin:0;flex:0 0 auto}
+.cpfoot .coavb b{display:none}
+.cpfoot>small{order:2;flex:1 1 0;min-width:0;font-weight:600;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cpfoot .thpk{order:3;flex:0 0 auto;margin:0}
+.cpfoot .thpk b{display:none}
+.cpfoot .thpk>div{display:flex;gap:6px}
+.cpfoot .thc{display:flex;flex-direction:row;align-items:center;gap:5px;padding:6px 10px}
+.cpfoot .thc span{font-size:14px}.cpfoot .thc i{font-size:12px}
+.cpfoot .lblbtn{order:4;flex:1 1 auto;text-align:center;white-space:nowrap;padding:9px 6px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:10px;letter-spacing:.02em}
+.cptabs:not(.cpnavx){scrollbar-width:none;gap:0}
+.cptabs:not(.cpnavx) .cptab{flex:0 0 auto;padding:10px 6px;font-size:13px}
+.cptable .cptr.head{display:none}
+.cptable .cptr.cprow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 52px 12px 14px!important}
+.cptable .cptr.cprow>span{min-width:0}
+.cptable .cptr.cprow>span:nth-child(n+4){display:block}
+.cptable .cptr.cprow>span:nth-child(5){display:none}
+.cptable .cptr.cprow>.cpcl{flex:1 0 100%;display:flex;align-items:center;gap:10px}
+.cptable .cptr.cprow .cpnm{min-width:0;flex:1}
+.cptable .cptr.cprow .cpnm b{display:block;white-space:normal;overflow:visible;text-overflow:clip}
+.cptable .cptr.cprow .cpem{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cptable .cptr.cprow>span:nth-child(2) small{display:none!important}
+.cptable .cptr.cprow .cpkb{position:absolute;right:6px;top:12px}
+}`;document.head.appendChild(st);})();
