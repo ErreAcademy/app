@@ -275,7 +275,7 @@ function resetLocal(){
 }
 
 /* ---------- pantallas: acceso, consentimiento, coach ---------- */
-function verTag(){const v=String(typeof APP_VER==='string'?APP_VER:'').match(/^(\d+)([a-z]+)-(\d\d)(\d\d)$/);return 'Alpha'+(v?' '+(+v[1])+' '+v[2]+' '+v[3]+':'+v[4]:'');}
+function verTag(){const v=String(typeof APP_VER==='string'?APP_VER:'').match(/^(\d+)([a-z]+)-(\d\d)(\d\d)$/);return 'Beta'+(v?' '+(+v[1])+' '+v[2]+' '+v[3]+':'+v[4]:'');}
 function authHead(){return `<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Complete</h1><small>Método Complete · ${verTag()}</small></div></header>`;}
 const PLAN_INFO={
  basic:{n:'Basic',ic:'🌱',c:'#5A554E',p:'Desde $24 USD al mes · precio fundador',t:'Entrena solo, con un programa claro por niveles',b:['Método Complete: movilidad, fuerza, resistencia y dominio','Programa por nivel (principiante, intermedio, avanzado)','Mesociclos de 5 semanas, hasta 5 días de fuerza','Videos de cada ejercicio dentro de la app','Reporte semanal para ti']},
@@ -1599,11 +1599,13 @@ try{if(navigator.getInstalledRelatedApps)navigator.getInstalledRelatedApps().the
 const pwaIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
 const pwaDismissed=()=>{try{return Date.now()-(+localStorage.getItem('pwaNo')||0)<60*864e5;}catch(e){return false;}};
 const pwaRe=()=>{try{const l=document.getElementById('lgEmail');if(l){if(!l.value&&!LG.busy)showLogin();return;}if(S&&S.tab==='inicio')render();}catch(x){}};
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();PWA_EV=e;pwaRe();});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();PWA_EV=e;try{localStorage.removeItem('pwaInst');}catch(x){}pwaRe();});/* si Chrome ofrece instalar, la app NO está instalada: se borra la marca vieja */
+try{if(/[?&]pwa=reset/.test(location.search)){localStorage.removeItem('pwaInst');localStorage.removeItem('pwaNo');}}catch(e){}
 window.addEventListener('appinstalled',()=>{PWA_EV=null;try{toast('App instalada ✓');render();}catch(x){}});
 function pwaBar(){
   if(pwaStandalone()||pwaDismissed())return '';
   if(PWA_EV)return `<div class="pwab"><img src="icon-192.png" alt=""><span><b>Instala la app de ERRE</b>Ábrela como cualquier app, sin buscar el link.</span><button class="pwai" data-act="pwainstall">Instalar</button><button class="pwax" data-act="pwano" aria-label="Cerrar">✕</button></div>`;
+  if(/android/i.test(navigator.userAgent)&&/; wv\)|Instagram|FBAN|FBAV|Line\/|TikTok|musical_ly/i.test(navigator.userAgent))return `<div class="pwab"><img src="icon-192.png" alt=""><span><b>Ábrela en Chrome para instalarla</b>Toca el menú <b style="display:inline">⋮</b> y elige <b style="display:inline">Abrir en Chrome</b>.</span><button class="pwax" data-act="pwano" aria-label="Cerrar">✕</button></div>`;
   if(/android/i.test(navigator.userAgent))return `<div class="pwab"><img src="icon-192.png" alt=""><span><b>Instala la app en tu celular</b>Toca el menú <b style="display:inline">⋮</b> de Chrome y elige <b style="display:inline">Instalar app</b>.</span><button class="pwax" data-act="pwano" aria-label="Cerrar">✕</button></div>`;
   if(pwaIOS())return `<div class="pwab"><img src="icon-192.png" alt=""><span><b>Instala la app en tu iPhone</b>Toca <b style="display:inline">Compartir</b> (el cuadro con flecha) y luego <b style="display:inline">Añadir a pantalla de inicio</b>.</span><button class="pwax" data-act="pwano" aria-label="Cerrar">✕</button></div>`;
   return '';
