@@ -2183,8 +2183,9 @@ function realDB(){
     async lessons(){return ok(await sb.from('lessons').select('id,title,body,tag,active,created_at').order('created_at'));},
     async saveLesson(o,uid){const row={title:o.title,body:o.body,tag:o.tag,active:o.active!==false};if(o.id)ok(await sb.from('lessons').update(row).eq('id',o.id));else ok(await sb.from('lessons').insert(Object.assign({created_by:uid},row)));},
     async delLesson(id){ok(await sb.from('lessons').delete().eq('id',id));},
+    async accessAll(){return ok(await sb.from('client_access').select('client_id,email,tier,period,paid_until,payment_failed_at,cancel_at_period_end,source').not('client_id','is',null));},
     async clientInfo(){const r=await sb.rpc('coach_client_info');if(r.error)throw r.error;const o={};(r.data||[]).forEach(x=>o[x.id]=x);return o;},
-    async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level,status').eq('role','client').order('full_name'));}
+    async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level,status,birth_date,member_since,created_at').eq('role','client').order('full_name'));}
   };
 }
 const DB=window.DB_MOCK||realDB();
@@ -2445,18 +2446,19 @@ function cpHomeData(){
   });
   al.sort((a,b)=>a.s-b.s);
   const dis=cpDisGet(),hid=al.filter(a=>dis[a.k]);
-  return {feed:feed.slice(0,6),al:al.filter(a=>!dis[a.k]),nm,nh:hid.length};
+  return {feed:feed.slice(0,6),al:al.filter(a=>!dis[a.k]),nm,nh:hid.length,hid};
 }
 function cpHomePage(){
-  const {feed,al,nm,nh}=cpHomeData(),K={ses:'Workout',hito:'Logro',com:'Comentario',mol:'Molestia',chk:'Chequeo'};
+  const {feed,al,nm,nh,hid}=cpHomeData(),K={ses:'Workout',hito:'Logro',com:'Comentario',mol:'Molestia',chk:'Chequeo'};
   const AK={prog:'Programa',task:'Tarea',call:'Llamada',cli:'Cliente'},act=((CP.home&&CP.home.act)||[]).slice(0,6);
   const ahist=act.length?act.map(a=>{const c=nm[a.client_id]||{},dt=new Date(a.created_at),b=bogota(a.created_at);return `<button class="cpfi" data-act="cpopen" data-id="${a.client_id||''}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')} <small style="display:inline">${esc(a.text)}</small></b><small><i class="cpfk" style="font-style:normal;background:color-mix(in srgb,#EEF3FB var(--tm,100%),var(--card,#FBFAF8));color:#2A5BA8">${AK[a.kind]||'Acción'}</i>${cpRel(b.date)} · ${b.time}</small></span></button>`;}).join(''):'<div class="note" style="padding:10px 4px">Aquí verás lo que vayas haciendo con tus clientes: programas, tareas, llamadas.</div>';
   const fh=feed.length?feed.map(f=>{const c=nm[f.cid]||{};return `<button class="cpfi" data-act="cpopen" data-id="${f.cid}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')} <small style="display:inline">${esc(f.t)}</small></b><small><i class="cpfk ${f.k}" style="font-style:normal">${K[f.k]}</i>${f.rpe?'Esfuerzo '+f.rpe+'/10 · ':''}${f.feel?esc(f.feel):''}</small>${f.q?`<span class="cpq">“${esc(f.q)}”</span>`:''}</span><em>${cpRel(f.d)}</em></button>`;}).join(''):'<div class="note">Aún no hay actividad en los últimos 14 días.</div>';
-  const ah=al.length?al.slice(0,6).map(a=>{const c=nm[a.cid]||{};return `<div class="cpal ${a.s===0?'warn':a.s===1?'':'info'}"><button class="cpalb" data-act="cpopen" data-id="${a.cid}"><i class="cpav" style="flex:none;width:34px;height:34px;font-size:12px">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')}</b><b style="font-weight:600;color:${a.s===0?'#C0392B':'inherit'}">${esc(a.t)}</b><small>${esc(a.q)}</small></span></button><button class="cpok" data-act="cpdis" data-k="${esc(a.k)}" title="Marcar como atendida">✓ Atendida</button></div>`;}).join(''):'<div class="note">Todo en orden ✓ Ningún cliente necesita tu atención ahora.</div>';
-  return `<div class="cphead"><h2 class="h2" style="margin:0">Inicio</h2><em class="cpcount">${(CP.clients||[]).length} clientes</em></div>
-   <div class="cphome"><section class="sec"><div class="sec-h"><b>Actividad reciente</b><em>${feed.length}</em></div>${fh}</section>
-   <section class="sec"><div class="sec-h"><b>Mi actividad como coach</b><em>${act.length}</em></div>${ahist}</section>
-   <section class="sec"><div class="sec-h"><b>Necesitan tu atención</b><em>${al.length}</em></div>${ah}${nh?`<button class="lblbtn" data-act="cprestore" style="margin-top:6px">Mostrar ${nh} atendida${nh>1?'s':''}</button>`:''}</section></div>`;
+  const ah=al.length?al.slice(0,10).map(a=>{const c=nm[a.cid]||{};return `<div class="cpal ${a.s===0?'warn':a.s===1?'':'info'}"><button class="cpalb" data-act="cpopen" data-id="${a.cid}"><i class="cpav" style="flex:none;width:34px;height:34px;font-size:12px">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')}</b><b style="font-weight:600;color:${a.s===0?'#C0392B':'inherit'}">${esc(a.t)}</b><small>${esc(a.q)}</small></span></button><button class="cpok" data-act="cpdis" data-k="${esc(a.k)}" title="Marcar como atendida">✓ Atendida</button></div>`;}).join(''):'<div class="note">Todo en orden ✓ Ningún cliente necesita tu atención ahora.</div>';
+  const hh=(CP.showDis&&hid&&hid.length)?hid.map(a=>{const c=nm[a.cid]||{};return `<div class="cpal info" style="opacity:.75"><button class="cpalb" data-act="cpopen" data-id="${a.cid}"><i class="cpav" style="flex:none;width:34px;height:34px;font-size:12px">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')}</b><b style="font-weight:600">${esc(a.t)}</b><small>${esc(a.q)}</small></span></button><button class="cpok" data-act="cpundis" data-k="${esc(a.k)}" title="Volver a pendientes">↺ Aún no la atendí</button></div>`;}).join(''):'';
+  return `<div class="cphead"><h2 class="h2" style="margin:0">Inicio</h2><em class="cpcount">${(CP.clients||[]).filter(c=>c.status!=='archived').length} clientes</em></div>
+   <div class="cphome"><section class="sec"><div class="sec-h"><b>Necesitan tu atención</b><em>${al.length}</em></div>${ah}${nh?`<button class="lblbtn" data-act="cprestore" style="margin-top:6px">${CP.showDis?'Ocultar':'Ver'} ${nh} atendida${nh>1?'s':''}</button>`:''}${hh}</section>
+   <section class="sec"><div class="sec-h"><b>Actividad reciente</b><em>${feed.length}</em></div>${fh}</section>
+   <section class="sec"><div class="sec-h"><b>Mi actividad como coach</b><em>${act.length}</em></div>${ahist}</section></div>`;
 }
 function cpGripsSec(d){try{
   const bl=(d.blobs||[]).find(x=>x.key==='grips'),G=(bl&&bl.value)||{};const L=[];
@@ -2484,7 +2486,7 @@ function cpClientsPage(){
   return `<div class="cphead"><h2 class="h2" style="margin:0">Clientes</h2><em class="cpcount">${cnt('todos')}</em></div>
    <div class="cptabs">${['todos','basic','complete','elite'].concat(all.some(c=>c.status==='archived')?['arch']:[]).map(k=>`<button class="cptab${CP.pf===k?' on':''}" data-act="cppf" data-v="${k}">${k==='todos'?'Todos':k==='arch'?'Archivados':PNAME[k]} <em>${cnt(k)}</em></button>`).join('')}</div>
    <input class="fld" id="cpQ" placeholder="Buscar cliente…" value="${esc(CP.q)}" autocomplete="off" style="margin:10px 0">
-   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Programa</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<div class="cptr cprow"><span class="cpcl" data-act="cpopen" data-id="${c.id}" style="cursor:pointer"><i class="cpav">${esc(ini)}</i><span class="cpnm"><b>${esc(c.full_name||'Sin nombre')}</b><small class="cpem">${esc(((CP.info&&CP.info[c.id])||{}).email||'')}</small>${regTag((CP.info&&CP.info[c.id])||{},c)}</span>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em>${c.status==='pending'?' <em class="cpwarn">Pendiente</em>':''}${c.status==='archived'?' <em class="cpwarn">Archivado</em>':''}</span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin programa</em>'}</span><span>${dAgo(m.last[c.id])}</span><button class="cpkb" data-act="cpmenu" data-id="${c.id}" aria-label="Más acciones">⋮</button></div>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
+   ${cl.length?`<div class="cptable"><div class="cptr head"><span>Cliente</span><span>Plan</span><span>Nivel</span><span>Programa</span><span>Última sesión</span></div>${cl.map(c=>{const r=m.rt[c.id],ini=(c.full_name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<div class="cptr cprow"><span class="cpcl" data-act="cpopen" data-id="${c.id}" style="cursor:pointer"><i class="cpav">${esc(ini)}</i><span class="cpnm"><b>${esc(c.full_name||'Sin nombre')}</b><small class="cpem">${esc(((CP.info&&CP.info[c.id])||{}).email||'')}</small>${regTag((CP.info&&CP.info[c.id])||{},c)}</span>${(m.hito&&m.hito[c.id]&&Date.now()-Date.parse(m.hito[c.id].at)<864e5*3)?`<em class="cphito" title="${esc(m.hito[c.id].body)}">🏆</em>`:''}</span><span><em class="cpbadge ${c.plan}">${PNAME[c.plan]||c.plan}</em>${c.status==='pending'?' <em class="cpwarn">Pendiente</em>':''}${c.status==='archived'?' <em class="cpwarn">Archivado</em>':''}${c.status==='pending'?`<small style="display:block;color:var(--gray);font-size:11px;margin-top:3px">Se registró ${c.created_at?fdate(bogota(c.created_at).date):'—'}</small>`:`<small style="display:block;color:var(--gray);font-size:11px;margin-top:3px">Activo desde ${(c.member_since||c.created_at)?fdate(c.member_since||bogota(c.created_at).date):'—'}</small>`}</span><span>${esc(c.level||'—')}</span><span>${r?`${r.n} ${r.n===1?'día':'días'}`:'<em class="cpwarn">Sin programa</em>'}</span><span>${dAgo(m.last[c.id])}</span><button class="cpkb" data-act="cpmenu" data-id="${c.id}" aria-label="Más acciones">⋮</button></div>`;}).join('')}</div>`:'<div class="note">No hay clientes con ese filtro.</div>'}`;
 }
 async function coachLive(m){try{
   if(CP.sec==='chat'&&CP.view==='list'){cpInboxLoad();}else{DB.chatInbox().then(r=>{CP.inbox=r;badgeCalc();}).catch(()=>{});}
@@ -2836,7 +2838,8 @@ document.addEventListener('click',async e=>{
         CP.routine.days[ix].cardioDefault=mod;await DB.saveRoutine(CP.cid,CP.routine.name,CP.routine.days,ME.id);toast('Cardio del programa actualizado ✓');}
       cpDayClose();coachRender();}catch(x){console.warn(x);toast('No se pudo guardar el cardio');}return;}
   if(a==='cpdis'){const o=cpDisGet();o[t.dataset.k]=Date.now();cpDisSet(o);coachRender();return;}
-  if(a==='cprestore'){cpDisSet({});coachRender();return;}
+  if(a==='cprestore'){CP.showDis=!CP.showDis;coachRender();return;}
+  if(a==='cpundis'){const o=cpDisGet();delete o[t.dataset.k];cpDisSet(o);coachRender();return;}
   if(a==='cpview'){CP.cv=t.dataset.v;coachRender();return;}
   if(a==='cptnew'){CP.tm={date:t.dataset.v||today(),type:'workout'};cpTaskModal();return;}
   if(a==='cptclose'){CP.tm=null;cpTaskModal();return;}
@@ -3662,12 +3665,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-1320';
+const APP_VER='22nov-1324';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1320'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1324'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4723,12 +4726,12 @@ function chkFlags(d){d=d||{};const f=[];if(d.molestia==='si')f.push('molestia');
 function chkSum(d){d=d||{};return [CHK_L.cumple[d.cumple],CHK_L.carga[d.carga],d.alim!=null?'Alim. '+d.alim+'/10':''].filter(Boolean).join(' · ');}
 (function(){const h0=cpHomeData;cpHomeData=function(){const r=h0.apply(this,arguments);try{
   if(!CP.chk){cpChkLoad();return r;}
-  const nm=r.nm,dis=cpDisGet(),tdy=today(),since=addD(tdy,-14),feed=r.feed.slice(),al=r.al.slice();let nh=r.nh;
+  const nm=r.nm,dis=cpDisGet(),tdy=today(),since=addD(tdy,-14),feed=r.feed.slice(),al=r.al.slice();let nh=r.nh;const hid=(r.hid||[]).slice();
   CP.chk.forEach(x=>{if(!nm[x.client_id]||!x.period||x.period<since)return;const d=x.data||{};
     feed.push({d:bogota(x.created_at).date,cid:x.client_id,k:'chk',t:'envió su chequeo quincenal',feel:chkSum(d),q:x.comment||''});
-    const fl=chkFlags(d);if(fl.length){const k=x.client_id+'|chk|'+x.id;if(dis[k])nh++;else al.push({s:d.molestia==='si'?0:1,k,cid:x.client_id,t:'Chequeo: '+fl.join(' · '),q:'Léelo en su ficha y respóndele.'});}});
+    const fl=chkFlags(d);if(fl.length){const k=x.client_id+'|chk|'+x.id;const A={s:d.molestia==='si'?0:1,k,cid:x.client_id,t:'Chequeo: '+fl.join(' · '),q:'Léelo en su ficha y respóndele.'};if(dis[k]){nh++;hid.push(A);}else al.push(A);}});
   feed.sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:0);al.sort((a,b)=>a.s-b.s);
-  return {feed:feed.slice(0,8),al,nm,nh};}catch(e){return r;}};
+  return {feed:feed.slice(0,8),al,nm,nh,hid};}catch(e){return r;}};
   document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="cpnav"]');if(t)CP.chk=null;},true);})();
 function cpChkSec(){try{
   if(!CP.cid)return '';if(!CP.chk){cpChkLoad();return '<section class="sec"><div class="sec-h"><b>Chequeos quincenales</b></div><div class="note">Cargando…</div></section>';}
@@ -6853,6 +6856,36 @@ document.head.appendChild(st);
   document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="curset"]');if(!t)return;e.stopPropagation();e.preventDefault();
     try{localStorage.setItem('erre_cur',t.dataset.v);}catch(x){}
     const y=window.scrollY;try{if(typeof ME!=='undefined'&&ME&&PROFILE&&PROFILE.role==='client')render();else showLogin();}catch(x){}window.scrollTo(0,y);},true);
+})();
+
+/* ---------- PANEL COACH · INICIO: cumpleaños, planes por vencer/cobrar, chats por responder, actividad ---------- */
+(function(){
+  const h1=cpHomeData;cpHomeData=function(){const r=h1.apply(this,arguments);try{
+    if(!CP.acc&&!CP._accL){CP._accL=1;DB.accessAll().then(x=>{CP.acc=x;CP._accL=0;try{coachRender(true);}catch(e){}}).catch(()=>{CP.acc=[];CP._accL=0;});}
+    const nm=r.nm,dis=cpDisGet(),tdy=today(),al=r.al.slice(),hid=(r.hid||[]).slice();let nh=r.nh;
+    const add=A=>{if(dis[A.k]){nh++;hid.push(A);}else al.push(A);};
+    const act=(CP.clients||[]).filter(c=>c.status==='active');
+    act.forEach(c=>{if(!c.birth_date)return;const bd=String(c.birth_date).slice(5),y0=+tdy.slice(0,4);let nx=(y0)+'-'+bd;if(nx<tdy)nx=(y0+1)+'-'+bd;const n=diffD(nx,tdy);
+      if(n>=0&&n<=7){const age=+nx.slice(0,4)-(+String(c.birth_date).slice(0,4));add({s:2,k:c.id+'|bday|'+nx.slice(0,4),cid:c.id,t:n===0?'🎂 ¡Hoy cumple '+age+' años!':'🎂 Cumple '+age+' años '+(n===1?'mañana':'en '+n+' días'),q:'Escríbele un mensaje para felicitarlo.'});}});
+    (CP.acc||[]).forEach(a=>{const c=act.find(x=>x.id===a.client_id);if(!c)return;
+      if(a.payment_failed_at){add({s:0,k:c.id+'|pfail|'+String(a.payment_failed_at).slice(0,10),cid:c.id,t:'💳 Falló su pago',q:'Escríbele para que actualice su método de pago.'});return;}
+      if(!a.paid_until)return;const dl=Math.ceil((new Date(a.paid_until).getTime()-Date.now())/864e5),pk=String(a.paid_until).slice(0,10);
+      if(dl<0)add({s:0,k:c.id+'|exp|'+pk,cid:c.id,t:'💰 Plan vencido hace '+(-dl)+' día'+(dl===-1?'':'s')+' · por cobrar',q:'Venció el '+fdate(pk)+'. Confirma su renovación.'});
+      else if(dl<=7)add({s:1,k:c.id+'|soon|'+pk,cid:c.id,t:'⏳ Su plan vence '+(dl===0?'hoy':dl===1?'mañana':'en '+dl+' días'),q:(a.cancel_at_period_end?'Ya canceló la renovación. ':'')+'Vence el '+fdate(pk)+'.'});});
+    al.sort((a,b)=>a.s-b.s);
+    return Object.assign({},r,{al,nh,hid});}catch(e){return r;}};
+  const p1=cpHomePage;cpHomePage=function(){let h=p1.apply(this,arguments);try{
+    const last={};(CP.inbox||[]).forEach(m=>{if(m.client_id&&!last[m.client_id])last[m.client_id]=m;});
+    const rd=id=>{try{return +localStorage.getItem('cpread_'+id)||0;}catch(e){return 0;}};
+    const pend=(CP.clients||[]).filter(c=>c.status!=='archived').map(c=>({c,m:last[c.id]})).filter(x=>x.m&&x.m.sender_id===x.c.id&&x.m.kind!=='hito'&&new Date(x.m.created_at).getTime()>rd(x.c.id));
+    const rows=pend.slice(0,4).map(({c,m})=>{const b=bogota(m.created_at);return `<button class="cpfi" data-act="cpchat" data-id="${c.id}"><i class="cpav">${esc(cpIni(c.full_name))}</i><span><b>${esc(c.full_name||'Cliente')}</b><small>${esc(String(m.body||'').replace(/\s+/g,' ').slice(0,60))}</small></span><em>${cpRel(b.date)}</em></button>`;}).join('');
+    const sec=`<section class="sec"><div class="sec-h"><b>💬 Chats por responder</b><em>${pend.length}</em></div>${rows||'<div class="note">Estás al día con los chats ✓</div>'}${pend.length>4?`<div class="note">y ${pend.length-4} más en la pestaña Chat.</div>`:''}</section>`;
+    const m='<section class="sec"><div class="sec-h"><b>Actividad reciente';const i=h.indexOf(m);if(i>=0)h=h.slice(0,i)+sec+h.slice(i);}catch(e){}return h;};
+  /* mi actividad: también archivar, restaurar, eliminar y reiniciar */
+  const nmOf=id=>{const c=(CP.clients||[]).find(x=>x.id===id);return (c&&c.full_name)||'un cliente';};
+  if(DB.archiveClient){const ar=DB.archiveClient.bind(DB);DB.archiveClient=async(cid,on)=>{const r=await ar(cid,on);try{DB.logAct(cid,'cli',on?'Archivó al cliente':'Restauró al cliente');}catch(e){}return r;};}
+  if(DB.deleteClient){const dc=DB.deleteClient.bind(DB);DB.deleteClient=async cid=>{const n=nmOf(cid);const r=await dc(cid);try{DB.logAct(null,'cli','Eliminó la cuenta de '+n);}catch(e){}return r;};}
+  if(DB.resetProfile){const rp=DB.resetProfile.bind(DB);DB.resetProfile=async cid=>{const r=await rp(cid);try{DB.logAct(cid,'cli','Reinició el perfil del cliente');}catch(e){}return r;};}
 })();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
