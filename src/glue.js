@@ -3147,10 +3147,25 @@ var PV_MC={'Pecho':'#C0392B','Espalda':'#3B6FB6','Hombros':'#E08A2E','Piernas':'
 .pvfoot{position:sticky;bottom:78px;display:flex;flex-direction:column;gap:8px;margin-top:14px;padding:10px 0;background:linear-gradient(transparent,#F7F6F3 30%)}
 .pvgo{border:0;border-radius:99px;padding:15px;font:700 16px Archivo,sans-serif;background:#1C1B19;color:#fff}.pvw{border:2px solid #1C1B19;background:none;border-radius:99px;padding:13px;font:700 15px Archivo,sans-serif}
 .disc{width:100%;margin-top:16px;border:0;border-radius:99px;padding:14px;background:#C0392B;color:#fff;font:700 15px Archivo,sans-serif}`;document.head.appendChild(st);})();
+/* reparto de músculos por ejercicio: usa el patrón/músculo y reparte entre principal y secundarios */
+const PV_SPL={'Pecho':{Pecho:1},'Pectoral':{Pecho:1},'Aperturas de pecho':{Pecho:1},'Empuje horizontal':{Pecho:.6,Tríceps:.2,Hombros:.2},'Empuje vertical':{Hombros:.6,Tríceps:.4},
+ 'Hombro':{Hombros:1},'Elevación lateral':{Hombros:1},'Deltoide anterior':{Hombros:1},'Deltoide posterior':{Hombros:1},'Hombro posterior':{Hombros:1},'Manguito rotador':{Hombros:1},
+ 'Tracción vertical':{Espalda:.75,Bíceps:.25},'Tracción horizontal':{Espalda:.75,Bíceps:.25},'Dorsal aislado':{Espalda:1},'Dorsal':{Espalda:1},'Espalda':{Espalda:1},'Trapecio':{Trapecio:1},'Escápulas':{Trapecio:1},
+ 'Flexión de codo':{Bíceps:1},'Bíceps':{Bíceps:1},'Extensión de codo':{Tríceps:1},'Tríceps':{Tríceps:1},'Antebrazo':{Antebrazo:1},
+ 'Core':{Abdomen:1},'Abdomen':{Abdomen:1},'Oblicuos':{Abdomen:1},
+ 'Sentadilla':{Piernas:.65,Glúteos:.35},'Dominante de rodilla':{Piernas:.65,Glúteos:.35},'Pierna':{Piernas:1},'Cuádriceps':{Piernas:1},'Extensión de rodilla':{Piernas:1},'Aducción':{Piernas:1},
+ 'Zancada':{Piernas:.55,Glúteos:.45},'Glúteo/Cuádriceps':{Piernas:.55,Glúteos:.45},
+ 'Dominante de cadera':{Isquios:.55,Glúteos:.45},'Bisagra de cadera':{Isquios:.55,Glúteos:.45},'Curl femoral':{Isquios:1},'Flexión de rodilla':{Isquios:1},'Isquiotibiales':{Isquios:1},
+ 'Puente de glúteo':{Glúteos:1},'Patada de glúteo':{Glúteos:1},'Glúteo aislado':{Glúteos:1},'Glúteo':{Glúteos:1},'Glúteo mayor':{Glúteos:1},'Abducción':{Glúteos:1},'Gemelos':{Gemelos:1}};
+const PV_GSPL={'Espalda':{Espalda:1},'Pecho':{Pecho:1},'Hombro':{Hombros:1},'Pierna':{Piernas:.6,Glúteos:.4},'Glúteo':{Glúteos:1},'Core':{Abdomen:1}};
+function pvSplit(e){if(!e)return null;const nm=String(e.n||'').toLowerCase();
+  if(/pantorrilla|talón|talon/.test(nm))return [['Gemelos',1]];
+  const o=PV_SPL[e.mus]||PV_SPL[e.pat]||PV_GSPL[e.g]||null;if(!o)return null;return Object.entries(o);}
+Object.assign(PV_MC,{'Isquios':'#1E8A8A','Gemelos':'#6B9F2E','Trapecio':'#3A5E9C','Antebrazo':'#8C6A4B'});
 function pvData(){const d=DAYS[S.day],P=PERIOD[S.program],wk=Math.min(S.week,P.weeks),rows=[],mg={};
   ['main','acc'].concat(d.blocks.filter(b=>b.cust).map(b=>b.k)).forEach(bk=>{const b=d.blocks.find(x=>x.k===bk);if(!b)return;
     itemsOf(d,b).forEach((it,i)=>{const id=curEx(d,bk,i,it),e=E[id]||{};let p={};try{p=presc(it);}catch(x){}
-      rows.push({id,n:e.n||id,sets:p.sets||it.sets||0,reps:p.reps});const m=PV_MG[e.mus]||(e.mus&&PV_MG[e.mus])||null;if(m)mg[m]=(mg[m]||0)+(p.sets||1);});});
+      rows.push({id,n:e.n||id,sets:p.sets||it.sets||0,reps:p.reps});const sp=pvSplit(e);if(sp)sp.forEach(([g,w])=>{mg[g]=(mg[g]||0)+w*(p.sets||1);});});});
   const tot=Object.values(mg).reduce((a,b)=>a+b,0)||1,top=Object.entries(mg).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([n,v])=>[n,Math.round(v/tot*100)]);
   return {d,wk,P,rows,top};}
 function pvHTML(){const {d,wk,P,rows,top}=pvData();
