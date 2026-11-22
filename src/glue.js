@@ -3467,7 +3467,7 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
 @media(min-width:700px){#cpmn{background:transparent;align-items:flex-start;justify-content:flex-start}#cpmn .cpmnc{position:absolute;width:260px;border-radius:14px;padding:6px;border:1px solid #DCD6CC;box-shadow:0 8px 28px rgba(0,0,0,.18)}}`;document.head.appendChild(st);})();
 function cpMenu(id,btn){let o=document.getElementById('cpmn');if(o)o.remove();if(!id)return;
   const c=(CP.clients||[]).find(x=>x.id===id)||{},nm=c.full_name||'Cliente',chat=c.plan==='complete'||c.plan==='elite',med=(c.modules||[]).includes('medidas');
-  const items=[['open','👤','Abrir ficha'],['exp','📋','Exportar datos'],chat?['chat','💬','Abrir chat']:null,['task','🗓️','Asignar tarea / workout'],['pdf','📄','Exportar rutina a PDF'],med?['meas','📏','Nueva medición']:null,['acc','💳','Acceso y pago']].filter(Boolean);
+  const items=[['open','👤','Abrir ficha'],['exp','📋','Exportar datos'],chat?['chat','💬','Abrir chat']:null,['task','🗓️','Asignar tarea / workout'],['pdf','📄','Exportar rutina a PDF'],med?['meas','📏','Nueva medición']:null,['acc','💳','Acceso y pago'],c.status==='archived'?['unarch','♻️','Restaurar cliente']:['arch','🗃️','Archivar cliente'],['del','🗑️','Eliminar cliente']].filter(Boolean);
   o=document.createElement('div');o.id='cpmn';o.innerHTML=`<div class="cpmnc"><div class="cpmnh">${esc(nm)}<small>Atajos</small></div>${items.map(([k,ic,t])=>`<button class="cpmi" data-act="cpmact" data-k="${k}" data-id="${id}"><i>${ic}</i>${t}</button>`).join('')}</div>`;
   document.body.appendChild(o);
   if(window.innerWidth>=700&&btn){const r=btn.getBoundingClientRect(),bx=o.firstChild;bx.style.left=Math.max(8,Math.min(window.innerWidth-268,r.right-260))+'px';const h=bx.offsetHeight;bx.style.top=Math.max(8,Math.min(window.innerHeight-h-8,r.bottom+4))+'px';}}
@@ -3483,6 +3483,10 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
   else if(k==='task'){CP.err='';coachOpen(id,'plan');}
   else if(k==='acc'){CP.err='';coachOpen(id,'resumen');}
   else if(k==='meas'){CP.cid=id;CP.med=null;medModal(true);}
+  else if(k==='arch'||k==='unarch'){const on=k==='arch';if(on&&!confirm('¿Archivar a '+(c.full_name||'este cliente')+'? Deja de entrar a la app y sale de tu lista. Lo encuentras en la pestaña Archivados y puedes restaurarlo cuando quieras.'))return;
+    try{await DB.archiveClient(id,on);c.status=on?'archived':'active';coachRender();toast(on?'Cliente archivado ✓':'Cliente restaurado ✓');}catch(x){console.warn(x);toast('No se pudo completar');}}
+  else if(k==='del'){const nm=c.full_name||'este cliente';if(!confirm('¿Eliminar a '+nm+' y TODOS sus datos para siempre? No se puede deshacer.\n\nSi solo quieres sacarlo de tu lista, mejor usa "Archivar cliente".'))return;const w=prompt('Para confirmar, escribe ELIMINAR');if((w||'').trim().toUpperCase()!=='ELIMINAR'){toast('No se eliminó');return;}
+    try{await DB.deleteClient(id);CP.clients=(CP.clients||[]).filter(x=>x.id!==id);coachRender();toast('Cliente eliminado');}catch(x){console.warn(x);toast('No se pudo eliminar');}}
   else if(k==='pdf'){try{const rt=await DB.routine(id);if(!rt||!rt.days||!rt.days.length){toast('Este cliente aún no tiene rutina para exportar');return;}
       let prog='complete';try{prog=planOf(c);}catch(x){}PDFM={days:rt.days.filter(d=>!d.x),sel:0,prog,goal:['bajar','complete','aumentar'].includes(c.goal)?c.goal:'complete',wk:1,who:c.full_name||'',title:rt.name||'Rutina',intro:PDF_INTRO,scope:'all'};pdfModal();}catch(x){console.warn(x);toast('No se pudo cargar la rutina');}}
 },true);
