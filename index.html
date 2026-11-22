@@ -3646,12 +3646,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-0953';
+const APP_VER='22nov-1005';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-0953'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1005'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5782,7 +5782,7 @@ window.AL_CULS=[['co','🇨🇴','Colombia'],['mx','🇲🇽','México'],['es','
 window.AL_CUL={'Arepa con huevos':'co','Pollo con fríjol':'co','Cerdo con yuca':'co','Atún con arepa':'co','Crema de pollo':'co',
  'Huevos rancheros':'mx','Tacos de pollo con nopales':'mx','Mango con limón y chile':'mx','Aguachile de camarón':'mx',
  'Pan con tomate y huevo':'es','Potaje de garbanzos con bacalao':'es','Paella ligera de pollo':'es','Tortilla española ligera':'es'};
-const of=alpOptOk;alpOptOk=function(m,i){if(!of.apply(this,arguments))return false;const c=(typeof S!=='undefined'&&S)?S.alcul:null;return !c||c==='all'||AL_CUL[AL_O[m][i][0]]===c;};
+const of=alpOptOk;alpOptOk=function(m,i){if(!of.apply(this,arguments))return false;const c=(typeof S!=='undefined'&&S)?S.alcul:null;return !c||c==='all'||AL_CUL[AL_O[m][i][0]]===c||(m==='m'&&!AL_CUL[AL_O[m][i][0]]);};
 const dy=alDay;alDay=function(){let h=dy.apply(this,arguments);const cur=S.alcul||'all',have=AL_CULS.filter(c=>Object.values(AL_CUL).includes(c[0]));
  Object.keys(AL_CUL).forEach(n=>{const fl=(AL_CULS.find(c=>c[0]===AL_CUL[n])||[])[1];if(fl)h=h.split('<b>'+esc(n)+'</b></button>').join('<b>'+esc(n)+'</b><span class="alfl">'+fl+'</span></button>');});
  const chips=`<div class="alcul"><button class="${cur==='all'?'on':''}" data-alcul="all">🍽 Todas</button>${have.map(c=>`<button class="${cur===c[0]?'on':''}" data-alcul="${c[0]}">${c[1]} ${c[2]}</button>`).join('')}</div>`;
@@ -6557,6 +6557,37 @@ const ts=toast;toast=function(m){if(window.__lastDur&&typeof m==='string'&&m.ind
 const st=document.createElement('style');st.textContent=`.sesh .sest span{white-space:normal!important;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.2}.sesclk{flex:none;text-align:right;background:rgba(255,255,255,.18);border-radius:12px;padding:4px 10px;line-height:1.1}.sesclk small{display:block;font:700 9px Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;opacity:.8}.sesclk b{font:700 16px Oswald,Archivo,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .fdur{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px auto 4px;background:var(--paper,var(--paper,#EFEDE8));border-radius:14px;padding:10px 16px;width:max-content;max-width:100%}.fdur span{font-size:24px}.fdur small{display:block;font:700 10px Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--gray,var(--gray,#5A554E))}.fdur b{font:700 20px Oswald,Archivo,sans-serif}`;
 document.head.appendChild(st);
+})();
+
+/* Android: agarres/posturas no se salen de la pantalla (22 nov) */
+(function(){const st=document.createElement('style');st.textContent=`.grprow{flex-wrap:wrap!important;row-gap:4px}.grprow .chips{flex-wrap:wrap!important;flex:1 1 auto;min-width:0}.grp .chip{white-space:nowrap}`;document.head.appendChild(st);})();
+
+
+/* ===== Más meriendas, universales y por cultura (22 nov) ===== */
+(function(){
+const add=(c,n,e,comp,r)=>{AL_O.m.push([n,e,comp,{r:r,e:undefined}]);if(c)AL_CUL[n]=c;};
+/* universales: aparecen en todas las culturas */
+add(null,'Manzana con mantequilla de maní','🍎🥜',{fr:'Manzana',f:'Mantequilla de maní'},'Corta la manzana en rodajas y acompáñala con 1 cucharada de mantequilla de maní.');
+add(null,'Uvas con queso','🍇🧀',{p:'Queso campesino / requesón',fr:'Uvas / kiwi'},'Una porción de queso en cubos con un puñado de uvas. Listo en 1 minuto.');
+add(null,'Tostada con requesón y fresas','🍞🧀🍓',{p:'Queso campesino / requesón',c:'Pan integral',fr:'Fresas'},'Tuesta el pan, unta el requesón y cubre con las fresas en rodajas.');
+add(null,'Yogurt con chía y papaya','🥣🍈',{p:'Yogurt griego',f:'Semillas (chía, girasol)',fr:'Papaya'},'Mezcla el yogurt con las semillas y sirve con la papaya en cubos.');
+add(null,'Fruta fresca picada','🍍🍊🍓',{fr:'Piña'},'Pica 2 o 3 frutas que te gusten (piña, naranja, fresas) y come con calma. Si quieres más proteína, súmale un yogurt.');
+/* por cultura */
+add('co','Arepa con queso','🫓🧀',{p:'Queso campesino / requesón',c:'Arepa'},'Asa la arepa en sartén y rellénala con el queso en láminas hasta que se derrita un poco.');
+add('co','Plátano asado con queso','🍌🧀',{p:'Queso campesino / requesón',c:'Plátano'},'Asa el plátano maduro con su cáscara o en sartén sin aceite y acompáñalo con el queso.');
+add('mx','Pepino con limón y requesón','🥒🍋🧀',{p:'Queso campesino / requesón',v:'Pepino'},'Corta el pepino en bastones, báñalo con limón, sal y una pizca de chile y come con el requesón.');
+add('mx','Tostada con aguacate y huevo','🥑🍞🥚',{p:'Huevos',c:'Pan integral',f:'Aguacate (½)'},'Tuesta el pan, aplasta el aguacate con limón y sal, y corona con huevo duro en rodajas.');
+add('es','Tostada con tomate y atún','🍞🍅🐟',{p:'Atún',c:'Pan integral',v:'Tomate',f:'Aceite de oliva'},'Tuesta el pan, frota tomate maduro, un chorrito de aceite de oliva y el atún por encima.');
+add('es','Requesón con uvas y nueces','🧀🍇🥜',{p:'Queso campesino / requesón',f:'Almendras / maní / nueces',fr:'Uvas / kiwi'},'Sirve el requesón en un bowl con las uvas y unas nueces troceadas.');
+add('es','Naranja con almendras','🍊🥜',{fr:'Naranja',f:'Almendras / maní / nueces'},'Una naranja pelada en gajos con un puñado pequeño de almendras.');
+add('pe','Camote asado con queso','🍠🧀',{p:'Queso campesino / requesón',c:'Batata'},'Hornea o asa el camote hasta que esté suave y acompáñalo con el queso fresco.');
+add('pe','Quinua con yogurt y fresas','🥣🌾🍓',{p:'Yogurt griego',c:'Quinua',fr:'Fresas'},'Mezcla un poco de quinua ya cocida con el yogurt y las fresas picadas.');
+add('eu','Pan integral con requesón y tomate','🍞🧀🍅',{p:'Queso campesino / requesón',c:'Pan integral',v:'Tomate',f:'Aceite de oliva'},'Tuesta el pan, unta el requesón y añade tomate en rodajas con orégano y aceite de oliva.');
+add('eu','Yogurt griego con nueces','🥣🥜🍯',{p:'Yogurt griego',f:'Almendras / maní / nueces',fr:'Uvas / kiwi'},'Yogurt griego con nueces troceadas y fruta fresca por encima.');
+add('us','Cottage cheese con piña','🧀🍍',{p:'Queso campesino / requesón',fr:'Piña'},'Requesón (cottage cheese) con piña en cubos. Alto en proteína y muy fácil.');
+add('us','Mix de frutos secos y uvas','🥜🍇',{f:'Almendras / maní / nueces',fr:'Uvas / kiwi'},'Un puñado pequeño de frutos secos con uvas. Mide la porción: los frutos secos son calóricos.');
+add('au','Tostada con aguacate','🥑🍞',{c:'Pan integral',f:'Aguacate (½)',p:'Huevos'},'Aplasta el aguacate con limón sobre pan tostado y suma un huevo duro si quieres más proteína.');
+add('au','Fruta con yogurt y coco','🥣🥭🥥',{p:'Yogurt griego',fr:'Mango'},'Yogurt con mango en cubos; si tienes coco rallado sin azúcar, una pizca encima.');
 })();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
