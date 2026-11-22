@@ -5085,9 +5085,10 @@ const sync=()=>{const a=document.getElementById('aiRt'),b=document.getElementByI
 document.addEventListener('input',e=>{if(e.target&&(e.target.id==='aiRt'||e.target.id==='aiAns'))sync();},true);
 document.addEventListener('click',async e=>{
   const t=e.target.closest&&e.target.closest('[data-act^="ai"]');if(!t)return;const a=t.dataset.act;
-  if(!/^(aipo|aipx|aicopy|aipaste|aibuild|aiapply|aiback|aiprognew)$/.test(a))return;
+  if(!/^(aipo|aipx|aicopy|aipaste|aibuild|aiapply|aiback|aiprognew|aicli)$/.test(a))return;
   e.stopPropagation();e.preventDefault();sync();
   if(a==='aiprognew'){rtOpen('template',{name:'',tkind:RT.lb.kind,folder:RT.lb.folder,days:[RD.torsoC(1)]});AI.plan=null;AI.err='';AI.step='write';aiModal(true);return;}
+  if(a==='aicli'){const has=CP.routine&&CP.routine.days&&CP.routine.days.length;rtOpen('client',{cid:CP.cid,name:has?CP.routine.name:'Rutina de '+((CP.d&&CP.d.profile&&CP.d.profile.full_name||'cliente').split(' ')[0]),days:has?CP.routine.days:[RD.torsoC(1)]});AI.plan=null;AI.err='';aiModal(true);return;}
   if(a==='aipo'){AI.plan=null;AI.err='';aiModal(true);return;}
   if(a==='aipx'){aiModal(false);return;}
   if(a==='aiback'){AI.plan=null;aiModal(true);return;}
@@ -5102,4 +5103,5 @@ document.addEventListener('click',async e=>{
 /* botones de entrada */
 const re=rtEditorHTML;rtEditorHTML=function(){let h=re.apply(this,arguments);const m='<div class="note">Series y repeticiones de básicos';const i=h.indexOf(m);return i<0?h:h.slice(0,i)+'<button class="btn" data-act="aipo" style="width:100%;margin:10px 0 0">✨ Crear con IA (copiar y pegar)</button>'+h.slice(i);};
 const rl=rtTplList;rtTplList=function(){let h=rl.apply(this,arguments);const m='<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-act="rtlbnewf"';const i=h.indexOf(m);return i<0?h:h.slice(0,i)+'<button class="btn" data-act="aiprognew" style="width:100%;margin-top:10px">✨ Crear '+(RT.lb&&RT.lb.kind==='workout'?'workout':'programa')+' con IA</button>'+h.slice(i);};
+const ce=cpEntSeg;cpEntSeg=function(){return ce.apply(this,arguments)+'<button class="btn" data-act="aicli" style="width:100%;margin:0 0 10px">✨ Crear programa con IA</button>';};
 })();
