@@ -847,7 +847,7 @@ const save=()=>{store.set('erre_state',S);if(window.SYNC)SYNC.dirty();try{msSoon
 const $=s=>document.querySelector(s);
 const ikey=(d,b,i)=>`${S.sel}|${d?d.id:'none'}|${b}|${i}`;
 const skey=(d,b,i)=>`${S.sel}|${d?d.id:'none'}|${b}|${i}`;
-const curEx=(d,b,i,it)=>S.swaps[skey(d,b,i)]||it.ex;
+const curEx=(d,b,i,it)=>S.swaps[skey(d,b,i)]||(typeof pregSafe==='function'?pregSafe(it.ex,it):it.ex);
 
 const xkey=(d,bk)=>`${S.sel}|${d?d.id:'none'}|${bk}`;
 function itemsOf(d,b){
@@ -1376,7 +1376,7 @@ function cardioBlock0(b,d){
 }
 
 function exHTML(d,b,i,it,pr,key,L){
-  const exId=curEx(d,b.k,i,it), x=E[exId], swapped=exId!==it.ex, warm=b.k==='warm'||b.k==='calm';
+  const exId=curEx(d,b.k,i,it), x=E[exId], swapped=exId!==it.ex, warm=b.k==='warm'||b.k==='calm', pgAuto=swapped&&!S.swaps[skey(d,b.k,i)];
   const showRef=S.program==='complete'&&it.ref&&!swapped&&!it.fixed&&!warm;
   const logging=!it.fixed&&!warm;
   const ek='ex.'+key, open=!!S.exp[ek];
@@ -1397,7 +1397,7 @@ function exHTML(d,b,i,it,pr,key,L){
   const meta=(!warm&&!it.extra&&!it.fixed)?`<div class="meta"><button data-act="info" data-v="descanso">Descanso <b>${pr.rest}</b></button><button data-act="info" data-v="rir">RIR <b>${pr.rir}</b></button><button data-act="info" data-v="tempo">Tempo <b>${pr.tempo}</b></button></div>`:'';
   return `<div class="ex2${open?' open':''}${all?' exok':''}">
     <div class="exrow">
-      <button class="exo" data-act="exp" data-k="${ek}">${typeof thumb==='function'?thumb(exId):''}<span class="exn"><b class="exlink" data-act="exguide" data-ex="${exId}">${x.n}</b><small>${summ}${swapped?' · Sustituido':''}${it.extra?' · Añadido por ti':''}</small></span>
+      <button class="exo" data-act="exp" data-k="${ek}">${typeof thumb==='function'?thumb(exId):''}<span class="exn"><b class="exlink" data-act="exguide" data-ex="${exId}">${x.n}</b><small>${summ}${swapped?(pgAuto?' · Adaptado a tu embarazo':' · Sustituido'):''}${it.extra?' · Añadido por ti':''}</small></span>
       ${warm?'':`<span class="exs${all?' ok':''}">${all?'✓':dn+'/'+pr.sets}</span>`}<i class="chev">›</i></button>
       ${!warm?`<button class="exmenu" data-act="exmenu" data-ex="${exId}" aria-label="Histórico y comentarios">⋮${((S.excom||{})[exId]||[]).length?'<i class="exdot"></i>':''}</button>`:''}
       ${warm?`<button class="xchk${all?' on':''}" data-act="wdone" data-k="${key}" data-n="${pr.sets}" aria-label="Hecho">✓</button>`:''}
@@ -1405,14 +1405,14 @@ function exHTML(d,b,i,it,pr,key,L){
     ${open?`<div class="exb">
       ${meta}${typeof gripRow==='function'?gripRow(exId):''}
       ${showRef?`<div class="ref">Peso de referencia de tu coach: <b>${fkg(it.ref)} kg</b></div>`:(!isC()&&!it.fixed&&!warm&&!it.extra&&!swapped?invl('Con Complete: peso de referencia de tu coach'):'')}
-      ${swapped?`<div class="note"><b>Original:</b> ${E[it.ex].n}.${warm?'':' Registra tu peso real, no hay referencia para este ejercicio.'}</div>`:(it.note?`<div class="note"><b>${isC()?'Nota del coach':'Tip'}:</b> ${it.note}</div>`:'')}
+      ${swapped?(pgAuto?`<div class="note"><b>Adaptado a tu embarazo.</b> Original: ${E[it.ex].n}. Esfuerzo moderado, sin aguantar el aire.</div>`:`<div class="note"><b>Original:</b> ${E[it.ex].n}.${warm?'':' Registra tu peso real, no hay referencia para este ejercicio.'}</div>`):(it.note?`<div class="note"><b>${isC()?'Nota del coach':'Tip'}:</b> ${it.note}</div>`:'')}
       ${logging?prevLine(exId):''}
       ${logging?`<div class="sets"><div class="setlabels"><span>#</span><span>Reps</span><span>Kg</span><button class="lblbtn" data-act="info" data-v="rpe">Esfuerzo ⓘ</button><span></span></div>${sets}</div>`:''}
       ${it.extra?`<div class="actions"><button class="btn" data-act="xset" data-d="-1" data-b="${b.k}" data-xi="${it.xi}">− Serie</button><button class="btn" data-act="xset" data-d="1" data-b="${b.k}" data-xi="${it.xi}">+ Serie</button></div>`:''}
       <div class="actions">
         <button class="btn" data-act="video" data-ex="${exId}">▶ Ver video</button>
         ${it.extra?`<button class="btn red" data-act="xdel" data-b="${b.k}" data-xi="${it.xi}">Quitar</button>`:`<button class="btn" data-act="swap" data-b="${b.k}" data-i="${i}">⇄ Cambiar</button>`}
-        ${swapped?`<button class="btn" data-act="restore" data-b="${b.k}" data-i="${i}">Restaurar</button>`:''}
+        ${swapped&&!pgAuto?`<button class="btn" data-act="restore" data-b="${b.k}" data-i="${i}">Restaurar</button>`:''}
       </div>
     </div>`:''}
   </div>`;
@@ -2564,7 +2564,7 @@ function cxSync(){
   cxList().forEach(t=>{const sd=t.day||(t.ref&&(cxList().find(q=>q.id===t.ref)||{}).day);if(t.type==='workout'&&sd){const d=JSON.parse(JSON.stringify(sd));d.id='x'+t.id;d.x=1;d.label=t.title||d.name||'Workout';DAYS.push(d);}});
 }
 function cxCard(){return cxList().filter(t=>t.date===S.sel&&t.type==='cardio').pop()||null;}
-const cxTier=t=>((cxCard()||{}).tier)||t;
+let cxTier=t=>((cxCard()||{}).tier)||t;
 function cxOv(date){const L=cxList().filter(t=>t.date===date);return L.find(t=>t.type==='rest')||L.find(t=>t.type==='workout'&&!t.extra)||null;}
 const CXS={};
 function cxExtras(date){return cxList().filter(t=>t.date===date&&t.type==='workout'&&t.extra);}
@@ -3647,12 +3647,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-1024';
+const APP_VER='22nov-1030';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1024'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1030'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5635,7 +5635,7 @@ function cpHoy(d){
   const k=(l,v,e)=>`<div class="cphk"><small>${l}</small><b>${v}</b><em>${e||'&nbsp;'}</em></div>`;
   const edad=p.birth_date?Math.floor((Date.now()-new Date(p.birth_date))/31557600000):null;
   const inj=(p.injuries||'').trim(),hasInj=inj&&!/^ning/i.test(inj);
-  const chips=`<div class="cph-chips">${p.level?`<span>${esc(p.level)}</span>`:''}${(p.train_days||[]).length?`<span>${(p.train_days||[]).map(i=>DAYL[i]).join(' · ')}</span>`:''}${edad!=null?`<span>${edad} años</span>`:''}${p.height_cm?`<span>${p.height_cm} cm</span>`:''}${hasInj?`<span class="red">⚠ ${esc(inj)}</span>`:''}</div>`;
+  const chips=`<div class="cph-chips">${p.level?`<span>${esc(p.level)}</span>`:''}${(p.train_days||[]).length?`<span>${(p.train_days||[]).map(i=>DAYL[i]).join(' · ')}</span>`:''}${edad!=null?`<span>${edad} años</span>`:''}${p.height_cm?`<span>${p.height_cm} cm</span>`:''}${hasInj?`<span class="red">⚠ ${esc(inj)}</span>`:''}${typeof pgChip==='function'?pgChip(d):''}</div>`;
   const c=d.call?bogota(d.call.starts_at):null;
   const call=`<section class="sec"><div class="sec-h"><b>Llamada 1:1</b><em>${c?fmtCall(c):'Sin agendar'}</em></div>
     <div class="rtgrid g3" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><label>Fecha<input class="fld" type="date" id="cpD" value="${c?c.date:addD(tdy,10)}"></label><label>Hora (Bogotá)<input class="fld" type="time" id="cpT" value="${c?c.time:'19:00'}"></label></div>
@@ -6671,6 +6671,76 @@ async function basicBlockSync(){try{
   setTimeout(()=>{try{toast(cl!==lvl?'Subiste a nivel '+lvl:'Empieza tu bloque '+eb+': ejercicios nuevos, misma progresión');}catch(e){}},900);
 }catch(e){console.warn('bbSync',e);}}
 window.__bbs=basicBlockSync;const sc0=startClient;startClient=async function(){const r=await sc0.apply(this,arguments);frzCheck();await basicBlockSync();return r;};
+})();
+
+/* ---------- MODO EMBARAZO (22 nov) ---------- */
+(function(){
+const pg=()=>{const u=S.user||{};return (u.preg&&u.preg.on)?u.preg:null;};
+const pgWeek=()=>{const p=pg();if(!p)return 0;const d=Math.floor((new Date(today())-new Date(p.at))/864e5);return Math.min(42,Math.max(1,(+p.w0||1)+Math.floor(d/7)));};
+const pgTri=w=>w<=13?1:w<=27?2:3;
+window.pgChip=function(d){try{const pr=((d.data||{}).user||{}).preg;if(!pr||!pr.on)return '';const w=Math.min(42,(+pr.w0||1)+Math.floor((new Date(today())-new Date(pr.at))/864e5/7));return `<span class="${pr.ok?'':'red'}" style="background:color-mix(in srgb,#F6E4EE var(--tm,100%),var(--card,#FBFAF8));border-color:#C77DA3">🤰 Embarazo · sem ${w} · T${w<=13?1:w<=27?2:3}${pr.ok?'':' · sin autorización médica'}</span>`;}catch(e){return '';}};
+window.pregOn=()=>!!pg();
+window.pregInfo=()=>{const p=pg();if(!p)return null;const w=pgWeek();return {w,t:pgTri(w),ok:!!p.ok};};
+const CORE_OK=new Set(['h_plancha_lateral_en_rodillas_estabilida','h_abduccion_de_cadera_en_plancha_de_rodi']);
+const SUP=new Set(['press_plano_barra','l_press_plano_con_mancuernas','h_press_plano_agarre_cerrado','h_press_plano_en_maquina_de_polea','l_press_horizontal_en_maquina_x']);
+const FLOORBR=new Set(['h_puente_de_gluteos_con_peso','l_puente_de_gluteos','h_puente_de_gluteos_unilateral_con_peso','h_puente_a_una_pierna_sin_peso','h_hip_thrust_sin_peso','h_puente_de_gluteos_abduccion_de_cadera','h_puente_de_gluteos_puente_de_cadera','h_hip_thrust_unilateral_con_peso']);
+const PRONE=new Set(['h_curl_isquios_en_maquina_acostado']);
+const HEAVY={remo_barra:'h_remo_en_maquina_polea_pecho_apoyado',h_sentadilla_libre:'h_sentadilla_goblet_con_mancuerna',l_dominadas:'jalon',h_dominadas_agarre_prono:'jalon',h_dominadas_agarre_supino:'jalon',h_dominadas_agarre_neutro:'jalon',h_dominadas_lastradas_agarre_neutro:'jalon',h_dominadas_lastradas_agarre_prono:'jalon',h_dominadas_lastradas_agarre_supino:'jalon',fondos:'l_fondos_en_maquina',h_fondos_en_paralelas_lastrados:'l_fondos_en_maquina',press_plano_barra:'press_inc_maq',h_press_plano_agarre_cerrado:'press_inc_maq',h_press_inclinado_con_barra:'press_inc_maq',press_milit:'h_press_militar_con_mancuernas_sentado',l_flexiones_con_peso:'flexiones',h_flexiones_en_diamante:'flexiones',h_flexiones_en_pica:'h_press_militar_con_mancuernas_sentado'};
+const BAL={h_sentadilla_bulgara_con_mancuernas:'h_prensa_de_piernas_horizontal',h_sentadilla_bulgara_sin_peso:'h_prensa_de_piernas_horizontal',h_peso_muerto_rumano_a_una_pierna:'h_peso_muerto_rumano_smith',h_zancada_smith:'h_prensa_de_piernas_horizontal',h_step_up_smith:'h_prensa_de_piernas_horizontal'};
+window.pregSafe=function(ex,it){
+  try{const p=pg();if(!p||!ex)return ex;const w=pgWeek(),e=E[ex]||{};
+    if(e.g==='Core'||e.pat==='Core'){return CORE_OK.has(ex)?ex:'h_plancha_lateral_en_rodillas_estabilida';}
+    if(HEAVY[ex])return HEAVY[ex];
+    if(w>=16&&SUP.has(ex))return 'press_inc_maq';
+    if(w>=16&&FLOORBR.has(ex))return 'h_patada_de_gluteos_trasera_en_polea';
+    if(w>=14&&PRONE.has(ex))return 'h_curl_isquios_en_maquina_sentado';
+    if(w>=20&&BAL[ex])return BAL[ex];
+    return ex;}catch(x){return ex;}};
+/* cardio: nunca intenso; en el 3.er trimestre solo suave */
+const cx0=cxTier;cxTier=function(t){let r=cx0.apply(this,arguments);const i=pregInfo();if(!i||!r)return r;if(r==='Intenso')r='Moderado';if(i.t===3&&r==='Moderado')r='Base';return r;};
+/* alimentación: sin déficit; calorías extra por trimestre; más agua */
+const at0=alTargets;alTargets=function(raw){
+  const i=pregInfo();if(!i||(!raw&&alP&&alP().tg))return at0.apply(this,arguments);
+  const g0=S.goal;if(g0==='bajar')S.goal='complete';let T;try{T=at0.apply(this,arguments);}finally{S.goal=g0;}
+  const add=[0,0,340,450][i.t];return Object.assign({},T,{kc:T.kc+add,C:T.C+Math.round(add/4),water:T.water+250});};
+/* textos */
+const TRI={1:'Primer trimestre',2:'Segundo trimestre',3:'Tercer trimestre'};
+const TIP={1:'Cansancio y náuseas son normales: baja la carga, no la constancia. Más proteína y comidas pequeñas y frecuentes.',2:'Suele ser la etapa con más energía. Evita acostarte boca arriba por periodos largos y cuida la postura.',3:'Prioriza movilidad, piernas, espalda alta y respiración. Baja el volumen y escucha tu cuerpo cada día.'};
+const STOP=['Sangrado vaginal o pérdida de líquido','Dolor de cabeza fuerte, visión borrosa o mareo','Dolor en el pecho o dificultad para respirar antes de hacer esfuerzo','Dolor o hinchazón en una pantorrilla','Contracciones regulares o dolor en el abdomen o la pelvis','Menos movimientos del bebé de lo normal'];
+const AVOID=['Carne, pollo o huevo crudos o poco cocidos','Pescados altos en mercurio (pez espada, tiburón, caballa rey)','Lácteos y quesos sin pasteurizar','Embutidos fríos sin calentar bien','Alcohol','Más de 200 mg de cafeína al día (≈ 1–2 tintos)'];
+const stopHtml=()=>`<details class="pgd"><summary>Señales para parar y llamar al médico</summary><ul>${STOP.map(x=>`<li>${x}</li>`).join('')}</ul></details>`;
+const guide=()=>`<ul class="pgl"><li><b>Esfuerzo 12–14 de 20</b> (moderado): siempre puedes hablar frases completas.</li><li>Calienta bien y respira: <b>sin aguantar el aire</b> al empujar.</li><li>Nada de saltos fuertes, golpes ni deportes de contacto. Evita el calor extremo y toma agua.</li><li>Cambia de postura despacio. Si algo molesta, para y avísale a tu coach.</li></ul>`;
+function card(){const i=pregInfo();if(!i)return '';
+  const ex=S.exp['pg.card'];
+  return `<section class="pgc"><button class="pgh" data-act="pgx"><i>🤰</i><span><b>Tu embarazo · semana ${i.w}</b><small>${TRI[i.t]} · entrenamiento adaptado</small></span><em>${ex?'▴':'▾'}</em></button>
+  ${i.ok?'':`<div class="pgw">Antes de seguir entrenando, confirma con tu médico/a que puedes hacerlo. Puedes marcarlo en Perfil → Embarazo.</div>`}
+  ${ex?`<p class="pgt">${TIP[i.t]}</p>${guide()}<div class="pgn">Cambiamos algunos ejercicios por opciones más seguras (abdomen clásico, barra pesada, boca arriba después de la semana 16…). Suelo pélvico y respiración: ve a Respiración y haz «Dormir» o «Diafragmática».</div>${stopHtml()}`:''}</section>`;}
+function nutCard(){const i=pregInfo();if(!i)return '';const add=[0,0,340,450][i.t];
+  return `<section class="pgc"><div class="pgh" style="cursor:default"><i>🥗</i><span><b>Alimentación en embarazo</b><small>Sin déficit${add?' · +'+add+' kcal por trimestre':''}</small></span></div><p class="pgt">Tu plan no busca bajar de peso: busca nutrirte a ti y al bebé. Más proteína, hierro, calcio y agua.</p><details class="pgd"><summary>Alimentos a evitar</summary><ul>${AVOID.map(x=>`<li>${x}</li>`).join('')}</ul></details><div class="pgn">Consulta con tu médico/a suplementos (ácido fólico, hierro, vitamina D).</div></section>`;}
+const hv=homeView;homeView=function(){const h=hv.apply(this,arguments);const c=card();return c?c+h:h;};
+const pv=pillarView;pillarView=function(p){const h=pv.apply(this,arguments);if(p==='alim'){const c=nutCard();return c?c+h:h;}return h;};
+/* ajustes */
+function sec(){const u=S.user||{};if(u.sex==='Hombre')return '';const p=u.preg||{},on=!!p.on,w=on?pgWeek():null;
+  return `<details class="sec acc" data-pk="Embarazo"${(S.pfOpen||{})['Embarazo']?' open':''}><summary><span>Embarazo<small>Entrenamiento adaptado y seguro</small></span></summary><div class="accbody">
+  <p class="hint" style="margin-top:10px">Si estás embarazada, adaptamos tu entrenamiento, el cardio y la alimentación. No reemplaza a tu médico/a.</p>
+  <button class="pcard sm${on?' on':''}" data-act="pgtoggle"><b>${on?'Estoy embarazada · semana '+w:'Estoy embarazada'}</b><small>${on?'Toca para desactivar':'Activa el modo embarazo'}</small></button>
+  ${on?`<label class="pfl">Semanas de embarazo hoy</label><input class="pgin" id="pgw" type="number" inputmode="numeric" min="1" max="42" value="${w}"><button class="btn" data-act="pgweek" style="width:100%;margin-top:8px">Guardar semanas</button>
+  <label class="pgck"><input type="checkbox" data-act="pgok" ${p.ok?'checked':''}> Mi médico/a me autorizó a hacer ejercicio</label>`:''}</div></details>`;}
+const pf0=profileView;profileView=function(){let h=pf0.apply(this,arguments);const s=sec();if(s){const k='<details class="sec acc" data-pk="Entrenamiento"';h=h.includes(k)?h.replace(k,s+k):h;}return h;};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act^="pg"]');if(!t)return;const a=t.dataset.act;if(!['pgx','pgtoggle','pgweek','pgok'].includes(a))return;e.stopPropagation();
+  S.user=S.user||{};const u=S.user;
+  if(a==='pgx'){S.exp['pg.card']=!S.exp['pg.card'];save();render();return;}
+  if(a==='pgtoggle'){if(u.preg&&u.preg.on){sheet(`<h3>¿Desactivar el modo embarazo?</h3><div class="sub">Tu programa vuelve a los ejercicios originales. Si acabas de dar a luz, espera la autorización de tu médico/a y habla con tu coach antes de retomar.</div><button class="btn solid" data-act="pgoff" style="width:100%;margin-top:10px">Sí, desactivar</button><button class="btn" data-act="close" style="width:100%;margin-top:8px">Cancelar</button>`);return;}
+    u.preg={on:true,w0:12,at:today(),ok:false};save();render();toast('Modo embarazo activado. Indica tus semanas.');return;}
+  if(a==='pgweek'){const v=parseInt((document.getElementById('pgw')||{}).value,10);if(!(v>=1&&v<=42)){toast('Escribe un número entre 1 y 42');return;}u.preg=Object.assign({},u.preg,{w0:v,at:today()});save();render();toast('Semanas guardadas');return;}
+  if(a==='pgok'){u.preg=Object.assign({},u.preg,{ok:!!t.checked});save();render();return;}
+},true);
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pgoff"]');if(!t)return;e.stopPropagation();const u=S.user||{};u.preg=Object.assign({},u.preg,{on:false,endedAt:today()});save();try{closeSheet&&closeSheet();}catch(x){}render();toast('Modo embarazo desactivado');},true);
+const st=document.createElement('style');st.textContent=`.pgc{background:color-mix(in srgb,#C77DA3 12%,var(--card,#fff));border:1.5px solid color-mix(in srgb,#C77DA3 45%,var(--line,#ddd));border-radius:16px;padding:12px;margin:10px 0}
+.pgh{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;text-align:left;padding:0;color:inherit;font:inherit}.pgh i{font-style:normal;font-size:24px}.pgh span{flex:1}.pgh b{display:block;font:700 15px Archivo,sans-serif}.pgh small{color:var(--gray,var(--gray,#5A554E));font-size:12.5px}.pgh em{font-style:normal;color:var(--gray)}
+.pgw{margin-top:8px;background:color-mix(in srgb,#FFF3D6 var(--tm,100%),var(--card,#FBFAF8));color:#7A5200;border-radius:10px;padding:8px 10px;font-size:13px}.pgt{margin:10px 0 6px;font-size:13.5px}.pgl{margin:6px 0 8px;padding-left:18px;font-size:13px}.pgl li{margin:3px 0}.pgn{font-size:12.5px;color:var(--gray,var(--gray,#5A554E));margin:8px 0}
+.pgd{margin-top:6px;font-size:13px}.pgd summary{font-weight:700;cursor:pointer}.pgd ul{margin:6px 0 0;padding-left:18px}.pgin{width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1.5px solid var(--line,#ddd);font:600 16px Archivo,sans-serif;background:var(--card,#fff);color:inherit}.pgck{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px}`;
+document.head.appendChild(st);
 })();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
