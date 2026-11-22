@@ -5105,3 +5105,21 @@ const re=rtEditorHTML;rtEditorHTML=function(){let h=re.apply(this,arguments);con
 const rl=rtTplList;rtTplList=function(){let h=rl.apply(this,arguments);const m='<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" data-act="rtlbnewf"';const i=h.indexOf(m);return i<0?h:h.slice(0,i)+'<button class="btn" data-act="aiprognew" style="width:100%;margin-top:10px">✨ Crear '+(RT.lb&&RT.lb.kind==='workout'?'workout':'programa')+' con IA</button>'+h.slice(i);};
 const ce=cpEntSeg;cpEntSeg=function(){return ce.apply(this,arguments)+'<button class="btn" data-act="aicli" style="width:100%;margin:0 0 10px">✨ Crear programa con IA</button>';};
 })();
+
+/* ===== Inicio del cliente: invitar a activar los avisos con un toque (sin ir a Perfil) ===== */
+(function(){
+const NOK='pushNo',DAYS=2;
+const dismissed=()=>{try{return Date.now()-(+localStorage.getItem(NOK)||0)<DAYS*864e5;}catch(e){return false;}};
+let ready=false;
+const check=()=>{try{pushRefresh().then(()=>{ready=true;try{if(S&&S.tab==='inicio'&&PROFILE&&PROFILE.role!=='coach'&&!document.getElementById('lgEmail'))render();}catch(e){}});}catch(e){ready=true;}};
+setTimeout(check,2500);
+function card(){
+  try{
+    if(!ready||PUSH.on||dismissed()||!pushSupported()||Notification.permission==='denied')return '';
+    if(PROFILE&&PROFILE.role==='coach')return '';
+    return `<div class="pwab pushnud" style="margin-bottom:12px"><span style="font-size:26px;flex:none">🔔</span><span><b>Activa tus avisos</b>Te avisamos cuando tu coach te escriba o cambie tu plan, y cuando te toque entrenar. Es un toque.</span><button class="pwai" data-act="pushtg">Activar</button><button class="pwax" data-act="pushno" aria-label="Ahora no">✕</button></div>`;
+  }catch(e){return '';}
+}
+const hv=homeView;homeView=function(){const h=hv.apply(this,arguments),c=card();return c?c+h:h;};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pushno"]');if(!t)return;e.stopPropagation();try{localStorage.setItem(NOK,String(Date.now()));}catch(x){}try{render();}catch(x){}},true);
+})();
