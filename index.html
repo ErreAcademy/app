@@ -2354,11 +2354,12 @@ function loginView(){
   if(LG.mode==='signup')return authHead()+bar+`<button class="lblbtn" data-act="lgback" style="color:var(--gray);margin:10px 0 0">‹ Volver</button><h2 class="h2" style="margin-top:6px">Crear cuenta</h2><p class="lead">Empiezas con el plan Basic. Tu coach activa tu cuenta y te asigna tu plan.</p>${e}${ok}
     <label class="pfl">Nombre</label><input class="fld" id="lgName" autocomplete="name" placeholder="Tu nombre" value="${esc(LG.name||'')}">
     <label class="pfl" style="margin-top:10px">Correo</label><input class="fld" id="lgEmail" type="email" inputmode="email" autocomplete="username" placeholder="tu@correo.com" value="${LG.email}">
-    <label class="pfl" style="margin-top:10px">Contraseña (mínimo 6)</label><input class="fld" id="lgPass" type="password" autocomplete="new-password" placeholder="Crea una contraseña">
+    <label class="pfl" style="margin-top:10px">Contraseña (mínimo 6)</label><div class="pweye"><input class="fld" id="lgPass" type="password" autocomplete="new-password" placeholder="Crea una contraseña"><button type="button" class="eyeb" data-act="lgeye" aria-label="Ver contraseña">👁</button></div>
+    <label class="pfl" style="margin-top:10px">Repite la contraseña</label><div class="pweye"><input class="fld" id="lgPass2" type="password" autocomplete="new-password" placeholder="Escríbela otra vez"><button type="button" class="eyeb" data-act="lgeye" aria-label="Ver contraseña">👁</button></div>
     <button class="btn solid" data-act="lgsignup" style="width:100%;padding:14px;margin-top:14px"${LG.busy?' disabled':''}>${LG.busy?'Creando…':'Crear mi cuenta'}</button>`;
   return authHead()+bar+`<h2 class="h2" style="margin-top:14px">Entra a tu cuenta</h2><p class="lead">Escribe tu correo y tu contraseña.</p>${e}${ok}
     <label class="pfl">Correo</label><input class="fld" id="lgEmail" type="email" inputmode="email" autocomplete="username" placeholder="tu@correo.com" value="${LG.email}">
-    <label class="pfl" style="margin-top:10px">Contraseña</label><input class="fld" id="lgPass" type="password" autocomplete="current-password" placeholder="Tu contraseña">
+    <label class="pfl" style="margin-top:10px">Contraseña</label><div class="pweye"><input class="fld" id="lgPass" type="password" autocomplete="current-password" placeholder="Tu contraseña"><button type="button" class="eyeb" data-act="lgeye" aria-label="Ver contraseña">👁</button></div>
     <button class="btn solid" data-act="lgsend" style="width:100%;padding:14px;margin-top:14px"${LG.busy?' disabled':''}>${LG.busy?'Entrando…':'Entrar'}</button>
     <button class="lblbtn" data-act="lgforgot" style="display:block;margin:12px auto 0;color:var(--gray)">¿Olvidaste tu contraseña?</button>
     <div class="plwrap"><div class="pltitle">¿Aún no tienes cuenta?</div><button class="btn solid" data-act="lgsignmode" style="width:100%;padding:14px;margin:4px 0 12px">Crear cuenta</button>${plansPublic()}<div class="foot" style="margin-top:10px">Te registras y tu coach activa tu plan.</div></div>`;
@@ -2367,7 +2368,7 @@ function showLogin(){$('#app').innerHTML=loginView();}
 function pendingView(){
   const nm=esc((PROFILE.full_name||'').split(' ')[0]||'');
   const msg=encodeURIComponent('Hola Juanjo, acabo de crear mi cuenta en la app ('+(ME.email||'')+'). ¿Me activas?');
-  return authHead()+`<h2 class="h2" style="margin-top:14px">¡Hola${nm?' '+nm:''}! Tu cuenta está pendiente</h2><p class="lead">Ya quedó creada. Tu coach la activa y te asigna tu plan; en cuanto lo haga, entras a tu programa.</p>
+  return authHead()+`<h2 class="h2" style="margin-top:14px">¡Listo${nm?', '+nm:''}! Tu registro quedó completo</h2><p class="lead">Ya llenaste todo. Solo falta que tu coach active tu cuenta y te asigne tu plan; en cuanto lo haga, entras a tu programa.</p>
     <div class="note">Elige el plan que quieres y avísale a tu coach para que lo active más rápido.</div>${plansPublic()}
     <a class="btn solid" style="display:block;text-align:center;padding:14px;margin-top:14px;text-decoration:none" href="https://wa.me/${COACH_WA}?text=${msg}" target="_blank" rel="noopener">Avisarle a mi coach</a>
     <button class="btn" data-act="pendchk" style="width:100%;padding:14px;margin-top:10px">Ya me activaron: revisar</button>
@@ -2906,9 +2907,9 @@ async function enter(ses){
   PROFILE=await DB.profile(uid);try{await pushRefresh();}catch(e){console.warn('push',e);}
   if(store.get('erre_uid')!==uid){resetLocal();store.set('erre_uid',uid);}
   if(PROFILE.role==='coach'){await coachHome();return;}
-  if(PROFILE.status==='pending'){$('#app').innerHTML=pendingView();return;}
   if(PROFILE.status==='archived'){$('#app').innerHTML=authHead()+`<h2 class="h2" style="margin-top:14px">Tu cuenta está en pausa</h2><p class="lead">Tu acceso está pausado por ahora. Escríbele a tu coach para retomarlo.</p><a class="btn solid" style="display:block;text-align:center;padding:14px;margin-top:14px;text-decoration:none" href="https://wa.me/${COACH_WA}?text=${encodeURIComponent('Hola Juanjo, quiero retomar mi cuenta en la app ('+(ME.email||'')+').')}" target="_blank" rel="noopener">Escribirle a mi coach</a><button class="lblbtn" data-act="pendout" style="display:block;margin:12px auto 0;color:var(--gray)">Cerrar sesión</button>`;return;}
   if(!PROFILE.consent_at){$('#app').innerHTML=consentView();return;}
+  if(PROFILE.status==='pending'){await startClient();return;}/* pendiente: llena el formulario ya; al terminar ve «registro listo» */
   if(await accessGate())return;
   await startClient();
 }
@@ -2946,6 +2947,7 @@ document.addEventListener('click',async e=>{
     if(nm.length<2){LG.err='Escribe tu nombre.';showLogin();return;}
     if(!/^\S+@\S+\.\S+$/.test(em)){LG.err='Escribe un correo válido.';showLogin();return;}
     if(pw.length<6){LG.err='La contraseña debe tener al menos 6 caracteres.';showLogin();return;}
+    if(pw!==((document.getElementById('lgPass2')||{}).value||'')){LG.err='Las contraseñas no coinciden. Escríbelas igual en los dos campos.';showLogin();return;}
     LG.err='';LG.busy=true;showLogin();
     try{const r=await DB.signUp(em,pw,nm);LG.busy=false;
       if(r.session){LG.mode='';await enter(r.session);}
@@ -3660,12 +3662,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-1157';
+const APP_VER='22nov-1320';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1157'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1320'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -6820,6 +6822,38 @@ document.head.appendChild(st);
 (function(){const os=obSubmit;obSubmit=function(){const f=(S.ob&&S.ob.form)||{};const r=os.apply(this,arguments);
   try{if(r!==false&&S.user&&f.sex==='Mujer'&&f.preg==='Sí'){const w=Math.min(42,Math.max(1,parseInt(f.pregW,10)||12));S.user.preg={on:true,w0:w,at:today(),ok:f.pregOk==='Sí'};save();}}catch(e){}
   return r;};})();
+
+/* ---------- REGISTRO SIN FRICCIÓN: ojito, formulario antes de «pendiente», COP/USD, wizard más grande ---------- */
+(function(){
+  const st=document.createElement('style');st.textContent=`.pweye{position:relative}.pweye .fld{padding-right:52px;width:100%;box-sizing:border-box}.eyeb{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:0;font-size:21px;padding:10px;line-height:1;opacity:.75}.eyeb.on{opacity:1}
+.cursw{display:flex;gap:6px;margin:8px 0 10px}.cursw button{flex:1;border:2px solid var(--line,#DCD6CC);background:var(--card,#FBFAF8);border-radius:99px;padding:9px;font:700 14px Archivo,sans-serif;color:var(--ink,#1C1B19)}.cursw button.on{background:var(--btn,var(--ink,#1C1B19));border-color:var(--ink,#1C1B19);color:#fff}.cursw small{display:block;font:500 11px Archivo,sans-serif;color:var(--gray,#5A554E);text-align:center;margin-top:-4px}
+#app:has(.wzq) .wzq{font-size:28px;line-height:1.15;margin:8px 0 8px}#app:has(.wzq) .wzs{font-size:16px;line-height:1.4}#app:has(.wzq) .fld,#app:has(.wzq) select.fld{font-size:18px;padding:16px 14px;min-height:54px}#app:has(.wzq) .chip{font-size:17px;padding:14px 20px;min-height:50px}#app:has(.wzq) .pcard b{font-size:18px}#app:has(.wzq) .pcard small{font-size:14px}#app:has(.wzq) .wzn .btn{font-size:18px;padding:18px}#app:has(.wzq) .pfl,#app:has(.wzq) label{font-size:15px}`;
+  document.head.appendChild(st);
+  /* ojito: muestra/oculta todas las contraseñas de la pantalla */
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="lgeye"]');if(!t)return;e.stopPropagation();e.preventDefault();
+    const ins=[...document.querySelectorAll('.pweye input')],show=ins.length&&ins[0].type==='password';ins.forEach(i=>i.type=show?'text':'password');document.querySelectorAll('.eyeb').forEach(b=>b.classList.toggle('on',show));},true);
+  /* pendiente con formulario ya lleno: pantalla «registro listo» (sigue logueado) */
+  const r0=render;render=function(){try{if(typeof PROFILE!=='undefined'&&PROFILE&&PROFILE.role==='client'&&PROFILE.status==='pending'&&S.user&&(!S.ob||S.ob.step==='done')){$('#app').innerHTML=pendingView();return;}}catch(e){}return r0.apply(this,arguments);};
+  const os=obSubmit;obSubmit=function(){const r=os.apply(this,arguments);try{if(r!==false&&S.user&&PROFILE&&PROFILE.status==='pending'){S.user.pendReg=true;save();}}catch(e){}return r;};
+  /* al activarse: arma su programa Basic (la base lo exige activo) */
+  const sc=startClient;startClient=async function(){const r=await sc.apply(this,arguments);
+    try{if(PROFILE&&PROFILE.status==='active'&&S.user&&S.user.pendReg&&S.program==='basic'&&DB.assignBasic){
+      const f=(S.user.data&&S.user.data.focus)||FOCD(S.user.sex);
+      try{S.assigned=await DB.assignBasic(f,S.user.days||4,S.user.level||'Principiante');await loadClientRoutine(ME.id);}catch(e){console.warn('assignAfterActive',e);}
+      delete S.user.pendReg;save();try{render();}catch(e){}}}catch(e){console.warn(e);}
+    return r;};
+  /* precios COP / USD (tasa fija) */
+  const RATE=4000;
+  const curOn=()=>{try{return localStorage.getItem('erre_cur')==='COP';}catch(e){return false;}};
+  const fmt=n=>'$'+(Math.round(n*RATE/1000)*1000).toLocaleString('es-CO');
+  const conv=h=>curOn()?h.replace(/\$([\d.,]+)(<em>)?( USD)?/g,(m,num,em,usd)=>{const n=num.indexOf(',')>=0?parseFloat(num.replace(/\./g,'').replace(',','.')):parseFloat(num.replace(/\./g,''));return isFinite(n)?fmt(n)+(em||'')+(usd?' COP':''):m;}):h;
+  const sw=()=>`<div class="cursw"><button data-act="curset" data-v="USD" class="${curOn()?'':'on'}">USD · dólares</button><button data-act="curset" data-v="COP" class="${curOn()?'on':''}">COP · pesos</button></div>${curOn()?'<small>Valor aproximado en pesos. El cobro en la pasarela es en dólares.</small>':''}`;
+  const pp=plansPublic;plansPublic=function(){let h=pp.apply(this,arguments);h=h.replace('<div class="sub2">Mira qué incluye cada plan.</div>','<div class="sub2">Mira qué incluye cada plan.</div>'+sw());return conv(h);};
+  if(typeof plansView==='function'){const pv=plansView;plansView=function(){let h=pv.apply(this,arguments);return typeof h==='string'?conv(sw()+h):h;};}
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="curset"]');if(!t)return;e.stopPropagation();e.preventDefault();
+    try{localStorage.setItem('erre_cur',t.dataset.v);}catch(x){}
+    const y=window.scrollY;try{if(typeof ME!=='undefined'&&ME&&PROFILE&&PROFILE.role==='client')render();else showLogin();}catch(x){}window.scrollTo(0,y);},true);
+})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
