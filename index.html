@@ -3629,12 +3629,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-0818';
+const APP_VER='22nov-0825';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-0818'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-0825'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -6076,8 +6076,24 @@ function mineLoad(){if(CA.mineTry||!PROFILE||PROFILE.role!=='coach'||!PROFILE.av
 const cs=cpShell;cpShell=function(inner){mineLoad();let h=cs.apply(this,arguments);
   const av=`<label class="coavb" title="Tu foto de coach. La ven tus clientes en el chat.">${CA.mine?`<img src="${CA.mine}" alt="">`:'<span>＋</span>'}<b>${CA.mine?'Cambiar foto':'Tu foto de coach'}</b><input type="file" accept="image/*" data-coav hidden></label>`;
   return h.replace('<div class="cpfoot">','<div class="cpfoot">'+av);};
-document.addEventListener('change',async e=>{const t=e.target;if(!t.dataset||t.dataset.coav==null)return;const f=t.files&&t.files[0];if(!f||!PROFILE)return;
-  crop(f,400,async(blob,du)=>{try{const path=PROFILE.id+'/coach-avatar.jpg';await DB.upload(path,blob);await DB.saveProfile(PROFILE.id,{avatar_path:path});PROFILE.avatar_path=path;CA.mine=du;try{coachRender(true);}catch(x){}toast('Foto guardada ✓ Tus clientes la ven en el chat');}catch(x){console.warn(x);toast('No se pudo subir la foto');}});});
+function coAdjust(file){const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{
+  const V=280,m=Math.min(im.width,im.height),base=V/m;let z=1,ox=0,oy=0;
+  const w=document.createElement('div');w.id='coadj';w.innerHTML=`<div class="coadb"><b>Ajusta tu foto</b><small>Arrástrala y usa el zoom</small><canvas width="${V}" height="${V}"></canvas><input type="range" min="1" max="3" step="0.01" value="1"><div class="coadr"><button data-x="no">Cancelar</button><button data-x="ok" class="ok">Guardar foto</button></div></div>`;
+  document.body.appendChild(w);const cv=w.querySelector('canvas'),g=cv.getContext('2d'),rg=w.querySelector('input');
+  const lim=()=>{const sw=im.width*base*z,sh=im.height*base*z;ox=Math.min(0,Math.max(V-sw,ox));oy=Math.min(0,Math.max(V-sh,oy));};
+  const draw=()=>{lim();g.clearRect(0,0,V,V);g.drawImage(im,ox,oy,im.width*base*z,im.height*base*z);};
+  ox=(V-im.width*base)/2;oy=(V-im.height*base)/2;draw();
+  let dr=null;cv.onpointerdown=e=>{dr={x:e.clientX,y:e.clientY,ox,oy};cv.setPointerCapture(e.pointerId);};
+  cv.onpointermove=e=>{if(!dr)return;ox=dr.ox+(e.clientX-dr.x);oy=dr.oy+(e.clientY-dr.y);draw();};
+  cv.onpointerup=cv.onpointercancel=()=>{dr=null;};
+  const zoom=nz=>{const c=V/2,r=nz/z;ox=c-(c-ox)*r;oy=c-(c-oy)*r;z=nz;rg.value=z;draw();};
+  rg.oninput=()=>zoom(+rg.value);cv.onwheel=e=>{e.preventDefault();zoom(Math.min(3,Math.max(1,z*(e.deltaY<0?1.06:.94))));};
+  w.onclick=async e=>{const x=e.target.dataset&&e.target.dataset.x;if(e.target===w||x==='no'){w.remove();return;}if(x!=='ok')return;
+    const o=document.createElement('canvas');o.width=o.height=400;o.getContext('2d').drawImage(cv,0,0,V,V,0,0,400,400);const du=o.toDataURL('image/jpeg',.88);
+    e.target.textContent='Guardando…';e.target.disabled=true;
+    o.toBlob(async blob=>{try{const path=PROFILE.id+'/coach-avatar.jpg';await DB.upload(path,blob);await DB.saveProfile(PROFILE.id,{avatar_path:path});PROFILE.avatar_path=path;CA.mine=du;w.remove();try{coachRender(true);}catch(x2){}toast('Foto guardada ✓ Tus clientes la ven en el chat');}catch(x3){console.warn(x3);toast('No se pudo subir la foto');w.remove();}},'image/jpeg',.88);};
+  };im.src=fr.result;};fr.readAsDataURL(file);}
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||t.dataset.coav==null)return;const f=t.files&&t.files[0];t.value='';if(!f||!PROFILE)return;coAdjust(f);});
 /* --- lado cliente --- */
 function clLoad(){if(CA.clTry||!ME||!PROFILE||PROFILE.role==='coach'||!PROFILE.coach_id)return;CA.clTry=true;CA.cl=lsGet();
   (async()=>{try{const cp=await DB.profile(PROFILE.coach_id);if(!cp)return;const had=CA.cl&&CA.cl.p===cp.avatar_path&&CA.cl.u;
@@ -6092,6 +6108,7 @@ const th=threadHTML;threadHTML=function(role){let h=th.apply(this,arguments);if(
 window.coachAvState=()=>CA;
 const st=document.createElement('style');st.textContent=`.coav{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid #1C1B19;flex:none}.coav.sm{width:30px;height:30px;border-width:1px}.coav.md{width:40px;height:40px;border:2px solid #C0392B}
 .cochead{display:flex;align-items:center;gap:12px;background:#FBFAF8;border:1px solid #DCD6CC;border-radius:16px;padding:10px 12px;margin:0 0 10px}.cochead b{display:block;font:700 17px Oswald,Archivo,sans-serif;text-transform:uppercase;letter-spacing:.03em}.cochead small{color:#5A554E}
+.coadj,#coadj{position:fixed;inset:0;z-index:9999;background:rgba(28,27,25,.6);display:flex;align-items:center;justify-content:center}.coadb{background:#FBFAF8;border-radius:20px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:10px;max-width:92vw}.coadb b{font:700 18px Oswald,Archivo,sans-serif;text-transform:uppercase}.coadb small{color:#5A554E}.coadb canvas{width:280px;height:280px;border-radius:50%;border:3px solid #C0392B;touch-action:none;cursor:grab;background:#DCD6CC}.coadb input{width:240px;accent-color:#C0392B}.coadr{display:flex;gap:10px}.coadr button{padding:10px 16px;border-radius:12px;border:1px solid #DCD6CC;background:#fff;font:700 14px Archivo,sans-serif}.coadr .ok{background:#C0392B;color:#fff;border-color:#C0392B}
 .corow{display:flex;align-items:flex-end;gap:6px;margin-bottom:8px}.corow .bubble{margin-bottom:0}
 .coavb{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px}.coavb img,.coavb span{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #C0392B;display:flex;align-items:center;justify-content:center;background:#FBFAF8;color:#C0392B;font-size:18px;flex:none}.coavb b{font:700 12px Archivo,sans-serif}`;
 document.head.appendChild(st);
