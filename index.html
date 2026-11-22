@@ -3629,12 +3629,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-0859';
+const APP_VER='22nov-0911';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-0859'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-0911'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -6194,6 +6194,98 @@ html[data-theme] ::placeholder{color:var(--gray2)}
 html[data-theme] svg [fill="#1C1B19"]{fill:var(--ink)}html[data-theme] svg [stroke="#1C1B19"]{stroke:var(--ink)}
 html[data-theme] [style*="background:#F"],html[data-theme] [style*="background:#E"],html[data-theme] [style*="background: #F"],html[data-theme] [style*="background: #E"]{background:var(--paper)!important}
 html[data-theme=oscuro] .sesh{filter:saturate(.9)}`;
+document.head.appendChild(st);
+})();
+
+
+/* ===== Hábitos (22 nov): checklist Mañana · Tarde · Noche con base científica ===== */
+(function(){
+const M=[['m','☀️','Mañana','Activa tu día','#D9822B'],['t','🌤️','Tarde','Baja revoluciones','#3C7FA6'],['n','🌙','Noche','Desactivación','#5B4B9A']];
+const EV={3:['Evidencia sólida','#1F8F53'],2:['Evidencia moderada','#B87400'],1:['Evidencia limitada','#7A746B']};
+/* core = cuenta para el día; extra = opcional */
+const H=[
+ {id:'agua',m:'m',ic:'💧',t:'Vaso de agua al despertar',min:'1 min',core:1,fu:7,ev:2,
+  how:'Un vaso grande (300 a 500 ml) apenas te levantas. Si entrenas temprano, sudas mucho o hace calor, agrégale una pizca de sal o electrolitos.',
+  sci:'Después de 7 u 8 horas sin tomar nada empiezas el día con un pequeño déficit de líquido. Reponerlo ayuda a sentirte más despierto y concentrado. Lo que de verdad cuenta es tomar suficiente durante todo el día; los electrolitos sirven sobre todo si sudas mucho.'},
+ {id:'luz',m:'m',ic:'🌞',t:'Luz natural y sol',min:'5 a 20 min',core:1,fu:9,ev:2,
+  how:'Sal afuera en la primera hora después de despertar: balcón, caminata o ventana abierta. Con cielo despejado bastan 5 a 10 minutos; si está nublado, 15 a 20. Nunca mires directo al sol.',
+  sci:'La luz fuerte de la mañana le avisa a tu reloj interno que ya es de día: ayuda a dormir mejor esa noche y a estar más alerta. Afuera hay muchísima más luz que adentro, incluso nublado. Las revisiones lo respaldan, aunque muchos estudios son de calidad variable.'},
+ {id:'mov_m',m:'m',ic:'🤸',t:'Movilidad articular suave',min:'3 a 5 min',core:1,fu:6,ev:2,
+  how:'Círculos de cuello, hombros, cadera y tobillos, y rotación de columna. Lento, sin dolor y sin forzar el rango.',
+  sci:'Mueve las articulaciones por su rango y sube un poco la temperatura del cuerpo antes de empezar el día. Mejora cómo te sientes y tu rango de movimiento; que prevenga lesiones por sí sola está menos claro.'},
+ {id:'pump',m:'m',ic:'🦵',t:'Bombeo de pantorrillas',min:'1 a 2 min',core:1,fu:4,ev:1,
+  how:'20 a 30 elevaciones de talones, subiendo y bajando sin prisa, o saltitos suaves sobre las puntas durante 1 a 2 minutos.',
+  sci:'Cada elevación de talones comprime las venas de la pantorrilla y empuja la sangre de vuelta hacia el corazón: es fisiología bien establecida (por eso la llaman el segundo corazón). Los estudios directos sobre drenaje linfático en personas sanas son escasos; lo seguro es la circulación y la sensación de piernas livianas.'},
+ {id:'resp_m',m:'m',ic:'🫁',t:'Respiración 5-5',min:'3 min',core:0,fu:6,ev:2,go:'man',
+  how:'Inhala 5 segundos y exhala 5 segundos, suave y continuo, antes de empezar a moverte.',
+  sci:'Respirar lento, cerca de 6 veces por minuto, sube la variabilidad de la frecuencia cardiaca y baja la frecuencia y la presión en los minutos siguientes. Es una forma simple de empezar el día con más calma.'},
+ {id:'camina',m:'t',ic:'🚶',t:'Caminata corta después de comer',min:'5 a 10 min',core:1,fu:8,ev:3,
+  how:'Camina a paso tranquilo 5 a 10 minutos después de tu comida principal. Si no puedes caminar, quédate de pie y muévete un poco.',
+  sci:'Un meta-análisis encontró que caminar suave entre 2 y 5 minutos después de comer reduce el pico de azúcar y de insulina, y funciona mejor que quedarse de pie o sentado. Es de lo más respaldado de esta lista.'},
+ {id:'resp_t',m:'t',ic:'🫁',t:'Respiración después de comer',min:'3 a 5 min',core:1,fu:6,ev:2,go:'com',
+  how:'Sentado y relajado, inhala por la nariz y exhala más largo de lo que inhalas. Hazlo entre 3 y 5 minutos.',
+  sci:'La respiración lenta aumenta la variabilidad cardiaca y baja la frecuencia cardiaca y la presión: señales de un sistema nervioso más calmado. Que además mejore la digestión es plausible, pero hay poca evidencia directa.'},
+ {id:'mov',m:'t',ic:'🧘',t:'Movilidad y estiramientos de la tarde',min:'3 a 5 min',core:1,fu:5,ev:2,
+  how:'Una pausa corta para soltar cadera, espalda y hombros. No necesitas ropa deportiva ni equipo.',
+  sci:'Interrumpir las horas sentado con movimiento ligero mejora la circulación y afloja la rigidez de espalda, cadera y hombros. Es un hábito pequeño con buen retorno.'},
+ {id:'luces',m:'n',ic:'🕯️',t:'Luces bajas y sin pantallas',min:'30 a 60 min antes',core:1,fu:7,ev:2,
+  how:'Apaga las luces fuertes y deja lámparas cálidas y bajas. Guarda el celular y la TV; si usas pantalla, con poco brillo y fuera de la cama.',
+  sci:'La luz brillante de noche retrasa tu reloj interno y empeora el sueño. Ojo: la luz azul de la pantalla en sí tiene un efecto pequeño en los experimentos (unos minutos). Lo que más pesa es la estimulación mental y acostarte tarde por un contenido más.'},
+ {id:'jour',m:'n',ic:'✍️',t:'Journaling: lista para mañana',min:'5 min',core:1,fu:6,ev:2,
+  how:'Escribe 5 minutos las tareas y preocupaciones de mañana, y cierra con una cosa buena del día. Así las sacas de tu cabeza antes de acostarte.',
+  sci:'En un experimento con polisomnografía, escribir 5 minutos la lista de pendientes de mañana hizo que las personas se durmieran unos 9 minutos más rápido que quienes escribían lo que ya habían hecho.'},
+ {id:'resp_n',m:'n',ic:'🌬️',t:'Respiración con exhalación larga',min:'5 min',core:1,fu:8,ev:2,go:'dor',
+  how:'Ya en la cama o antes de acostarte: inhala por la nariz y exhala lento, más largo que la inhalación. Repite 5 minutos.',
+  sci:'Un meta-análisis de 31 estudios mostró que la respiración lenta baja la frecuencia cardiaca y la presión sistólica y sube la variabilidad cardiaca en poco tiempo. Hay menos estudios que midan directamente cuánto tardas en dormirte.'},
+ {id:'sueno',m:'n',ic:'😴',t:'Dormir tus horas objetivo',min:'7 a 9 h',core:1,fu:10,ev:3,
+  how:'Acuéstate a una hora parecida cada noche, con el cuarto oscuro y fresco. Tu coach define la meta contigo.',
+  sci:'Dormir es cuando recuperas y te adaptas al entrenamiento. Es la base de todo lo demás: sin sueño, la fuerza, el ánimo y el apetito se resienten.'},
+ {id:'est_n',m:'n',ic:'🧎',t:'Estiramientos suaves antes de acostarte',min:'5 min',core:0,fu:4,ev:1,
+  how:'Estiramientos lentos de espalda, cadera y piernas, sin dolor y respirando tranquilo.',
+  sci:'La evidencia directa sobre dormir mejor es limitada. Su valor está en ser un ritual que le avisa a tu cuerpo que el día terminó y en soltar tensión.'}
+];
+window.HB_LIST=H;
+/* los hábitos que cuentan para el día reemplazan a los del prototipo */
+try{const it=TASKS.habitos.items;it.length=0;H.filter(h=>h.core).forEach(h=>it.push({id:h.id,t:h.t,s:h.min,d:h.how}));TASKS.habitos.intro='Mañana, tarde y noche: pequeñas conductas que sostienen todo lo demás.';}catch(e){console.warn('hb',e);}
+const seg=()=>{if(S.hbSeg)return S.hbSeg;const h=new Date(Date.now()-5*36e5).getUTCHours();return h<12?'m':h<18?'t':'n';};
+const cnt=(m,t)=>{const L=H.filter(h=>h.m===m&&h.core);return {d:L.filter(h=>t['habitos.'+h.id]).length,n:L.length};};
+const fuBar=n=>`<span class="hbfu">${Array.from({length:10},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span><b>${n}/10</b>`;
+function card(h,col,t){const k='habitos.'+h.id,on=t[k],open=S.exp['hb.'+h.id],ev=EV[h.ev];
+  return `<div class="hbc${open?' open':''}${on?' done':''}" style="--c:${col}">
+   <div class="hbr"><button class="chk2${on?' on':''}" data-act="task" data-k="${k}" aria-label="Marcar">✓</button>
+    <button class="hbo" data-hb="${h.id}"><span class="hbi">${h.ic}</span><span class="hbn"><b>${h.t}</b><small>${h.min}${h.core?'':' · opcional'}</small></span><i class="chev">›</i></button></div>
+   ${open?`<div class="hbb"><div class="hbs"><em>Cómo hacerlo</em><p>${h.how}</p></div>
+     <div class="hbs"><em>Qué dice la ciencia</em><p>${h.sci}</p><span class="hbev" style="--e:${ev[1]}">${ev[0]}</span></div>
+     <div class="hbs"><em>Qué tan fundamental es</em><div class="hbfr">${fuBar(h.fu)}</div></div>
+     ${h.go?`<button class="btn solid hbgo" data-act="breath" data-id="${h.go}">🫁 Respirar guiado</button>`:''}</div>`:''}
+  </div>`;}
+function view(){const t=tk(),cur=seg(),mm=M.find(x=>x[0]===cur),col=mm[4];
+  const tabs=M.map(([k,ic,n,s,c])=>{const q=cnt(k,t);return `<button class="hbt${cur===k?' on':''}" data-hbseg="${k}" style="--c:${c}"><span>${ic}</span><b>${n}</b><small>${q.d}/${q.n}</small></button>`;}).join('');
+  const L=H.filter(h=>h.m===cur),core=L.filter(h=>h.core),ext=L.filter(h=>!h.core),q=cnt(cur,t);
+  const all=H.filter(h=>h.core),dn=all.filter(h=>t['habitos.'+h.id]).length;
+  return `<div class="hbhero" style="--c:${col}"><div><small>${S.sel===today()?'Hoy':fmtL(S.sel).split(',')[0]}</small><b>${dn} de ${all.length} hábitos</b></div><div class="hbring"><i style="width:${all.length?Math.round(dn/all.length*100):0}%"></i></div></div>
+   <div class="hbtabs">${tabs}</div>
+   <div class="hbtit" style="--c:${col}"><span>${mm[1]}</span><div><b>${mm[2]} · ${mm[3]}</b><small>${q.d} de ${q.n} listos</small></div></div>
+   ${core.map(h=>card(h,col,t)).join('')}
+   ${ext.length?`<div class="hbop">Opcional</div>${ext.map(h=>card(h,col,t)).join('')}`:''}
+   <p class="hbn2">Toca un hábito para ver cómo hacerlo y qué dice la ciencia. "Qué tan fundamental" es una guía general; tu coach la ajusta a ti. Información general: no reemplaza el consejo de un profesional de la salud.</p>`;}
+const pv=pillarView;pillarView=function(p){if(p!=='habitos')return pv.apply(this,arguments);try{return view();}catch(e){console.warn('hb view',e);return pv.apply(this,arguments);}};
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-hb],[data-hbseg]');if(!t)return;e.stopPropagation();
+  if(t.dataset.hbseg){S.hbSeg=t.dataset.hbseg;save();render();return;}
+  const k='hb.'+t.dataset.hb;S.exp=S.exp||{};S.exp[k]=!S.exp[k];save();render();},true);
+const st=document.createElement('style');st.textContent=`
+.hbhero{display:flex;align-items:center;gap:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;border-radius:18px;padding:14px 16px;margin:4px 0 12px}.hbhero>div:first-child{flex:none}.hbhero small{display:block;font:700 10.5px Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.7}.hbhero b{font:700 17px Oswald,Archivo,sans-serif;text-transform:uppercase;letter-spacing:.03em}
+.hbring{flex:1;height:8px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden}.hbring i{display:block;height:100%;background:var(--wh,#fff);border-radius:99px;transition:width .3s}
+.hbtabs{display:flex;gap:8px;margin-bottom:12px}.hbt{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;border:2px solid var(--line,#DCD6CC);background:var(--card,#FBFAF8);border-radius:16px;padding:10px 4px;font-family:Archivo,sans-serif;color:var(--ink,#1C1B19)}.hbt span{font-size:22px}.hbt b{font-size:13px}.hbt small{font-size:11px;color:var(--gray,#5A554E)}.hbt.on{border-color:var(--c);background:var(--c);color:#fff}.hbt.on small{color:#fff;opacity:.85}
+.hbtit{display:flex;align-items:center;gap:10px;margin:2px 0 10px}.hbtit>span{font-size:26px}.hbtit b{display:block;font:700 15px Oswald,Archivo,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--c)}.hbtit small{color:var(--gray,#5A554E);font-size:12px}
+.hbc{background:var(--card,#FBFAF8);border:1px solid var(--line,#DCD6CC);border-left:6px solid var(--c);border-radius:14px;margin-bottom:8px;overflow:hidden}.hbc.done{background:color-mix(in srgb,#F1F8F3 var(--tm,100%),var(--card,#FBFAF8))}
+.hbr{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 8px}.hbo{flex:1;display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:6px 0;font-family:Archivo,sans-serif;color:var(--ink,#1C1B19);min-width:0}
+.hbi{width:42px;height:42px;flex:none;border-radius:12px;background:var(--paper,#EFEDE8);display:flex;align-items:center;justify-content:center;font-size:22px}.hbn{flex:1;min-width:0}.hbn b{display:block;font-size:15px;line-height:1.2}.hbn small{color:var(--gray,#5A554E);font-size:12px}.hbc.done .hbn b{text-decoration:line-through;color:#7A746B}
+.hbc.open .chev{transform:rotate(90deg)}
+.hbb{padding:2px 14px 14px 14px;border-top:1px dashed var(--line,#DCD6CC)}.hbs{margin-top:10px}.hbs em{display:block;font:700 10.5px Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--c);font-style:normal;margin-bottom:3px}.hbs p{margin:0;font-size:14px;line-height:1.45;color:var(--ink,#1C1B19)}
+.hbev{display:inline-block;margin-top:6px;font:700 11px Archivo,sans-serif;color:var(--e);border:1.5px solid var(--e);border-radius:99px;padding:3px 9px}
+.hbfr{display:flex;align-items:center;gap:8px}.hbfu{display:flex;gap:3px;flex:1}.hbfu i{flex:1;height:9px;border-radius:3px;background:var(--line,#DCD6CC)}.hbfu i.on{background:var(--c)}.hbfr b{font-size:13px}
+.hbgo{width:100%;margin-top:12px}.hbop{font:700 11px Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--gray,#5A554E);margin:14px 0 6px}.hbn2{font-size:11.5px;color:#7A746B;line-height:1.4;margin:14px 2px 4px}`;
 document.head.appendChild(st);
 })();
 
