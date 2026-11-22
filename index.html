@@ -3629,12 +3629,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-0825';
+const APP_VER='22nov-0833';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#1C1B19;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:#C0392B;color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-0825'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-0833'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -5846,40 +5846,51 @@ const BUY={'Arroz':.37,'Pasta':.4,'Quinua':.35,'Fríjol / lenteja':.4,'Garbanzos
 const SH=()=>{S.alshop=S.alshop||{sel:{d:[],a:[],m:[],c:[]},days:7,chk:{}};S.alshop.sel=S.alshop.sel||{d:[],a:[],m:[],c:[]};S.alshop.chk=S.alshop.chk||{};return S.alshop;};
 const goal=()=>(S.goal==='bajar'||S.goal==='aumentar')?S.goal:'complete';
 function okOpts(m){const keep=S.alcul;S.alcul='all';try{return AL_O[m].map((o,i)=>[o,i]).filter(x=>alpOptOk(m,x[1]));}finally{S.alcul=keep;}}
+function planOpts(m){let L=AL_O[m].filter((o,i)=>alpOptOk(m,i));if(!L.length){const keep=S.alcul;S.alcul='all';try{L=AL_O[m].filter((o,i)=>alpOptOk(m,i));}finally{S.alcul=keep;}}return L;}
 function recent(){const out={d:[],a:[],m:[],c:[]},t=today();for(let i=0;i<7;i++){const d=addD(t,-i),st=(S.alim||{})[d]||{};AL_M.forEach(([k])=>{const e=(st[k]||{}).eat;if(e!=null&&AL_O[k][e]&&!out[k].includes(AL_O[k][e][0]))out[k].push(AL_O[k][e][0]);});}return out;}
 function calc(){const sh=SH(),por=AL_PORC[goal()],tot={};
-  AL_M.forEach(([k])=>{const L=(sh.sel[k]||[]).map(n=>AL_O[k].find(o=>o[0]===n)).filter(Boolean);if(!L.length)return;const times=sh.days/L.length;
+  AL_M.forEach(([k])=>{const L=planOpts(k);if(!L.length)return;const times=sh.days/L.length;
     L.forEach(o=>{Object.keys(o[2]).forEach(q=>{const food=o[2][q],f=alFd(food),g=alMul(por[k][q]||'1')*f[0]*times*(BUY[food]||1),key=q+'|'+food;tot[key]=(tot[key]||0)+g;});});});
   return CAT.map(([q,n,c,ic])=>({q,n,c,ic,rows:Object.keys(tot).filter(k=>k.split('|')[0]===q).map(k=>{const food=k.slice(q.length+1),f=alFd(food),g=tot[k];let txt;
       if(f[1]&&f[1][0]){const u=Math.max(1,Math.ceil(g/f[1][0]-0.01));txt=u+' '+(u>1?f[1][2]:f[1][1]);}
       else{const r=Math.max(50,Math.ceil(g/50)*50);txt=r>=1000?(r/1000).toString().replace('.',',')+' kg':r+' g';}
       return {key:k,food,txt,e:AL_FE[food]||(food==='Pechuga de pollo'?'🍗':'')};}).sort((a,b)=>a.food.localeCompare(b.food,'es'))})).filter(c=>c.rows.length);}
-function asText(){const sh=SH(),L=calc();return '🛒 Lista de compras · '+sh.days+' días\n\n'+L.map(c=>c.ic+' '+c.n+'\n'+c.rows.map(r=>'• '+r.food.replace(/ \(½\)/,'')+': '+r.txt).join('\n')).join('\n\n')+'\n\n(Cantidades aproximadas, en crudo. ERRE Academy)';}
-function view(){const sh=SH(),L=calc(),nsel=AL_M.reduce((a,[k])=>a+(sh.sel[k]||[]).length,0);
+function asText(){const sh=SH(),L=calc();return '🛒 Lista de compras · '+sh.days+' días · según mi plan\n\n'+L.map(c=>c.ic+' '+c.n+'\n'+c.rows.map(r=>'• '+r.food.replace(/ \(½\)/,'')+': '+r.txt).join('\n')).join('\n\n')+'\n\n(Cantidades aproximadas, en crudo. ERRE Academy)';}
+function view(){const sh=SH(),L=calc();
   const days=[3,5,7].map(d=>`<button class="${sh.days===d?'on':''}" data-alshop="days" data-v="${d}">${d} días</button>`).join('');
-  const meals=AL_M.map(([k,n,ic])=>{const s=sh.sel[k]||[];return `<details class="alsp"><summary><span>${ic} ${n}</span><em>${s.length?s.length+' elegida'+(s.length>1?'s':''):'ninguna'}</em></summary><div class="alsc">${okOpts(k).map(([o,i])=>`<button class="${s.includes(o[0])?'on':''}" data-alshop="tog" data-m="${k}" data-n="${encodeURIComponent(o[0])}">${esc(/^[^<]*$/.test(alOpt(k,i).e||'')?(alOpt(k,i).e||''):'')} ${esc(o[0])}</button>`).join('')}</div></details>`;}).join('');
-  const list=nsel?L.map(c=>`<div class="alsl" style="--c:${c.c}"><h4>${c.ic} ${c.n}</h4>${c.rows.map(r=>`<button class="alsr${sh.chk[r.key]?' ok':''}" data-alshop="chk" data-k="${esc(r.key)}"><i>${sh.chk[r.key]?'✓':''}</i><span>${r.e} ${esc(r.food.replace(/ \(½\)/,''))}</span><b>${r.txt}</b></button>`).join('')}</div>`).join(''):'<div class="note" style="margin:10px 0">Elige abajo las opciones que vas a comer esta semana y aquí aparece tu lista.</div>';
+  const cul=S.alcul&&S.alcul!=='all'&&AL_CULS?(AL_CULS.find(c=>c[0]===S.alcul)||[])[1]:'';
+  const list=L.map(c=>`<div class="alsl" style="--c:${c.c}"><h4>${c.ic} ${c.n}</h4>${c.rows.map(r=>`<button class="alsr${sh.chk[r.key]?' ok':''}" data-alshop="chk" data-k="${esc(r.key)}"><i>${sh.chk[r.key]?'✓':''}</i><span>${r.e} ${esc(r.food.replace(/ \(½\)/,''))}</span><b>${r.txt}</b></button>`).join('')}</div>`).join('');
+  const done=Object.values(sh.chk).filter(Boolean).length;
   return `<div class="alsh"><button class="alx" data-alshop="close">‹ Volver</button><div class="big">🛒</div><h2>Lista de compras</h2>
-   <div class="alsd">${days}</div><button class="alsauto" data-alshop="auto">✨ Usar lo que comí esta semana</button>
-   ${list}${nsel?`<div class="alsbt"><button data-alshop="copy">📋 Copiar</button><button data-alshop="share">📤 Compartir</button><button data-alshop="clear">↺ Reiniciar</button></div><p class="alsn">Cantidades aproximadas, en crudo. Se calculan con las porciones de tu plan.</p>`:''}
-   <h3 class="alsq">¿Qué vas a comer?</h3>${meals}</div>`;}
+   <p class="alsn" style="margin:-6px 0 10px">Todo tu plan de alimentación, ya calculado${cul?' · '+esc(cul):''}</p>
+   <div class="alsd">${days}</div>
+   ${list}<div class="alsbt"><button data-alshop="pdf">📄 PDF</button><button data-alshop="copy">📋 Copiar</button><button data-alshop="share">📤 Enviar</button></div>
+   ${done?`<button class="alsauto" style="border-color:#B9B2A6;background:#fff;color:#5A554E" data-alshop="clear">↺ Desmarcar todo (${done})</button>`:''}
+   <p class="alsn">Cantidades aproximadas, en crudo, según las porciones de tu plan. Marca lo que ya tienes en casa y reparte entre las opciones que más te gusten.</p></div>`;}
+function pdfHTML(){const sh=SH(),L=calc(),logo=new URL('erre-logo.png',location.href).href,nm=(S.user&&S.user.name)||'';
+  const css=`@page{size:A4;margin:12mm 13mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Archivo,Helvetica,Arial,sans-serif;color:#1C1B19;margin:0;font-size:13px}.wm{position:fixed;top:50%;left:50%;width:430px;transform:translate(-50%,-50%);opacity:.07}.hd{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #DCD6CC;padding-bottom:8px;margin-bottom:12px}.hd img{height:38px}.hd small{color:#5A554E}h1{font-family:Oswald,Arial,sans-serif;text-transform:uppercase;font-size:24px;margin:0 0 2px}.who{color:#5A554E;margin-bottom:10px}.g{break-inside:avoid;margin-bottom:12px}h2{font-family:Oswald,Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:15px;margin:0 0 4px;padding-bottom:3px;border-bottom:2px solid var(--c);color:var(--c)}.r{display:flex;align-items:center;gap:8px;padding:5px 2px;border-bottom:1px solid #EFEDE8}.r i{width:13px;height:13px;border:1.5px solid #8b867e;border-radius:3px}.r span{flex:1}.r b{font-weight:700}.nt{color:#5A554E;font-size:11px;margin-top:10px}`;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Lista de compras</title><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Oswald:wght@600;700&display=swap" rel="stylesheet"><style>${css}</style></head><body><img class="wm" src="${logo}" alt="">
+   <div class="hd"><img src="${logo}" alt=""><small>ERRE Academy · Método Complete</small></div><h1>Lista de compras</h1><div class="who">${nm?esc(nm)+' · ':''}${sh.days} días · según tu plan de alimentación</div>
+   ${L.map(c=>`<div class="g" style="--c:${c.c}"><h2>${c.ic} ${c.n}</h2>${c.rows.map(r=>`<div class="r"><i></i><span>${r.e} ${esc(r.food.replace(/ \(½\)/,''))}</span><b>${r.txt}</b></div>`).join('')}</div>`).join('')}
+   <div class="nt">Cantidades aproximadas, en crudo, según las porciones de tu plan. Reparte entre las opciones que más te gusten.</div></body></html>`;}
 function show(){let o=document.getElementById('alshopm');if(!o){o=document.createElement('div');o.id='alshopm';o.style.cssText='position:fixed;inset:0;z-index:9600;background:rgba(28,27,25,.55);display:flex;align-items:flex-end;justify-content:center';document.body.appendChild(o);document.body.style.overflow='hidden';
   o.addEventListener('click',e=>{if(e.target===o)hide();});}
   const keep=o.querySelector('.alsh'),sy=keep?keep.scrollTop:0,op=[...o.querySelectorAll('details')].map(d=>d.open);
   o.innerHTML=view();const sh=o.querySelector('.alsh');o.querySelectorAll('details').forEach((d,i)=>{if(op[i])d.open=true;});sh.scrollTop=sy;}
 function hide(){const o=document.getElementById('alshopm');if(o)o.remove();document.body.style.overflow='';}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-alshop]');if(!t)return;e.stopPropagation();const a=t.dataset.alshop,sh=SH();
-  if(a==='open'){const n=AL_M.reduce((x,[k])=>x+(sh.sel[k]||[]).length,0);if(!n){const r=recent();AL_M.forEach(([k])=>sh.sel[k]=r[k].filter(nm=>AL_O[k].some(o=>o[0]===nm)));save();}show();return;}
+  if(a==='open'){show();return;}
+  if(a==='pdf'){alpPrint(pdfHTML());return;}
   if(a==='close'){hide();return;}
   if(a==='days'){sh.days=+t.dataset.v;sh.chk={};save();show();return;}
   if(a==='tog'){const k=t.dataset.m,n=decodeURIComponent(t.dataset.n),s=sh.sel[k]=sh.sel[k]||[],i=s.indexOf(n);if(i>=0)s.splice(i,1);else s.push(n);sh.chk={};save();show();return;}
   if(a==='chk'){sh.chk[t.dataset.k]=!sh.chk[t.dataset.k];save();show();return;}
   if(a==='auto'){const r=recent();AL_M.forEach(([k])=>sh.sel[k]=r[k].filter(nm=>AL_O[k].some(o=>o[0]===nm)));sh.chk={};save();show();return;}
-  if(a==='clear'){sh.sel={d:[],a:[],m:[],c:[]};sh.chk={};save();show();return;}
+  if(a==='clear'){sh.chk={};save();show();return;}
   if(a==='copy'){const tx=asText();(navigator.clipboard?navigator.clipboard.writeText(tx):Promise.reject()).then(()=>{t.textContent='✓ Copiada';},()=>{const ta=document.createElement('textarea');ta.value=tx;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');t.textContent='✓ Copiada';}catch(x){}ta.remove();});return;}
   if(a==='share'){const tx=asText();if(navigator.share)navigator.share({text:tx}).catch(()=>{});else{try{navigator.clipboard.writeText(tx);t.textContent='✓ Copiada';}catch(x){}}return;}
 },true);
-const av=alView;alView=function(){const h=av.apply(this,arguments);return h+`<button class="alshbtn" data-alshop="open"><span>🛒</span><b>Lista de compras</b><small>La arma sola con lo que vas a comer</small></button>`;};
+const av=alView;alView=function(){const h=av.apply(this,arguments);return h+`<button class="alshbtn" data-alshop="open"><span>🛒</span><b>Lista de compras</b><small>Todo tu plan, calculado y lista para exportar</small></button>`;};
 window.alShopText=asText;window.alShopCalc=calc;
 const st=document.createElement('style');st.textContent=`
 .alshbtn{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;margin:14px 0 4px;border:2px solid #1C1B19;background:#FBFAF8;border-radius:16px;padding:14px;font-family:Archivo,sans-serif}.alshbtn span{font-size:26px}.alshbtn b{font:700 16px Archivo,sans-serif}.alshbtn small{color:#5A554E;font-size:12px}
