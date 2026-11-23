@@ -1139,7 +1139,7 @@ function cardioBlock(b,d){
   const head=`<section class="block${open}"><button class="bh" data-act="tog" data-b="${b.k}"><span class="title">${b.t}</span><span>${t?t+' · Zona '+TIERZONE[t]:'NEAT · Zona 1–2'}</span></button><div class="bb"><div class="cardio">`;
   if(!t){const meas0=S.cm||'reloj',m=fcMax(),bp0=m?`${Math.round(m*.5)}–${Math.round(m*.7)} lpm`:'';
     return head+`<div class="zhead" style="--zc:${ZC[1]}"><span class="zbar" style="background:linear-gradient(${ZC[1]} 50%,${ZC[2]} 50%)"></span><div><small>Esta semana</small><b>Sin cardio estructurado · NEAT</b><em>Zona 1–2 · 15–35 min de movimiento suave</em></div></div>${zstrip([1,2])}
-    <p style="margin:10px 0 6px;color:var(--gray);font-size:14px">Mantén tu actividad diaria (NEAT): camina, muévete, sube escaleras. Sin buscar intensidad.</p>
+    ${cNoteHTML(d)}<p style="margin:10px 0 6px;color:var(--gray);font-size:14px">Mantén tu actividad diaria (NEAT): camina, muévete, sube escaleras. Sin buscar intensidad.</p>
     <div class="chips"><button class="chip${meas0==='reloj'?' on':''}" data-act="cm" data-v="reloj">⌚ Con reloj</button><button class="chip${meas0==='sens'?' on':''}" data-act="cm" data-v="sens">Por sensaciones</button></div>
     <div class="note">${meas0==='reloj'?(bp0?`Mantén tu pulso por debajo de <b>${Math.round(m*.7)} lpm</b> (zonas 1 y 2: ${bp0}).`:`Para calcular tus zonas necesitamos tu edad.<div class="wr" style="margin-top:8px"><input id="zAgeC" inputmode="numeric" placeholder="Tu edad"><button class="btn solid" data-act="zagec">Calcular</button></div>`):'Debes poder hablar con total facilidad o con una conversación fluida.'}</div>
     ${zoneList([1,2])}
@@ -1149,6 +1149,7 @@ function cardioBlock(b,d){
   const reloj=bp?`Mantén tu pulso entre <b>${bp}</b>. En tu reloj, busca la zona ${z} (el color cambia según la marca).`:`Para calcular tus zonas necesitamos tu edad.<div class="wr" style="margin-top:8px"><input id="zAgeC" inputmode="numeric" placeholder="Tu edad"><button class="btn solid" data-act="zagec">Calcular</button></div>`;
   const tip={2:'Si te falta el aire para hablar con frases completas, baja el ritmo.',3:'Si ya no puedes decir frases cortas, baja un poco el ritmo.'}[z]||'';
   return head+`<div class="zhead" style="--zc:${ZC[z]}"><span class="zbar"></span><div><small>${isDef?(isC()?'Tu coach programó':'Sugerido para hoy'):'Hoy haces'}</small><b>${m.n} · Zona ${z}</b><em>${cDur(d,t)} · ${Z.a}–${Z.b} % de tu FC máx.</em></div></div>
+    ${cNoteHTML(d)}
     ${zstrip([z])}
     <div class="chips" style="margin-top:10px"><button class="chip${meas==='reloj'?' on':''}" data-act="cm" data-v="reloj">⌚ Con reloj</button><button class="chip${meas==='sens'?' on':''}" data-act="cm" data-v="sens">Por sensaciones</button></div>
     <div class="note">${meas==='reloj'?reloj:`<b>Zona ${z}:</b> ${Z.talk} ${tip}`}</div>

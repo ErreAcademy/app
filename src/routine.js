@@ -228,6 +228,7 @@ function rtEditorHTML(){
      <label class="pfl" style="margin-top:8px">Tipo de cardio</label><select class="fld" data-rt="dctier">${TI.map(([v,n])=>`<option value="${v}"${(d.cardioTier||'')===v?' selected':''}>${n}</option>`).join('')}</select>
      ${d.cardioTier==='Intenso'?'<div class="note" style="border-color:var(--red);color:var(--red-strong)">El cardio Intenso no es el default del método. Úsalo solo si lo decidiste para este cliente.</div>':''}
      <label class="pfl" style="margin-top:8px">Minutos (vacío = automático)</label><input class="fld" data-rt="dcmin" inputmode="numeric" placeholder="auto" value="${esc(d.cardioMin||'')}">
+     <label class="pfl" style="margin-top:8px">📝 Notas para el cliente (texto libre)</label><textarea class="fld" data-rt="dcnote" rows="5" maxlength="1200" placeholder="Ej. Hyrox 4×4: 4 rondas de 4 min con 3 min de pausa. Ronda 1 SkiErg, ronda 2 remo, ronda 3 trote, ronda 4 bici. Ritmo: puedes decir frases cortas.">${esc(d.cardioNote||'')}</textarea><div class="note" style="margin-top:4px;font-size:12px">El cliente lo ve dentro de su cardio del día. Úsalo para explicar qué hacer cuando no es un solo tipo de cardio.</div>
      <div class="grp" style="margin-top:14px">⏱ Circuito del cronómetro</div>
      ${dc&&dc.ex?`<div class="cirpro"><span><b>${esc(dc.name||'Circuito')}</b><em>${esc(cirSummary(dc))}</em></span></div><div class="chips" style="margin-top:8px"><button class="chip" data-act="rtciredit">✎ Editar</button><button class="chip" data-act="rtcirdel">✕ Quitar</button></div>`:'<div class="note">Sin circuito. El cliente verá su cardio normal.</div>'}
      <label class="pfl" style="margin-top:8px">Elegir de mi biblioteca</label><select class="fld" data-rt="dcirsel"><option value="">${RT.cir===null||RT.cir===undefined?'Cargando…':(RT.cir.length?'Elige un circuito…':'Aún no hay circuitos guardados')}</option>${(RT.cir||[]).map(c=>`<option value="${c.id}">${esc(c.name)} · ${esc(cirSummary(c.cfg))}</option>`).join('')}</select>
@@ -324,6 +325,7 @@ function rtInput(e){
   if(k==='blkname'){const bb=rtBlock(RT.days[RT.sel],t.dataset.bk);if(bb)bb.t=v.slice(0,40);return;}
   if(k==='dcardio'){RT.days[RT.sel].cardioDefault=v;return;}
   if(k==='dctier'){if(v)RT.days[RT.sel].cardioTier=v;else delete RT.days[RT.sel].cardioTier;rtShow();return;}
+  if(k==='dcnote'){if(v.trim())RT.days[RT.sel].cardioNote=v.slice(0,1200);else delete RT.days[RT.sel].cardioNote;return;}
   if(k==='dcmin'){const n=parseInt(v);if(n>0)RT.days[RT.sel].cardioMin=n;else delete RT.days[RT.sel].cardioMin;return;}
   if(k==='dcirsel'){const c=(RT.cir||[]).find(x=>x.id===v);if(c){RT.days[RT.sel].circuit=Object.assign({},c.cfg,{dbid:c.id});RT.dirty=true;rtShow();}return;}
   if(k==='dfa'){if(v)RT.days[RT.sel].fa=v;else delete RT.days[RT.sel].fa;return;}

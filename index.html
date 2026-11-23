@@ -1351,7 +1351,7 @@ function cardioBlock0(b,d){
   const head=`<section class="block${open}"><button class="bh" data-act="tog" data-b="${b.k}"><span class="title">${b.t}</span><span>${t?t+' · Zona '+TIERZONE[t]:'NEAT · Zona 1–2'}</span></button><div class="bb"><div class="cardio">`;
   if(!t){const meas0=S.cm||'reloj',m=fcMax(),bp0=m?`${Math.round(m*.5)}–${Math.round(m*.7)} lpm`:'';
     return head+`<div class="zhead" style="--zc:${ZC[1]}"><span class="zbar" style="background:linear-gradient(${ZC[1]} 50%,${ZC[2]} 50%)"></span><div><small>Esta semana</small><b>Sin cardio estructurado · NEAT</b><em>Zona 1–2 · 15–35 min de movimiento suave</em></div></div>${zstrip([1,2])}
-    <p style="margin:10px 0 6px;color:var(--gray);font-size:14px">Mantén tu actividad diaria (NEAT): camina, muévete, sube escaleras. Sin buscar intensidad.</p>
+    ${cNoteHTML(d)}<p style="margin:10px 0 6px;color:var(--gray);font-size:14px">Mantén tu actividad diaria (NEAT): camina, muévete, sube escaleras. Sin buscar intensidad.</p>
     <div class="chips"><button class="chip${meas0==='reloj'?' on':''}" data-act="cm" data-v="reloj">⌚ Con reloj</button><button class="chip${meas0==='sens'?' on':''}" data-act="cm" data-v="sens">Por sensaciones</button></div>
     <div class="note">${meas0==='reloj'?(bp0?`Mantén tu pulso por debajo de <b>${Math.round(m*.7)} lpm</b> (zonas 1 y 2: ${bp0}).`:`Para calcular tus zonas necesitamos tu edad.<div class="wr" style="margin-top:8px"><input id="zAgeC" inputmode="numeric" placeholder="Tu edad"><button class="btn solid" data-act="zagec">Calcular</button></div>`):'Debes poder hablar con total facilidad o con una conversación fluida.'}</div>
     ${zoneList([1,2])}
@@ -1361,6 +1361,7 @@ function cardioBlock0(b,d){
   const reloj=bp?`Mantén tu pulso entre <b>${bp}</b>. En tu reloj, busca la zona ${z} (el color cambia según la marca).`:`Para calcular tus zonas necesitamos tu edad.<div class="wr" style="margin-top:8px"><input id="zAgeC" inputmode="numeric" placeholder="Tu edad"><button class="btn solid" data-act="zagec">Calcular</button></div>`;
   const tip={2:'Si te falta el aire para hablar con frases completas, baja el ritmo.',3:'Si ya no puedes decir frases cortas, baja un poco el ritmo.'}[z]||'';
   return head+`<div class="zhead" style="--zc:${ZC[z]}"><span class="zbar"></span><div><small>${isDef?(isC()?'Tu coach programó':'Sugerido para hoy'):'Hoy haces'}</small><b>${m.n} · Zona ${z}</b><em>${cDur(d,t)} · ${Z.a}–${Z.b} % de tu FC máx.</em></div></div>
+    ${cNoteHTML(d)}
     ${zstrip([z])}
     <div class="chips" style="margin-top:10px"><button class="chip${meas==='reloj'?' on':''}" data-act="cm" data-v="reloj">⌚ Con reloj</button><button class="chip${meas==='sens'?' on':''}" data-act="cm" data-v="sens">Por sensaciones</button></div>
     <div class="note">${meas==='reloj'?reloj:`<b>Zona ${z}:</b> ${Z.talk} ${tip}`}</div>
@@ -3675,12 +3676,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='22nov-1857';
+const APP_VER='22nov-1910';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1857'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='22nov-1910'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4786,7 +4787,7 @@ function pdfDay(d,o){
   const hasC=d.blocks.some(b=>b.cardio);
   if(hasC){const tier=d.cardioTier||((CARDIO[o.goal]||CARDIO.complete)[wk-1]),mins=d.cardioMin?d.cardioMin+' min':({Base:'20-40 min',Moderado:'10-25 min',Intenso:'5-12 min'}[tier]||''),mod=d.cardioDefault&&typeof CMODS!=='undefined'&&CMODS[d.cardioDefault]?CMODS[d.cardioDefault].n:'Cardio a tu elección';
     const feel={Base:'Puedes hablar sin problema',Moderado:'Puedes decir frases cortas',Intenso:'Esfuerzo alto (solo si tu coach lo indica)'}[tier]||'';
-    if(tier)h+=sec('Cardio',`<div class="row card"><div class="nm"><b>${esc(mod)}</b>${feel?`<div class="nt">${feel}</div>`:''}</div><div class="rx"><b>${esc(tier)}</b>${mins?'<br>'+esc(mins):''}</div></div>`);}
+    if(tier)h+=sec('Cardio',`<div class="row card"><div class="nm"><b>${esc(mod)}</b>${feel?`<div class="nt">${feel}</div>`:''}</div><div class="rx"><b>${esc(tier)}</b>${mins?'<br>'+esc(mins):''}</div></div>`+cNoteHTML(d));}
   h+=sec('Estiramientos y vuelta a la calma',bl('calm'));
   return h+'</section>';}
 function pdfHTML(o){
@@ -4922,7 +4923,7 @@ function pdfModelDay(d,o){const wk=o.wk,prog=o.prog,secs=[];
   d.blocks.filter(b=>b.cust).forEach(b=>secs.push({t:b.t||'Bloque',rows:(b.items||[]).map(it=>pdfRowData(it,wk,prog))}));
   if(d.blocks.some(b=>b.cardio)){const tier=d.cardioTier||((CARDIO[o.goal]||CARDIO.complete)[wk-1]);
     if(tier){const mins=d.cardioMin?d.cardioMin+' min':({Base:'20-40 min',Moderado:'10-25 min',Intenso:'5-12 min'}[tier]||''),mod=d.cardioDefault&&typeof CMODS!=='undefined'&&CMODS[d.cardioDefault]?CMODS[d.cardioDefault].n:'Cardio a tu elección';
-      secs.push({t:'Cardio',rows:[{name:mod,yt:'',noimg:1,note:{Base:'Puedes hablar sin problema',Moderado:'Puedes decir frases cortas',Intenso:'Esfuerzo alto (solo si tu coach lo indica)'}[tier]||'',l1:tier,l2:mins,l3:''}]});}}
+      secs.push({t:'Cardio',rows:[{name:mod,yt:'',noimg:1,note:d.cardioNote||({Base:'Puedes hablar sin problema',Moderado:'Puedes decir frases cortas',Intenso:'Esfuerzo alto (solo si tu coach lo indica)'}[tier]||''),l1:tier,l2:mins,l3:''}]});}}
   secs.push({t:'Estiramientos y vuelta a la calma',rows:items('calm').map(it=>pdfRowData(it,wk,prog))});
   return {title:o.multi?((d.label?d.label+' · ':'')+(d.name||'')):(d.name||d.label||''),secs:secs.filter(x=>x.rows.length)};}
 async function pdfMake(o){
@@ -6847,7 +6848,7 @@ function wrapC(h,d){
     const pick=`<div class="cvpl">¿Qué vas a hacer hoy?</div><div class="cvpk">${Object.keys(CMODS).filter(id=>!['trot_aire','bici','senderismo'].includes(id)).map(id=>`<button class="cvpb${id===mod?' on':''}" data-act="cmod" data-v="${id}" style="--zc:${ZC[z]}">${icon(id,'sm')}<span>${({camin_aire:'Caminar afuera',camin_cam:'Caminadora',bici_est:'Bici estática',trot_cam:'Trotar',eliptica:'Elíptica',escaladora:'Escaladora',remo:'Remo',natacion:'Natación',clase:'Clase grupal',hyrox:'Hyrox'})[id]||CMODS[id].n}</span></button>`).join('')}</div>`;
     const V=(t&&t!=='Intenso')?vids(t):[];
     const vid=V.length?`<div class="cvpl">Cardio guiado en video <small>(en casa, sin equipo)</small></div><div class="cvv">${V.map(v=>`<button class="cvvb" data-cvv="${v.k}">${typeof thumb==='function'?thumb(v.k):''}<span><b>${esc(v.nm)}</b><small>${v.mn?v.mn+' min · ':''}${v.lv<=1?'Sin impacto':'Moderado'}</small></span></button>`).join('')}</div>`:'';
-    h=h.replace('</em></div></div>','</em></div></div>'+hero);
+    h=h.replace('</em></div></div>','</em></div></div>'+hero+cNoteHTML(d));
     h=h.includes('<button class="cdet"')?h.replace('<button class="cdet"',pick+vid+'<button class="cdet"'):h;
   }catch(e){console.warn('cardio vis',e);}
   return h;}
@@ -6966,7 +6967,7 @@ function cardioPrev(){
   const meter=`<div class="zmt" style="--zc:${ZC[z]}"><div class="zmh"><b>ZONA ${z}</b><span>${zname}</span></div><div class="zmb">${[1,2,3,4,5].map(k=>`<i class="${k===z?'on':''}" style="--c:${ZC[k]}"></i>`).join('')}</div><div class="zml"><small>Suave</small><small>Máximo</small></div></div>`;
   const stats=`<div class="pcs"><div><small>Ritmo</small><b>${esc(String(Z.s).replace(/^Zona \d\s*[·-]?\s*/i,'')||Z.s)}</b></div><div><small>Semana</small><b>${wk}/${P.weeks}</b></div></div>`;
   const txt=t?`${t}. Un ritmo en el que puedas mantener el control de tu respiración.`:'Semana de movimiento suave: zonas 1–2, sin buscar intensidad.';
-  sheet(`<div class="pcv"><div class="prehd"><small>Cardio de hoy</small></div>${hero}${meter}${stats}<p class="pct">${esc(txt)}</p>${actBtns('g_cardio','Comenzar cardio')}<button class="pcl" data-act="prelist" data-b="g_cardio">Ver opciones de cardio</button></div>`);}
+  sheet(`<div class="pcv"><div class="prehd"><small>Cardio de hoy</small></div>${hero}${cNoteHTML(d)}${meter}${stats}<p class="pct">${esc(txt)}</p>${actBtns('g_cardio','Comenzar cardio')}<button class="pcl" data-act="prelist" data-b="g_cardio">Ver opciones de cardio</button></div>`);}
 const FIG=`<circle class="cqring" cx="60" cy="46" r="30" fill="currentColor" stroke="none"/><g stroke="currentColor" stroke-width="3.6" stroke-linecap="round" fill="none"><circle cx="60" cy="18" r="6.5"/><path d="M60 26 L60 54 M60 54 L50 72 M60 54 L70 72"/><g class="cqa1"><path d="M58 34 L44 16"/></g><g class="cqa2"><path d="M62 34 L76 16"/></g><path d="M20 76 H100" opacity=".4"/></g>`;
 function calmPrev(){
   const d=DAYS[S.day],P=PERIOD[S.program],wk=Math.min(S.week,P.weeks),b=d.blocks.find(x=>x.k==='calm'),its=(b&&b.items)||[],n=its.length,mn=Math.max(3,Math.round((n||4)*0.75));
@@ -7161,6 +7162,9 @@ function card(){
 const hv=homeView;homeView=function(){const h=hv.apply(this,arguments),c=card();return c?c+h:h;};
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pushno"]');if(!t)return;e.stopPropagation();try{localStorage.setItem(NOK,String(Date.now()));}catch(x){}try{render();}catch(x){}},true);
 })();
+
+/* Nota libre del coach en el cardio del día (se escribe en el editor › Cardio › «Notas para el cliente») */
+function cNoteHTML(d){try{return d&&d.cardioNote?`<div class="note cnote" style="margin:10px 0;white-space:pre-wrap;border-left:3px solid #D03A68"><b style="display:inline">📝 Nota de tu coach</b><br>${esc(d.cardioNote)}</div>`:'';}catch(e){return '';}}
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
@@ -7392,6 +7396,7 @@ function rtEditorHTML(){
      <label class="pfl" style="margin-top:8px">Tipo de cardio</label><select class="fld" data-rt="dctier">${TI.map(([v,n])=>`<option value="${v}"${(d.cardioTier||'')===v?' selected':''}>${n}</option>`).join('')}</select>
      ${d.cardioTier==='Intenso'?'<div class="note" style="border-color:var(--red);color:var(--red-strong)">El cardio Intenso no es el default del método. Úsalo solo si lo decidiste para este cliente.</div>':''}
      <label class="pfl" style="margin-top:8px">Minutos (vacío = automático)</label><input class="fld" data-rt="dcmin" inputmode="numeric" placeholder="auto" value="${esc(d.cardioMin||'')}">
+     <label class="pfl" style="margin-top:8px">📝 Notas para el cliente (texto libre)</label><textarea class="fld" data-rt="dcnote" rows="5" maxlength="1200" placeholder="Ej. Hyrox 4×4: 4 rondas de 4 min con 3 min de pausa. Ronda 1 SkiErg, ronda 2 remo, ronda 3 trote, ronda 4 bici. Ritmo: puedes decir frases cortas.">${esc(d.cardioNote||'')}</textarea><div class="note" style="margin-top:4px;font-size:12px">El cliente lo ve dentro de su cardio del día. Úsalo para explicar qué hacer cuando no es un solo tipo de cardio.</div>
      <div class="grp" style="margin-top:14px">⏱ Circuito del cronómetro</div>
      ${dc&&dc.ex?`<div class="cirpro"><span><b>${esc(dc.name||'Circuito')}</b><em>${esc(cirSummary(dc))}</em></span></div><div class="chips" style="margin-top:8px"><button class="chip" data-act="rtciredit">✎ Editar</button><button class="chip" data-act="rtcirdel">✕ Quitar</button></div>`:'<div class="note">Sin circuito. El cliente verá su cardio normal.</div>'}
      <label class="pfl" style="margin-top:8px">Elegir de mi biblioteca</label><select class="fld" data-rt="dcirsel"><option value="">${RT.cir===null||RT.cir===undefined?'Cargando…':(RT.cir.length?'Elige un circuito…':'Aún no hay circuitos guardados')}</option>${(RT.cir||[]).map(c=>`<option value="${c.id}">${esc(c.name)} · ${esc(cirSummary(c.cfg))}</option>`).join('')}</select>
@@ -7488,6 +7493,7 @@ function rtInput(e){
   if(k==='blkname'){const bb=rtBlock(RT.days[RT.sel],t.dataset.bk);if(bb)bb.t=v.slice(0,40);return;}
   if(k==='dcardio'){RT.days[RT.sel].cardioDefault=v;return;}
   if(k==='dctier'){if(v)RT.days[RT.sel].cardioTier=v;else delete RT.days[RT.sel].cardioTier;rtShow();return;}
+  if(k==='dcnote'){if(v.trim())RT.days[RT.sel].cardioNote=v.slice(0,1200);else delete RT.days[RT.sel].cardioNote;return;}
   if(k==='dcmin'){const n=parseInt(v);if(n>0)RT.days[RT.sel].cardioMin=n;else delete RT.days[RT.sel].cardioMin;return;}
   if(k==='dcirsel'){const c=(RT.cir||[]).find(x=>x.id===v);if(c){RT.days[RT.sel].circuit=Object.assign({},c.cfg,{dbid:c.id});RT.dirty=true;rtShow();}return;}
   if(k==='dfa'){if(v)RT.days[RT.sel].fa=v;else delete RT.days[RT.sel].fa;return;}

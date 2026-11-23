@@ -2748,7 +2748,7 @@ function pdfDay(d,o){
   const hasC=d.blocks.some(b=>b.cardio);
   if(hasC){const tier=d.cardioTier||((CARDIO[o.goal]||CARDIO.complete)[wk-1]),mins=d.cardioMin?d.cardioMin+' min':({Base:'20-40 min',Moderado:'10-25 min',Intenso:'5-12 min'}[tier]||''),mod=d.cardioDefault&&typeof CMODS!=='undefined'&&CMODS[d.cardioDefault]?CMODS[d.cardioDefault].n:'Cardio a tu elección';
     const feel={Base:'Puedes hablar sin problema',Moderado:'Puedes decir frases cortas',Intenso:'Esfuerzo alto (solo si tu coach lo indica)'}[tier]||'';
-    if(tier)h+=sec('Cardio',`<div class="row card"><div class="nm"><b>${esc(mod)}</b>${feel?`<div class="nt">${feel}</div>`:''}</div><div class="rx"><b>${esc(tier)}</b>${mins?'<br>'+esc(mins):''}</div></div>`);}
+    if(tier)h+=sec('Cardio',`<div class="row card"><div class="nm"><b>${esc(mod)}</b>${feel?`<div class="nt">${feel}</div>`:''}</div><div class="rx"><b>${esc(tier)}</b>${mins?'<br>'+esc(mins):''}</div></div>`+cNoteHTML(d));}
   h+=sec('Estiramientos y vuelta a la calma',bl('calm'));
   return h+'</section>';}
 function pdfHTML(o){
@@ -2884,7 +2884,7 @@ function pdfModelDay(d,o){const wk=o.wk,prog=o.prog,secs=[];
   d.blocks.filter(b=>b.cust).forEach(b=>secs.push({t:b.t||'Bloque',rows:(b.items||[]).map(it=>pdfRowData(it,wk,prog))}));
   if(d.blocks.some(b=>b.cardio)){const tier=d.cardioTier||((CARDIO[o.goal]||CARDIO.complete)[wk-1]);
     if(tier){const mins=d.cardioMin?d.cardioMin+' min':({Base:'20-40 min',Moderado:'10-25 min',Intenso:'5-12 min'}[tier]||''),mod=d.cardioDefault&&typeof CMODS!=='undefined'&&CMODS[d.cardioDefault]?CMODS[d.cardioDefault].n:'Cardio a tu elección';
-      secs.push({t:'Cardio',rows:[{name:mod,yt:'',noimg:1,note:{Base:'Puedes hablar sin problema',Moderado:'Puedes decir frases cortas',Intenso:'Esfuerzo alto (solo si tu coach lo indica)'}[tier]||'',l1:tier,l2:mins,l3:''}]});}}
+      secs.push({t:'Cardio',rows:[{name:mod,yt:'',noimg:1,note:d.cardioNote||({Base:'Puedes hablar sin problema',Moderado:'Puedes decir frases cortas',Intenso:'Esfuerzo alto (solo si tu coach lo indica)'}[tier]||''),l1:tier,l2:mins,l3:''}]});}}
   secs.push({t:'Estiramientos y vuelta a la calma',rows:items('calm').map(it=>pdfRowData(it,wk,prog))});
   return {title:o.multi?((d.label?d.label+' · ':'')+(d.name||'')):(d.name||d.label||''),secs:secs.filter(x=>x.rows.length)};}
 async function pdfMake(o){
@@ -4809,7 +4809,7 @@ function wrapC(h,d){
     const pick=`<div class="cvpl">¿Qué vas a hacer hoy?</div><div class="cvpk">${Object.keys(CMODS).filter(id=>!['trot_aire','bici','senderismo'].includes(id)).map(id=>`<button class="cvpb${id===mod?' on':''}" data-act="cmod" data-v="${id}" style="--zc:${ZC[z]}">${icon(id,'sm')}<span>${({camin_aire:'Caminar afuera',camin_cam:'Caminadora',bici_est:'Bici estática',trot_cam:'Trotar',eliptica:'Elíptica',escaladora:'Escaladora',remo:'Remo',natacion:'Natación',clase:'Clase grupal',hyrox:'Hyrox'})[id]||CMODS[id].n}</span></button>`).join('')}</div>`;
     const V=(t&&t!=='Intenso')?vids(t):[];
     const vid=V.length?`<div class="cvpl">Cardio guiado en video <small>(en casa, sin equipo)</small></div><div class="cvv">${V.map(v=>`<button class="cvvb" data-cvv="${v.k}">${typeof thumb==='function'?thumb(v.k):''}<span><b>${esc(v.nm)}</b><small>${v.mn?v.mn+' min · ':''}${v.lv<=1?'Sin impacto':'Moderado'}</small></span></button>`).join('')}</div>`:'';
-    h=h.replace('</em></div></div>','</em></div></div>'+hero);
+    h=h.replace('</em></div></div>','</em></div></div>'+hero+cNoteHTML(d));
     h=h.includes('<button class="cdet"')?h.replace('<button class="cdet"',pick+vid+'<button class="cdet"'):h;
   }catch(e){console.warn('cardio vis',e);}
   return h;}
@@ -4928,7 +4928,7 @@ function cardioPrev(){
   const meter=`<div class="zmt" style="--zc:${ZC[z]}"><div class="zmh"><b>ZONA ${z}</b><span>${zname}</span></div><div class="zmb">${[1,2,3,4,5].map(k=>`<i class="${k===z?'on':''}" style="--c:${ZC[k]}"></i>`).join('')}</div><div class="zml"><small>Suave</small><small>Máximo</small></div></div>`;
   const stats=`<div class="pcs"><div><small>Ritmo</small><b>${esc(String(Z.s).replace(/^Zona \d\s*[·-]?\s*/i,'')||Z.s)}</b></div><div><small>Semana</small><b>${wk}/${P.weeks}</b></div></div>`;
   const txt=t?`${t}. Un ritmo en el que puedas mantener el control de tu respiración.`:'Semana de movimiento suave: zonas 1–2, sin buscar intensidad.';
-  sheet(`<div class="pcv"><div class="prehd"><small>Cardio de hoy</small></div>${hero}${meter}${stats}<p class="pct">${esc(txt)}</p>${actBtns('g_cardio','Comenzar cardio')}<button class="pcl" data-act="prelist" data-b="g_cardio">Ver opciones de cardio</button></div>`);}
+  sheet(`<div class="pcv"><div class="prehd"><small>Cardio de hoy</small></div>${hero}${cNoteHTML(d)}${meter}${stats}<p class="pct">${esc(txt)}</p>${actBtns('g_cardio','Comenzar cardio')}<button class="pcl" data-act="prelist" data-b="g_cardio">Ver opciones de cardio</button></div>`);}
 const FIG=`<circle class="cqring" cx="60" cy="46" r="30" fill="currentColor" stroke="none"/><g stroke="currentColor" stroke-width="3.6" stroke-linecap="round" fill="none"><circle cx="60" cy="18" r="6.5"/><path d="M60 26 L60 54 M60 54 L50 72 M60 54 L70 72"/><g class="cqa1"><path d="M58 34 L44 16"/></g><g class="cqa2"><path d="M62 34 L76 16"/></g><path d="M20 76 H100" opacity=".4"/></g>`;
 function calmPrev(){
   const d=DAYS[S.day],P=PERIOD[S.program],wk=Math.min(S.week,P.weeks),b=d.blocks.find(x=>x.k==='calm'),its=(b&&b.items)||[],n=its.length,mn=Math.max(3,Math.round((n||4)*0.75));
@@ -5123,3 +5123,6 @@ function card(){
 const hv=homeView;homeView=function(){const h=hv.apply(this,arguments),c=card();return c?c+h:h;};
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pushno"]');if(!t)return;e.stopPropagation();try{localStorage.setItem(NOK,String(Date.now()));}catch(x){}try{render();}catch(x){}},true);
 })();
+
+/* Nota libre del coach en el cardio del día (se escribe en el editor › Cardio › «Notas para el cliente») */
+function cNoteHTML(d){try{return d&&d.cardioNote?`<div class="note cnote" style="margin:10px 0;white-space:pre-wrap;border-left:3px solid #D03A68"><b style="display:inline">📝 Nota de tu coach</b><br>${esc(d.cardioNote)}</div>`:'';}catch(e){return '';}}
