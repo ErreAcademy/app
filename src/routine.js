@@ -544,19 +544,31 @@ function pwLast(){const days=(CP.routine&&CP.routine.days)||[],L=(CP.d&&CP.d.dat
 function cpPesosTab(){
   const days=(CP.routine&&CP.routine.days)||[],w=pwGet(),last=pwLast(),seen={},rows=[];
   pwItems(days).forEach(it=>{if(seen[it.ex])return;seen[it.ex]=1;rows.push({ex:it.ex,rp:it.kind==='basic'?'6-10':'10-12'});});
-  Object.keys(w).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'10-12'});}});
-  Object.keys(last).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'10-12'});}});
-  (CP.pwx||[]).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'8-12'});}});
-  const nm=ex=>esc((E[ex]||{}).n||ex),fd=s=>{try{return new Date(s+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short'});}catch(e){return s;}};
-  const body=rows.length?rows.map(r=>{const cur=w[r.ex]||{},l=last[r.ex],rp=cur.reps||r.rp;
-    return `<div class="pwrow" data-ex="${esc(r.ex)}"><div class="pwn"><b>${nm(r.ex)}</b>${l?`<small>Último registro: ${l.kg} kg${l.reps?' × '+esc(l.reps):''} · ${fd(l.date)}</small>`:'<small>Sin registros del cliente</small>'}</div>
-     <div class="pwin"><label>kg<input class="fld pwkg" inputmode="decimal" value="${esc(cur.kg||'')}" placeholder="—"></label><label>Reps<input class="fld pwrp" value="${esc(rp)}"></label>${l&&!(+cur.kg===l.kg)?`<button class="btn pwuse" data-act="pwuse" data-ex="${esc(r.ex)}" data-kg="${l.kg}">Usar ${l.kg}</button>`:''}</div></div>`;}).join(''):'<div class="note">Aún no hay ejercicios. Toca "Añadir ejercicio", o asigna un programa y aquí aparecen solos sus básicos y accesorios.</div>';
-  return `<section class="sec"><div class="sec-h"><b>Pesos de referencia</b><em>${rows.length} ejercicios</em></div>
-   <button class="btn solid" data-act="pwadd" style="width:100%;padding:12px;margin-bottom:10px">＋ Añadir ejercicio</button>
-   <div class="note" style="margin-bottom:10px">Escríbelos una sola vez por cliente. Cuando agregues un ejercicio o asignes un programa o workout a esta persona, el kg se rellena solo (puedes cambiarlo en ese workout). "Usar" toma lo último que registró el cliente.</div>
+  [Object.keys(w),Object.keys(last),(CP.pwx||[])].forEach(L=>L.forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'8-12'});}}));
+  const q=nrm(CP.pwq||''),fd=x=>{try{return new Date(x+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short'});}catch(e){return x;}};
+  const withKg=rows.filter(r=>+(w[r.ex]||{}).kg>0).length,pend=rows.length-withKg;
+  const vis=rows.filter(r=>!q||nrm((E[r.ex]||{}).n||r.ex).includes(q));
+  const grp={};vis.forEach(r=>{const g=(E[r.ex]||{}).g||'Otros';(grp[g]=grp[g]||[]).push(r);});
+  const ord=['Pecho','Espalda','Hombro','Brazos','Pierna','Glúteo','Core','Full Body'];
+  const gk=Object.keys(grp).sort((a,b)=>((ord.indexOf(a)+1||99)-(ord.indexOf(b)+1||99))||a.localeCompare(b));
+  const row=r=>{const cur=w[r.ex]||{},l=last[r.ex],has=+cur.kg>0,rp=cur.reps||r.rp,nm=esc((E[r.ex]||{}).n||r.ex);
+    return `<div class="pwrow${has?' ok':''}" data-ex="${esc(r.ex)}">
+      <div class="pwt"><div class="pwn"><b>${nm}</b>${l?`<small>Último: ${l.kg} kg${l.reps?' × '+esc(l.reps):''} · ${fd(l.date)}${!(+cur.kg===l.kg)?` <button class="pwuse" data-act="pwuse" data-ex="${esc(r.ex)}" data-kg="${l.kg}">Usar ${l.kg}</button>`:''}</small>`:''}</div></div>
+      <input class="pwkg" inputmode="decimal" value="${esc(cur.kg||'')}" placeholder="kg" aria-label="Kilos"><input class="pwrp" value="${esc(rp)}" placeholder="reps" aria-label="Repeticiones"><button class="pwx" data-act="pwdel" data-ex="${esc(r.ex)}" aria-label="Quitar">✕</button></div>`;};
+  const body=rows.length?(`${rows.length>5?`<input class="fld" id="pwq" placeholder="Buscar en la tabla…" value="${esc(CP.pwq||'')}" autocomplete="off" style="margin-bottom:10px">`:''}
+    <div class="pwhead"><span>Ejercicio</span><span>kg</span><span>reps</span><span></span></div>
+    ${gk.map(g=>`<details class="pwg" open><summary><b>${esc(g)}</b><em>${grp[g].filter(r=>+(w[r.ex]||{}).kg>0).length}/${grp[g].length}</em></summary>${grp[g].map(row).join('')}</details>`).join('')||'<div class="note">Nada coincide con tu búsqueda.</div>'}`)
+    :'<div class="note">Aún no hay ejercicios. Toca "Añadir ejercicio", o asigna un programa y aquí aparecen solos sus básicos y accesorios.</div>';
+  return `<section class="sec"><div class="sec-h"><b>Pesos de referencia</b><em>${rows.length?`${withKg} con peso${pend?` · ${pend} pendientes`:''}`:'0 ejercicios'}</em></div>
+   <button class="btn solid" data-act="pwadd" style="width:100%;padding:12px;margin-bottom:8px">＋ Añadir ejercicio</button>
+   <div class="note" style="margin-bottom:10px">Escribe el kg una sola vez. Al agregar ese ejercicio a una rutina de esta persona, el peso sale solo.</div>
    ${body}
    ${rows.length&&days.length?`<button class="btn" data-act="pwapply" style="width:100%;margin-top:12px">Aplicar estos pesos al programa actual</button>`:''}</section>
-   <style>.pwrow{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;margin-bottom:8px}.pwn b{font-size:14px;display:block}.pwn small{color:var(--gray);font-size:12px}.pwin{display:flex;gap:8px;align-items:flex-end;margin-top:8px;flex-wrap:wrap}.pwin label{display:flex;flex-direction:column;font-size:11px;color:var(--gray);gap:2px}.pwin .fld{width:84px;padding:8px}.pwuse{padding:8px 10px;font-size:13px}</style>`;
+   <style>.pwhead,.pwrow{display:grid;grid-template-columns:minmax(0,1fr) 62px 62px 26px;gap:6px;align-items:center}.pwhead{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;padding:0 2px 4px}.pwhead span:nth-child(2),.pwhead span:nth-child(3){text-align:center}
+   .pwg{margin:0 0 8px;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}.pwg>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;background:rgba(128,128,128,.07)}.pwg>summary::-webkit-details-marker{display:none}.pwg>summary b{font-size:14px}.pwg>summary em{font-style:normal;font-size:12px;color:var(--gray)}
+   .pwrow{padding:8px 10px;border-top:1px solid var(--line)}.pwrow.ok{background:rgba(46,157,107,.08)}.pwt{display:flex;gap:8px;align-items:center;min-width:0}.pwn{min-width:0}.pwn b{font-size:13.5px;font-weight:600;display:block;line-height:1.2}.pwn small{display:block;font-size:11.5px;color:var(--gray);margin-top:2px}
+   .pwrow input{width:100%;box-sizing:border-box;padding:9px 4px;text-align:center;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font-size:15px;font-weight:600}.pwrow.ok .pwkg{border-color:#2E9D6B}
+   .pwuse{border:0;background:#2E9D6B;color:#fff;border-radius:99px;padding:2px 9px;font-size:11.5px;font-weight:600;margin-left:4px}.pwx{border:0;background:transparent;color:var(--gray);font-size:14px;padding:4px}</style>`;
 }
 async function pwSave(ex,kg,reps){
   const w=Object.assign({},pwGet()),k=+String(kg).replace(',','.')||0;
@@ -566,8 +578,12 @@ async function pwSave(ex,kg,reps){
     toast('Guardado');}catch(x){console.warn(x);toast('No se pudo guardar');}
 }
 document.addEventListener('change',e=>{const t=e.target;if(!t.classList||!(t.classList.contains('pwkg')||t.classList.contains('pwrp')))return;
-  const row=t.closest('.pwrow');if(!row)return;pwSave(row.dataset.ex,row.querySelector('.pwkg').value,row.querySelector('.pwrp').value);});
+  const row=t.closest('.pwrow');if(!row)return;row.classList.toggle('ok',+String(row.querySelector('.pwkg').value).replace(',','.')>0);pwSave(row.dataset.ex,row.querySelector('.pwkg').value,row.querySelector('.pwrp').value);});
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='pwq'){CP.pwq=e.target.value;const c=e.target.selectionStart;coachRender();const n=document.getElementById('pwq');if(n){n.focus();try{n.setSelectionRange(c,c);}catch(x){}}}});
 document.addEventListener('click',async e=>{
+  const dl=e.target.closest&&e.target.closest('[data-act="pwdel"]');
+  if(dl){e.stopPropagation();const ex=dl.dataset.ex,nmx=(E[ex]||{}).n||'este ejercicio';if(pwGet()[ex]&&!confirm('¿Quitar "'+nmx+'" de la tabla? Se borra su peso de referencia (las rutinas ya armadas no cambian).'))return;
+    CP.pwx=(CP.pwx||[]).filter(x=>x!==ex);if(pwGet()[ex])await pwSave(ex,'','');coachRender();return;}
   const u=e.target.closest&&e.target.closest('[data-act="pwuse"]');
   if(u){e.stopPropagation();await pwSave(u.dataset.ex,u.dataset.kg,(pwGet()[u.dataset.ex]||{}).reps||'');coachRender();return;}
   const a=e.target.closest&&e.target.closest('[data-act="pwapply"]');

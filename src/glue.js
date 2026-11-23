@@ -460,7 +460,7 @@ async function coachLive(m){try{
 }catch(e){}}
 async function coachHome(){try{if(DB.onChat)DB.onChat(coachLive);}catch(e){}CP.view='list';coachRender();try{DB.chatInbox().then(r=>{CP.inbox=r;badgeCalc();}).catch(()=>{});}catch(e){}try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{CP.info=await DB.clientInfo();}catch(e){console.warn('info',e);}try{CP.home=await DB.homeData();}catch(e){console.warn('home',e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
-  CP.view='client';CP.cid=id;CP.tab=tab||'hoy';CP.cd=null;CP.d=null;CP.routine=null;CP.pwx=[];coachRender();
+  CP.view='client';CP.cid=id;CP.tab=tab||'hoy';CP.cd=null;CP.d=null;CP.routine=null;CP.pwx=[];CP.pwq='';coachRender();
   try{await rtLoadTpls();CP.routine=await DB.routine(id);}catch(e){console.warn(e);}
   try{CP.d=await DB.clientDetail(id);}catch(e){console.warn(e);CP.err='No pudimos cargar al cliente.';}
   coachRender();clearInterval(CP.poll);CP.poll=setInterval(async()=>{if(CP.view==='client'&&(CP.tab==='chat'||CP.tab==='plan')&&document.visibilityState==='visible'&&!(typeof RT!=='undefined'&&RT.open)){try{CP.d=await DB.clientDetail(CP.cid);coachRender(true);}catch(e){}}},20000);
