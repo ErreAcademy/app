@@ -5133,3 +5133,18 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 
 /* Nota libre del coach en el cardio del día (se escribe en el editor › Cardio › «Notas para el cliente») */
 function cNoteHTML(d){try{return d&&d.cardioNote?`<div class="note cnote" style="margin:10px 0;white-space:pre-wrap;border-left:3px solid #D03A68"><b style="display:inline">📝 Nota de tu coach</b><br>${esc(d.cardioNote)}</div>`:'';}catch(e){return '';}}
+
+/* ===== Inicio: estado del entreno por partes (fuerza / cardio / calma) ===== */
+var OTROPEN=false;document.addEventListener('toggle',e=>{if(e.target&&e.target.classList&&e.target.classList.contains('otr'))OTROPEN=e.target.open;},true);
+function trainGroups(){
+  const d=DAYS[S.day];if(!d)return {gs:[],done:0,total:0,part:false};
+  const gs=[];
+  ['g_fuerza','g_cardio','g_calm'].forEach(g=>{
+    try{const c=gCount(g);if(!(c.t>0))return;
+      const fin=!!(S.fb&&S.fb[fbKey(g)]);
+      const ok=fin||c.ok;
+      gs.push({g,ok,part:!ok&&(c.x>0||gRstHas(g))});
+    }catch(e){}
+  });
+  return {gs,done:gs.filter(x=>x.ok).length,total:gs.length,part:gs.some(x=>x.part||x.ok)};
+}
