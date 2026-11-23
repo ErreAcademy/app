@@ -114,7 +114,7 @@ function realDB(){
         sb.from('chat_messages').select('id,sender_id,kind,body,created_at').eq('client_id',cid).order('created_at').then(ok),
         sb.from('calls').select('starts_at').eq('client_id',cid).gte('starts_at',new Date(Date.now()-36e5).toISOString()).order('starts_at').limit(1).then(ok),
         sb.from('progress_photos').select('month,angle,taken_at').eq('client_id',cid).then(ok)]);
-      let extra=[];try{extra=ok(await sb.from('client_data').select('key,value').eq('client_id',cid).in('key',['wnotes','sleep','excom','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','prefs','ctasks','freeOk','prio','alimplan']));}catch(e){}
+      let extra=[];try{extra=ok(await sb.from('client_data').select('key,value').eq('client_id',cid).in('key',['wnotes','sleep','excom','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','prefs','ctasks','freeOk','prio','alimplan','refw']));}catch(e){}
       const xv=k=>((extra.find(r=>r.key===k)||{}).value)||{};
       const data={};extra.forEach(r=>data[r.key]=r.value);
       return {profile,weights,steps,fb,chat,data,photos,call:calls[0]||null,wnotes:xv('wnotes'),sleep:xv('sleep'),excom:xv('excom')};
@@ -520,6 +520,7 @@ function coachRender(keepInput){
     }else if(CP.tab==='alim'){body=cpAlimTab();
     }else if(CP.tab==='plan'){body=cpEntSeg()+cpPlanBody();
     }else if(CP.tab==='rutina'){body=cpEntSeg()+rtClientTab();
+    }else if(CP.tab==='pesos'){body=cpEntSeg()+cpPesosTab();
     }else if(CP.tab==='chat'){
       const msgs=mapChat(d.chat,ME.id);
       body=`<div style="padding:4px 0 8px">${msgs.length?msgs.map(m=>msgHTML(m,m.from==='client')).join(''):'<div class="note">Aún no hay mensajes. Escríbele para empezar.</div>'}</div>
@@ -531,7 +532,7 @@ function coachRender(keepInput){
   el.innerHTML=cpShell(`<div class="cpcrumb"><button class="lblbtn" data-act="cpback">Clientes</button> / <b>${nm}</b></div>
     <div class="cphead"><span class="cpav">${esc(ini)}</span><div><h2 class="h2" style="margin:0">${nm}</h2>${(CP.info&&CP.info[CP.cid]&&CP.info[CP.cid].email)?`<small class="cpem" style="display:block">${esc(CP.info[CP.cid].email)}</small>`:''}<small>${d?(PNAME[pp.plan]||'')+' · '+(GN[pp.goal]||pp.goal||'Sin objetivo')+' · '+fidSpan(fidMonths(fidSince(pp)))+' con ERRE':''}</small></div></div>
     ${pp&&pp.status==='pending'?`<section class="sec" style="border:2px solid #F28C28;margin:10px 0"><div class="sec-h"><b>Cuenta pendiente</b></div><div class="note" style="margin-bottom:8px">Se registró solo. Elige su plan (Ajustes → Cuenta y acceso) y actívala para que entre a la app.</div><button class="btn solid" data-act="cpactivate" style="width:100%">Activar cuenta</button></section>`:''}
-    <div class="cptabs cpnavx">${tabs.map(t=>`<button class="cptab${(CP.tab===t||(t==='plan'&&CP.tab==='rutina'))?' on':''}" data-act="cptab" data-v="${t}"><i>${SB.find(x=>x[0]===t)[1]}</i>${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}<div class="${CP.tab==='plan'?'':'cpnar'}">${body}</div>`);cpWideCls(el);
+    <div class="cptabs cpnavx">${tabs.map(t=>`<button class="cptab${(CP.tab===t||(t==='plan'&&(CP.tab==='rutina'||CP.tab==='pesos')))?' on':''}" data-act="cptab" data-v="${t}"><i>${SB.find(x=>x[0]===t)[1]}</i>${TL[t]}</button>`).join('')}</div>${CP.err?`<div class="note">${CP.err}</div>`:''}<div class="${CP.tab==='plan'?'':'cpnar'}">${body}</div>`);cpWideCls(el);
 }
 /* tareas asignadas por el coach (cliente + coach) */
 const cxList=()=>((S.ctasks&&S.ctasks.tasks)||[]);
@@ -3602,7 +3603,7 @@ AL_O.m.push(['Atún con aguacate',null,{p:'Atún',f:'Aguacate (½)',fr:'Naranja'
 `;document.head.appendChild(s);})();
 document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.classList&&t.classList.contains('cpacc')){CP.dopen=CP.dopen||{};CP.dopen[t.dataset.k]=t.open;}},true);
 
-function cpEntSeg(){return `<div class="cpseg"><button class="${CP.tab==='plan'?'on':''}" data-act="cptab" data-v="plan">🗓 Calendario</button><button class="${CP.tab==='rutina'?'on':''}" data-act="cptab" data-v="rutina">📋 Programa</button></div>`;}
+function cpEntSeg(){return `<div class="cpseg"><button class="${CP.tab==='plan'?'on':''}" data-act="cptab" data-v="plan">🗓 Calendario</button><button class="${CP.tab==='rutina'?'on':''}" data-act="cptab" data-v="rutina">📋 Programa</button><button class="${CP.tab==='pesos'?'on':''}" data-act="cptab" data-v="pesos">⚖ Pesos</button></div>`;}
 
 function cpAlimTab(){try{return cpAlimSec();}catch(e){console.warn(e);return '<div class="note">No se pudo cargar la nutrición.</div>';}}
 

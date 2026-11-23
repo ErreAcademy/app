@@ -262,7 +262,7 @@ function libPanel(){
 function rtShow(){const app=document.getElementById('app'),ed=authHead()+rtEditorHTML(),w=RTW();app.classList.toggle('wide',w);
   const y=window.scrollY;app.innerHTML=w?`<div class="rtwrap"><div>${ed}</div><aside class="rtlib">${libPanel()}</aside></div>`:ed;window.scrollTo(0,y);}
 function rtAddItem(di,bk,id){const b=rtBlock(RT.days[di],bk),w=bk==='warm'||bk==='calm';
-  b.items.push(w?{ex:id,kind:bk,fixed:{sets:'2',reps:bk==='calm'?'30 s':'10-12'},note:''}:{ex:id,kind:bk==='main'?'basic':'acc',ref:0,tempo:bk==='main'?'3-0-1-0':RDEF.tempo,rir:RDEF.rir,rest:bk==='main'?120:RDEF.rest,note:''});RT.dirty=true;}
+  b.items.push(w?{ex:id,kind:bk,fixed:{sets:'2',reps:bk==='calm'?'30 s':'10-12'},note:''}:{ex:id,kind:bk==='main'?'basic':'acc',ref:(typeof pwRef==='function'?pwRef(id):0),tempo:bk==='main'?'3-0-1-0':RDEF.tempo,rir:RDEF.rir,rest:bk==='main'?120:RDEF.rest,note:''});RT.dirty=true;}
 function rtFixIds(){RT.days.forEach((d,i)=>{d.id='d'+(i+1);d.label='Día '+(i+1);});}
 /* tarjeta "Rutina" dentro de la ficha del cliente */
 RT.as={kind:'program',folder:null};
@@ -356,9 +356,9 @@ document.addEventListener('click',async e=>{
   if(a==='rtedit'){rtOpen('client',{cid:CP.cid,name:CP.routine.name,days:CP.routine.days});}
   else if(a==='rtblank'){if(CP.routine&&!confirm('Esto reemplaza el programa actual al guardar. ¿Continuar?'))return;rtOpen('client',{cid:CP.cid,name:'Rutina de '+((CP.d.profile.full_name||'cliente').split(' ')[0]),days:[RD.torsoC(1)]});}
   else if(a==='rtapply'){const tp=RT.tpls.find(x=>x.id===t.dataset.id);if(!tp)return;
-    if(tp.tkind==='workout'){const base=(CP.routine&&CP.routine.days)||[];rtOpen('client',{cid:CP.cid,name:(CP.routine&&CP.routine.name)||('Rutina de '+((CP.d.profile.full_name||'cliente').split(' ')[0])),days:base.concat(rtClone(tp.days))});RT.dirty=true;RT.sel=RT.days.length-1;rtShow();}
+    if(tp.tkind==='workout'){const base=(CP.routine&&CP.routine.days)||[];rtOpen('client',{cid:CP.cid,name:(CP.routine&&CP.routine.name)||('Rutina de '+((CP.d.profile.full_name||'cliente').split(' ')[0])),days:base.concat(rtClone(tp.days))});RT.dirty=true;rtFillRefs(RT.days);RT.sel=RT.days.length-1;rtShow();}
     else{if(CP.routine&&CP.routine.days&&CP.routine.days.length&&!confirm('Esto reemplaza el programa actual de este cliente al guardar. ¿Continuar?'))return;
-      rtOpen('client',{cid:CP.cid,name:tp.name,days:tp.days});RT.dirty=true;}}
+      rtOpen('client',{cid:CP.cid,name:tp.name,days:tp.days});RT.dirty=true;rtFillRefs(RT.days);}}
   else if(a==='rtback'){if(RT.self){if(RT.dirty&&!confirm('Si sales ahora se pierde lo que armaste. ¿Salir sin guardar?'))return;RT.self=false;RT.dirty=false;rtClose();render();window.scrollTo(0,0);return;}if(RT.dirty&&!confirm('Tus cambios quedan guardados como borrador y podrás continuar después. ¿Salir del editor?'))return;rtClose();if(RT.kind==='template'){coachHome();}else{coachRender();}}
   else if(a==='rtday'){RT.sel=+t.dataset.i;rtShow();}
   else if(a==='rtcirnew'||a==='rtciredit'){const d=RT.days[RT.sel],mk={std:0,tab:1,z2:2,vo2:3}[t.dataset.v],c=a==='rtciredit'?d.circuit:(mk!==undefined?CPRE[mk][1]():cirNew());if(!c)return;
@@ -528,3 +528,49 @@ const E_SIN={};
 /* sin barra "Con video / Sin video": solo hay ejercicios con video */
 exMatch=(function(f){return function(k,P,sg){const e=E[k];if(!e||(!e.yt&&!/^x_/.test(k)))return false;return f(k,Object.assign({},P,{vid:'todos'}),sg);};})(exMatch);
 (function(){const s=document.createElement('style');s.textContent='.vidbar{display:none!important}';document.head.appendChild(s);})();
+
+/* ================= Pesos de referencia por cliente (tabla en la ficha) ================= */
+const PW_KEY='refw';
+const pwGet=()=>((CP.d&&CP.d.data&&CP.d.data[PW_KEY])||{});
+function pwRef(id){const r=pwGet()[id];return (typeof RT!=='undefined'&&RT.kind==='client'&&RT.cid&&CP.cid===RT.cid&&r&&+r.kg>0)?+r.kg:0;}
+function pwItems(days){const o=[];(days||[]).forEach(d=>(d.blocks||[]).forEach(b=>{if(b.k==='warm'||b.k==='calm')return;(b.items||[]).forEach(it=>{if(it.fixed||it.extra||!it.ex)return;o.push(it);});}));return o;}
+function rtFillRefs(days){const w=pwGet();let n=0;pwItems(days).forEach(it=>{const r=w[it.ex];if(r&&+r.kg>0&&!(+it.ref>0)){it.ref=+r.kg;n++;}});if(n)toast('Pesos de referencia rellenados: '+n);return n;}
+function pwLast(){const days=(CP.routine&&CP.routine.days)||[],L=(CP.d&&CP.d.data&&CP.d.data.logs)||{},out={};
+  Object.keys(L).forEach(k=>{const [dt,di,bk,ix]=k.split('|');const d=days.find(x=>x.id===di);if(!d)return;const b=(d.blocks||[]).find(x=>x.k===bk);const it=b&&b.items&&b.items[+ix];if(!it||!it.ex||it.fixed)return;
+    const sets=(Array.isArray(L[k])?L[k]:[]).filter(s=>s&&s.done&&+String(s.kg).replace(',','.')>0);if(!sets.length)return;
+    let best=sets[0];sets.forEach(s=>{if(+String(s.kg).replace(',','.')>+String(best.kg).replace(',','.'))best=s;});
+    const o=out[it.ex];if(!o||dt>o.date)out[it.ex]={date:dt,kg:+String(best.kg).replace(',','.'),reps:best.reps};});
+  return out;}
+function cpPesosTab(){
+  const days=(CP.routine&&CP.routine.days)||[],w=pwGet(),last=pwLast(),seen={},rows=[];
+  pwItems(days).forEach(it=>{if(seen[it.ex])return;seen[it.ex]=1;rows.push({ex:it.ex,rp:it.kind==='basic'?'6-10':'10-12'});});
+  Object.keys(w).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'10-12'});}});
+  Object.keys(last).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'10-12'});}});
+  const nm=ex=>esc((E[ex]||{}).n||ex),fd=s=>{try{return new Date(s+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short'});}catch(e){return s;}};
+  const body=rows.length?rows.map(r=>{const cur=w[r.ex]||{},l=last[r.ex],rp=cur.reps||r.rp;
+    return `<div class="pwrow" data-ex="${esc(r.ex)}"><div class="pwn"><b>${nm(r.ex)}</b>${l?`<small>Último registro: ${l.kg} kg${l.reps?' × '+esc(l.reps):''} · ${fd(l.date)}</small>`:'<small>Sin registros del cliente</small>'}</div>
+     <div class="pwin"><label>kg<input class="fld pwkg" inputmode="decimal" value="${esc(cur.kg||'')}" placeholder="—"></label><label>Reps<input class="fld pwrp" value="${esc(rp)}"></label>${l&&!(+cur.kg===l.kg)?`<button class="btn pwuse" data-act="pwuse" data-ex="${esc(r.ex)}" data-kg="${l.kg}">Usar ${l.kg}</button>`:''}</div></div>`;}).join(''):'<div class="note">Aún no hay ejercicios. Asigna un programa a este cliente y aquí aparecen sus ejercicios básicos y accesorios.</div>';
+  return `<section class="sec"><div class="sec-h"><b>Pesos de referencia</b><em>${rows.length} ejercicios</em></div>
+   <div class="note" style="margin-bottom:10px">Escríbelos una sola vez por cliente. Cuando agregues un ejercicio o asignes un programa o workout a esta persona, el kg se rellena solo (puedes cambiarlo en ese workout). "Usar" toma lo último que registró el cliente.</div>
+   ${body}
+   ${rows.length&&days.length?`<button class="btn" data-act="pwapply" style="width:100%;margin-top:12px">Aplicar estos pesos al programa actual</button>`:''}</section>
+   <style>.pwrow{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;margin-bottom:8px}.pwn b{font-size:14px;display:block}.pwn small{color:var(--gray);font-size:12px}.pwin{display:flex;gap:8px;align-items:flex-end;margin-top:8px;flex-wrap:wrap}.pwin label{display:flex;flex-direction:column;font-size:11px;color:var(--gray);gap:2px}.pwin .fld{width:84px;padding:8px}.pwuse{padding:8px 10px;font-size:13px}</style>`;
+}
+async function pwSave(ex,kg,reps){
+  const w=Object.assign({},pwGet()),k=+String(kg).replace(',','.')||0;
+  if(!k&&!(reps||'').trim())delete w[ex];else w[ex]={kg:k,reps:(reps||'').trim()};
+  try{await DB.upsert('client_data',[{client_id:CP.cid,key:PW_KEY,value:w,updated_at:new Date().toISOString()}],'client_id,key');
+    CP.d.data=CP.d.data||{};CP.d.data[PW_KEY]=w;const bl=(CP.d.blobs||[]).find(x=>x.key===PW_KEY);if(bl)bl.value=w;else if(CP.d.blobs)CP.d.blobs.push({key:PW_KEY,value:w});
+    toast('Guardado');}catch(x){console.warn(x);toast('No se pudo guardar');}
+}
+document.addEventListener('change',e=>{const t=e.target;if(!t.classList||!(t.classList.contains('pwkg')||t.classList.contains('pwrp')))return;
+  const row=t.closest('.pwrow');if(!row)return;pwSave(row.dataset.ex,row.querySelector('.pwkg').value,row.querySelector('.pwrp').value);});
+document.addEventListener('click',async e=>{
+  const u=e.target.closest&&e.target.closest('[data-act="pwuse"]');
+  if(u){e.stopPropagation();await pwSave(u.dataset.ex,u.dataset.kg,(pwGet()[u.dataset.ex]||{}).reps||'');coachRender();return;}
+  const a=e.target.closest&&e.target.closest('[data-act="pwapply"]');
+  if(a){e.stopPropagation();const days=(CP.routine&&CP.routine.days)||[];if(!days.length)return;
+    if(!confirm('Esto pone en el programa actual los pesos de esta tabla (sobrescribe los kg que ya tenga). ¿Continuar?'))return;
+    const w=pwGet();let n=0;pwItems(days).forEach(it=>{const r=w[it.ex];if(r&&+r.kg>0){it.ref=+r.kg;n++;}});
+    try{await DB.saveRoutine(CP.cid,CP.routine.name||'Programa',days,ME.id);toast('Pesos aplicados: '+n);coachRender();}catch(x){console.warn(x);toast('No se pudo guardar el programa');}}
+},true);
