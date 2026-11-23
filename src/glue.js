@@ -2300,7 +2300,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 /* ---------- ACCESO / VENCIMIENTO (Whop) ---------- */
 const GRACE_D=3,RENEW_URL=WHOP_RENEW;
 let ACC={row:null,state:'ok'};
-function accState(r){if(!r||!r.paid_until)return 'ok';const e=new Date(r.paid_until).getTime(),n=Date.now();if(n<=e)return 'ok';if(n<=e+GRACE_D*86400000)return 'grace';if(r.whop_status==='past_due'&&r.payment_failed_at&&n<new Date(r.payment_failed_at).getTime()+5*86400000)return 'grace';return 'expired';}
+function accState(r){if(!r||!r.paid_until)return 'ok';const e=new Date(r.paid_until).getTime(),n=Date.now();if(n<=e)return 'ok';if(r.period==='cortesia')return 'expired';if(n<=e+GRACE_D*86400000)return 'grace';if(r.whop_status==='past_due'&&r.payment_failed_at&&n<new Date(r.payment_failed_at).getTime()+5*86400000)return 'grace';return 'expired';}
 const accFmt=d=>d?new Date(d).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric',timeZone:'America/Bogota'}):'';
 async function accessFetch(){try{const em=String((ME&&ME.email)||'').toLowerCase();if(!em||!DB.accessMine)return null;return await DB.accessMine(em);}catch(e){return null;}}
 async function accessGate(){ // si falla, NUNCA bloquea
@@ -2312,7 +2312,7 @@ function accessView(){
   const msg=encodeURIComponent('Hola Juanjo, quiero renovar mi plan ('+(ME.email||'')+').');
   const act=RENEW_URL?`<a class="btn solid" style="display:block;text-align:center;padding:14px;margin-top:14px;text-decoration:none" href="${RENEW_URL}" target="_blank" rel="noopener">Renovar mi plan</a>`
    :`<a class="btn solid" style="display:block;text-align:center;padding:14px;margin-top:14px;text-decoration:none" href="https://wa.me/${COACH_WA}?text=${msg}" target="_blank" rel="noopener">Renovar mi plan</a>`;
-  return authHead()+`<h2 class="h2" style="margin-top:14px">${nm?nm+', t':'T'}u plan venció</h2><p class="lead">Tu acceso terminó el ${accFmt(r.paid_until)}. Renueva para seguir entrenando: tu historial, tus cargas y tu programa se quedan guardados y retomas donde lo dejaste.</p>${act}
+  return authHead()+`<h2 class="h2" style="margin-top:14px">${nm?nm+', t':'T'}u ${r.period==='cortesia'?'cortesía terminó':'plan venció'}</h2><p class="lead">Tu acceso ${r.period==='cortesia'?'de cortesía ':''}terminó el ${accFmt(r.paid_until)}. ${r.period==='cortesia'?'Para continuar, escríbele a tu coach o activa un plan':'Renueva para seguir entrenando'}: tu historial, tus cargas y tu programa se quedan guardados y retomas donde lo dejaste.</p>${act}
    <button class="btn" data-act="accchk" style="width:100%;padding:14px;margin-top:10px">Ya renové: revisar</button>
    <button class="lblbtn" data-act="pendout" style="display:block;margin:12px auto 0;color:var(--gray)">Cerrar sesión</button>`;}
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act="accchk"]');if(!t)return;e.stopPropagation();
@@ -2341,12 +2341,25 @@ function accSec(){try{
   const v=r&&r.paid_until?new Date(r.paid_until).toLocaleDateString('en-CA',{timeZone:'America/Bogota'}):'';
   const per=(r&&r.period)||'';
   return `<section class="sec"><div class="sec-h"><b>Acceso y pago</b></div>
-   <div class="pfrow"><span><b style="color:${col}">${lab}</b><small>${r?`${r.source==='whop'?'Whop':'Manual'} · ${r.tier||''}${per&&per!=='manual'?' · '+per:''}${r.paid_until?' · vence '+accFmt(r.paid_until):''}${r.whop_status==='trialing'?' · en prueba':''}${r.cancel_at_period_end?' · CANCELADA (no se renueva)':''}`:'Sin registro de pago todavía'}</small></span></div>
+   <div class="pfrow"><span><b style="color:${col}">${lab}</b><small>${r?`${r.period==='cortesia'?'🎁 Cortesía':(r.source==='whop'?'Whop':'Manual')} · ${r.tier||''}${per&&per!=='manual'?' · '+per:''}${r.paid_until?' · vence '+accFmt(r.paid_until):''}${r.whop_status==='trialing'?' · en prueba':''}${r.cancel_at_period_end?' · CANCELADA (no se renueva)':''}`:'Sin registro de pago todavía'}</small></span></div>
+   <div class="note" style="margin:10px 0 6px"><b>🎁 Cortesía</b> · acceso con todas las funciones del plan que elijas, sin cobro ni renovación. Termina el día que pongas.</div>
+   <select class="fld" id="crtP">${[['basic','Basic'],['complete','Complete'],['elite','Elite']].map(o=>`<option value="${o[0]}"${((CP.d.profile&&CP.d.profile.plan)||'basic')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>
+   <label class="pfl">Termina el (hasta las 11:59 pm)</label><input class="fld" type="date" id="crtD" value="${r&&r.period==='cortesia'?v:''}">
+   <button class="btn" data-act="crtsave" style="width:100%;margin:8px 0 14px">${r&&r.period==='cortesia'?'Cambiar cortesía':'Dar cortesía'}</button>
    <label class="pfl">Empieza el</label><input class="fld" type="date" id="accS" value="${accStartOf(v,per)}">
    <label class="pfl">Periodo</label><select class="fld" id="accP">${[['','—'],['mensual','Mensual (1 mes)'],['trimestral','Trimestral (3 meses)'],['anual','Anual (12 meses)'],['unico','Pago único'],['cuotas','En cuotas']].map(o=>`<option value="${o[0]}"${per===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>
    <label class="pfl">Vence el (hasta las 11:59 pm) <small style="color:var(--gray)">· se calcula solo, puedes cambiarlo</small></label><input class="fld" type="date" id="accD" value="${v}">
    <div class="note" style="margin-top:6px">Con Whop conectado esto se llena solo en cada pago. Aquí pones cuándo empieza y el periodo, y el vencimiento se calcula solo (puedes corregirlo a mano). Dejar el vencimiento vacío = sin vencimiento. Tras vencer hay ${GRACE_D} días de gracia.</div>
    <button class="btn solid" data-act="accsave" style="width:100%;margin-top:8px">Guardar acceso</button></section>`;}catch(e){return '';}}
+document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act="crtsave"]');if(!t)return;e.stopPropagation();
+  try{const d=(document.getElementById('crtD')||{}).value||'',pl=(document.getElementById('crtP')||{}).value||'basic',r=CP.acc&&CP.acc.row,tdy=new Date().toLocaleDateString('en-CA',{timeZone:'America/Bogota'});
+    if(!d||d<tdy){toast('Elige una fecha de fin (hoy o después)');return;}
+    const nmp={basic:'Basic',complete:'Complete',elite:'Elite'}[pl],who=((CP.d.profile&&CP.d.profile.full_name)||'esta persona').split(' ')[0];
+    if(!confirm('¿Dar a '+who+' acceso de cortesía al plan '+nmp+' hasta el '+d+'?'+(r&&r.source==='whop'&&r.period!=='cortesia'?'\n\nOjo: tiene un plan pagado por Whop; la cortesía reemplaza su fecha de vencimiento aquí.':'')+'\n\nAl terminar se le pedirá continuar con un plan.'))return;
+    if(((CP.d.profile&&CP.d.profile.plan)||'')!==pl){await DB.updateClient(CP.cid,{plan:pl});CP.d.profile.plan=pl;}
+    const row={email:r&&r.email,tier:pl,period:'cortesia',paid_until:new Date(d+'T23:59:00-05:00').toISOString(),source:'manual'};
+    const full=await DB.accessSave(row,CP.cid);try{DB.logAct(CP.cid,'cli','Cortesía '+nmp+' hasta '+d);}catch(x){}
+    CP.acc={cid:CP.cid,row:Object.assign({},r||{},full)};coachRender(true);toast('Cortesía activada');}catch(x){console.warn(x);toast('No se pudo guardar');}},true);
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act="accsave"]');if(!t)return;e.stopPropagation();
   try{const d=(document.getElementById('accD')||{}).value||'',p=(document.getElementById('accP')||{}).value||null;
     const r=CP.acc&&CP.acc.row;
@@ -4896,6 +4909,7 @@ document.head.appendChild(st);
     (CP.acc||[]).forEach(a=>{const c=act.find(x=>x.id===a.client_id);if(!c)return;
       if(a.payment_failed_at){add({s:0,k:c.id+'|pfail|'+String(a.payment_failed_at).slice(0,10),cid:c.id,t:'💳 Falló su pago',q:'Escríbele para que actualice su método de pago.'});return;}
       if(!a.paid_until)return;const dl=Math.ceil((new Date(a.paid_until).getTime()-Date.now())/864e5),pk=String(a.paid_until).slice(0,10);
+      if(a.period==='cortesia'){if(dl<0)add({s:1,k:c.id+'|cexp|'+pk,cid:c.id,t:'🎁 Su cortesía terminó hace '+(-dl)+' día'+(dl===-1?'':'s'),q:'Terminó el '+fdate(pk)+'. Decide si la extiendes o pasa a un plan.'});else if(dl<=3)add({s:1,k:c.id+'|csoon|'+pk,cid:c.id,t:'🎁 Su cortesía vence '+(dl===0?'hoy':dl===1?'mañana':'en '+dl+' días'),q:'Vence el '+fdate(pk)+'. ¿La extiendes o le ofreces un plan?'});return;}
       if(dl<0)add({s:0,k:c.id+'|exp|'+pk,cid:c.id,t:'💰 Plan vencido hace '+(-dl)+' día'+(dl===-1?'':'s')+' · por cobrar',q:'Venció el '+fdate(pk)+'. Confirma su renovación.'});
       else if(dl<=7)add({s:1,k:c.id+'|soon|'+pk,cid:c.id,t:'⏳ Su plan vence '+(dl===0?'hoy':dl===1?'mañana':'en '+dl+' días'),q:(a.cancel_at_period_end?'Ya canceló la renovación. ':'')+'Vence el '+fdate(pk)+'.'});});
     al.sort((a,b)=>a.s-b.s);
