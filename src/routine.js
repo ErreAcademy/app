@@ -165,7 +165,7 @@ function pkFilters(P,w){
 function exPreview(yt){return yt?`<div class="expv"><iframe src="https://www.youtube.com/embed/${yt}" title="Video" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:'<div class="note">Este ejercicio aún no tiene video. Pega un link de YouTube abajo.</div>';}
 function exTagsHTML(){const t=(RT.exSt&&RT.exSt.tags)||[];return t.length?t.map(x=>`<span class="extag">#${esc(x)}<button data-act="rtextagdel" data-v="${esc(x)}" aria-label="Quitar">✕</button></span>`).join(''):'<small style="color:#888">Sin etiquetas todavía</small>';}
 function pkList(P0,act){
-  const P=P0||RT.pk;act=act||'rtpickex';
+  const P=P0||RT.pk;act=act||((P&&P.mode==='pw')?'pwpick':'rtpickex');
   let ids=Object.keys(E).filter(k=>exMatch(k,P));
   ids.sort((a,b)=>((RT.favs&&RT.favs.has(b))-(RT.favs&&RT.favs.has(a)))||(E[a].lvl||1)-(E[b].lvl||1)||E[a].n.localeCompare(E[b].n));
   return `<div class="pkcount">${ids.length} ejercicios</div>`+ids.slice(0,80).map(k=>`<div class="pkrow2"${act==='rtlibadd'?` draggable="true" data-libdrag="${k}"`:''} style="--tc:${TCOL[exTipos(k)[0]]||'#555'}"><button class="pkrow" data-act="${act}" data-id="${k}">${thumb(k)}<span class="pkt"><b>${RT.favs&&RT.favs.has(k)?'<span class="pkfav">♥</span> ':''}${esc(E[k].n)}${E[k].yt?' <em class="pkyt">▶</em>':''}</b><small><em class="pktag" style="--tc:${TCOL[exTipos(k)[0]]||'#555'}">${TICO[exTipos(k)[0]]||''} ${esc(exTipos(k).join(' · '))}</em> ${esc([E[k].s||E[k].mus,E[k].eq].filter(Boolean).join(' · '))}</small></span><i class="pklv l${E[k].lvl||1}">${esc(LVN[E[k].lvl||1]||'')}</i></button><button class="pkeye" data-act="rtexedit" data-id="${k}" title="Ver video, descripción y etiquetas" aria-label="Ver y editar">👁</button></div>`).join('');
@@ -184,7 +184,7 @@ function rtPendAdd(di,bk,P){
 }
 function pkRender(){
   const P=RT.pk;
-  const html=`<div class="pkhead"><b>${P.mode==='add'?'Añadir ejercicio':'Cambiar ejercicio'}</b><button class="rtb" data-act="rtpkx" aria-label="Cerrar">✕</button></div>
+  const html=`<div class="pkhead"><b>${P.mode==='pw'?'Elegir ejercicio':P.mode==='add'?'Añadir ejercicio':'Cambiar ejercicio'}</b><button class="rtb" data-act="rtpkx" aria-label="Cerrar">✕</button></div>
    <input class="fld" id="pkQ" placeholder="Buscar ejercicio…" value="${esc(P.q)}" autocomplete="off">
    ${pkFilters(P,'pk')}
    ${P.pend?pendHTML(P.pend,P.bk):''}
@@ -546,11 +546,13 @@ function cpPesosTab(){
   pwItems(days).forEach(it=>{if(seen[it.ex])return;seen[it.ex]=1;rows.push({ex:it.ex,rp:it.kind==='basic'?'6-10':'10-12'});});
   Object.keys(w).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'10-12'});}});
   Object.keys(last).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'10-12'});}});
+  (CP.pwx||[]).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'8-12'});}});
   const nm=ex=>esc((E[ex]||{}).n||ex),fd=s=>{try{return new Date(s+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short'});}catch(e){return s;}};
   const body=rows.length?rows.map(r=>{const cur=w[r.ex]||{},l=last[r.ex],rp=cur.reps||r.rp;
     return `<div class="pwrow" data-ex="${esc(r.ex)}"><div class="pwn"><b>${nm(r.ex)}</b>${l?`<small>Último registro: ${l.kg} kg${l.reps?' × '+esc(l.reps):''} · ${fd(l.date)}</small>`:'<small>Sin registros del cliente</small>'}</div>
-     <div class="pwin"><label>kg<input class="fld pwkg" inputmode="decimal" value="${esc(cur.kg||'')}" placeholder="—"></label><label>Reps<input class="fld pwrp" value="${esc(rp)}"></label>${l&&!(+cur.kg===l.kg)?`<button class="btn pwuse" data-act="pwuse" data-ex="${esc(r.ex)}" data-kg="${l.kg}">Usar ${l.kg}</button>`:''}</div></div>`;}).join(''):'<div class="note">Aún no hay ejercicios. Asigna un programa a este cliente y aquí aparecen sus ejercicios básicos y accesorios.</div>';
+     <div class="pwin"><label>kg<input class="fld pwkg" inputmode="decimal" value="${esc(cur.kg||'')}" placeholder="—"></label><label>Reps<input class="fld pwrp" value="${esc(rp)}"></label>${l&&!(+cur.kg===l.kg)?`<button class="btn pwuse" data-act="pwuse" data-ex="${esc(r.ex)}" data-kg="${l.kg}">Usar ${l.kg}</button>`:''}</div></div>`;}).join(''):'<div class="note">Aún no hay ejercicios. Toca "Añadir ejercicio", o asigna un programa y aquí aparecen solos sus básicos y accesorios.</div>';
   return `<section class="sec"><div class="sec-h"><b>Pesos de referencia</b><em>${rows.length} ejercicios</em></div>
+   <button class="btn solid" data-act="pwadd" style="width:100%;padding:12px;margin-bottom:10px">＋ Añadir ejercicio</button>
    <div class="note" style="margin-bottom:10px">Escríbelos una sola vez por cliente. Cuando agregues un ejercicio o asignes un programa o workout a esta persona, el kg se rellena solo (puedes cambiarlo en ese workout). "Usar" toma lo último que registró el cliente.</div>
    ${body}
    ${rows.length&&days.length?`<button class="btn" data-act="pwapply" style="width:100%;margin-top:12px">Aplicar estos pesos al programa actual</button>`:''}</section>
@@ -573,4 +575,12 @@ document.addEventListener('click',async e=>{
     if(!confirm('Esto pone en el programa actual los pesos de esta tabla (sobrescribe los kg que ya tenga). ¿Continuar?'))return;
     const w=pwGet();let n=0;pwItems(days).forEach(it=>{const r=w[it.ex];if(r&&+r.kg>0){it.ref=+r.kg;n++;}});
     try{await DB.saveRoutine(CP.cid,CP.routine.name||'Programa',days,ME.id);toast('Pesos aplicados: '+n);coachRender();}catch(x){console.warn(x);toast('No se pudo guardar el programa');}}
+},true);
+
+document.addEventListener('click',e=>{
+  const a=e.target.closest&&e.target.closest('[data-act="pwadd"]');
+  if(a){e.stopPropagation();RT.pk={mode:'pw',di:0,bk:'main',ii:-1,g:'Todos',t:'Fuerza',st:'Todos',pat:'',q:'',fav:false,tag:''};pkRender();return;}
+  const p=e.target.closest&&e.target.closest('[data-act="pwpick"]');
+  if(p){e.stopPropagation();const id=p.dataset.id;CP.pwx=CP.pwx||[];if(!CP.pwx.includes(id))CP.pwx.push(id);RT.pk=null;closeSheet();coachRender();
+    setTimeout(()=>{const r=[...document.querySelectorAll('.pwrow')].find(x=>x.dataset.ex===id);if(r){r.scrollIntoView({block:'center'});const k=r.querySelector('.pwkg');if(k)k.focus();}},120);}
 },true);

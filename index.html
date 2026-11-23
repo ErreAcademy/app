@@ -2505,7 +2505,7 @@ async function coachLive(m){try{
 }catch(e){}}
 async function coachHome(){try{if(DB.onChat)DB.onChat(coachLive);}catch(e){}CP.view='list';coachRender();try{DB.chatInbox().then(r=>{CP.inbox=r;badgeCalc();}).catch(()=>{});}catch(e){}try{CP.clients=await DB.clients(ME.id);}catch(e){console.warn(e);CP.err='No pudimos cargar tus clientes.';}try{CP.meta=await DB.clientsMeta();}catch(e){console.warn(e);}try{CP.info=await DB.clientInfo();}catch(e){console.warn('info',e);}try{CP.home=await DB.homeData();}catch(e){console.warn('home',e);}try{await rtLoadTpls();}catch(e){}coachRender();}
 async function coachOpen(id,tab){
-  CP.view='client';CP.cid=id;CP.tab=tab||'hoy';CP.cd=null;CP.d=null;CP.routine=null;coachRender();
+  CP.view='client';CP.cid=id;CP.tab=tab||'hoy';CP.cd=null;CP.d=null;CP.routine=null;CP.pwx=[];coachRender();
   try{await rtLoadTpls();CP.routine=await DB.routine(id);}catch(e){console.warn(e);}
   try{CP.d=await DB.clientDetail(id);}catch(e){console.warn(e);CP.err='No pudimos cargar al cliente.';}
   coachRender();clearInterval(CP.poll);CP.poll=setInterval(async()=>{if(CP.view==='client'&&(CP.tab==='chat'||CP.tab==='plan')&&document.visibilityState==='visible'&&!(typeof RT!=='undefined'&&RT.open)){try{CP.d=await DB.clientDetail(CP.cid);coachRender(true);}catch(e){}}},20000);
@@ -3683,12 +3683,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='23nov-1246';
+const APP_VER='23nov-1257';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='23nov-1246'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='23nov-1257'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -7376,7 +7376,7 @@ function pkFilters(P,w){
 function exPreview(yt){return yt?`<div class="expv"><iframe src="https://www.youtube.com/embed/${yt}" title="Video" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:'<div class="note">Este ejercicio aún no tiene video. Pega un link de YouTube abajo.</div>';}
 function exTagsHTML(){const t=(RT.exSt&&RT.exSt.tags)||[];return t.length?t.map(x=>`<span class="extag">#${esc(x)}<button data-act="rtextagdel" data-v="${esc(x)}" aria-label="Quitar">✕</button></span>`).join(''):'<small style="color:var(--gray2,#888)">Sin etiquetas todavía</small>';}
 function pkList(P0,act){
-  const P=P0||RT.pk;act=act||'rtpickex';
+  const P=P0||RT.pk;act=act||((P&&P.mode==='pw')?'pwpick':'rtpickex');
   let ids=Object.keys(E).filter(k=>exMatch(k,P));
   ids.sort((a,b)=>((RT.favs&&RT.favs.has(b))-(RT.favs&&RT.favs.has(a)))||(E[a].lvl||1)-(E[b].lvl||1)||E[a].n.localeCompare(E[b].n));
   return `<div class="pkcount">${ids.length} ejercicios</div>`+ids.slice(0,80).map(k=>`<div class="pkrow2"${act==='rtlibadd'?` draggable="true" data-libdrag="${k}"`:''} style="--tc:${TCOL[exTipos(k)[0]]||'#555'}"><button class="pkrow" data-act="${act}" data-id="${k}">${thumb(k)}<span class="pkt"><b>${RT.favs&&RT.favs.has(k)?'<span class="pkfav">♥</span> ':''}${esc(E[k].n)}${E[k].yt?' <em class="pkyt">▶</em>':''}</b><small><em class="pktag" style="--tc:${TCOL[exTipos(k)[0]]||'#555'}">${TICO[exTipos(k)[0]]||''} ${esc(exTipos(k).join(' · '))}</em> ${esc([E[k].s||E[k].mus,E[k].eq].filter(Boolean).join(' · '))}</small></span><i class="pklv l${E[k].lvl||1}">${esc(LVN[E[k].lvl||1]||'')}</i></button><button class="pkeye" data-act="rtexedit" data-id="${k}" title="Ver video, descripción y etiquetas" aria-label="Ver y editar">👁</button></div>`).join('');
@@ -7395,7 +7395,7 @@ function rtPendAdd(di,bk,P){
 }
 function pkRender(){
   const P=RT.pk;
-  const html=`<div class="pkhead"><b>${P.mode==='add'?'Añadir ejercicio':'Cambiar ejercicio'}</b><button class="rtb" data-act="rtpkx" aria-label="Cerrar">✕</button></div>
+  const html=`<div class="pkhead"><b>${P.mode==='pw'?'Elegir ejercicio':P.mode==='add'?'Añadir ejercicio':'Cambiar ejercicio'}</b><button class="rtb" data-act="rtpkx" aria-label="Cerrar">✕</button></div>
    <input class="fld" id="pkQ" placeholder="Buscar ejercicio…" value="${esc(P.q)}" autocomplete="off">
    ${pkFilters(P,'pk')}
    ${P.pend?pendHTML(P.pend,P.bk):''}
@@ -7757,11 +7757,13 @@ function cpPesosTab(){
   pwItems(days).forEach(it=>{if(seen[it.ex])return;seen[it.ex]=1;rows.push({ex:it.ex,rp:it.kind==='basic'?'6-10':'10-12'});});
   Object.keys(w).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'10-12'});}});
   Object.keys(last).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'10-12'});}});
+  (CP.pwx||[]).forEach(ex=>{if(!seen[ex]){seen[ex]=1;rows.push({ex,rp:'8-12'});}});
   const nm=ex=>esc((E[ex]||{}).n||ex),fd=s=>{try{return new Date(s+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short'});}catch(e){return s;}};
   const body=rows.length?rows.map(r=>{const cur=w[r.ex]||{},l=last[r.ex],rp=cur.reps||r.rp;
     return `<div class="pwrow" data-ex="${esc(r.ex)}"><div class="pwn"><b>${nm(r.ex)}</b>${l?`<small>Último registro: ${l.kg} kg${l.reps?' × '+esc(l.reps):''} · ${fd(l.date)}</small>`:'<small>Sin registros del cliente</small>'}</div>
-     <div class="pwin"><label>kg<input class="fld pwkg" inputmode="decimal" value="${esc(cur.kg||'')}" placeholder="—"></label><label>Reps<input class="fld pwrp" value="${esc(rp)}"></label>${l&&!(+cur.kg===l.kg)?`<button class="btn pwuse" data-act="pwuse" data-ex="${esc(r.ex)}" data-kg="${l.kg}">Usar ${l.kg}</button>`:''}</div></div>`;}).join(''):'<div class="note">Aún no hay ejercicios. Asigna un programa a este cliente y aquí aparecen sus ejercicios básicos y accesorios.</div>';
+     <div class="pwin"><label>kg<input class="fld pwkg" inputmode="decimal" value="${esc(cur.kg||'')}" placeholder="—"></label><label>Reps<input class="fld pwrp" value="${esc(rp)}"></label>${l&&!(+cur.kg===l.kg)?`<button class="btn pwuse" data-act="pwuse" data-ex="${esc(r.ex)}" data-kg="${l.kg}">Usar ${l.kg}</button>`:''}</div></div>`;}).join(''):'<div class="note">Aún no hay ejercicios. Toca "Añadir ejercicio", o asigna un programa y aquí aparecen solos sus básicos y accesorios.</div>';
   return `<section class="sec"><div class="sec-h"><b>Pesos de referencia</b><em>${rows.length} ejercicios</em></div>
+   <button class="btn solid" data-act="pwadd" style="width:100%;padding:12px;margin-bottom:10px">＋ Añadir ejercicio</button>
    <div class="note" style="margin-bottom:10px">Escríbelos una sola vez por cliente. Cuando agregues un ejercicio o asignes un programa o workout a esta persona, el kg se rellena solo (puedes cambiarlo en ese workout). "Usar" toma lo último que registró el cliente.</div>
    ${body}
    ${rows.length&&days.length?`<button class="btn" data-act="pwapply" style="width:100%;margin-top:12px">Aplicar estos pesos al programa actual</button>`:''}</section>
@@ -7784,6 +7786,14 @@ document.addEventListener('click',async e=>{
     if(!confirm('Esto pone en el programa actual los pesos de esta tabla (sobrescribe los kg que ya tenga). ¿Continuar?'))return;
     const w=pwGet();let n=0;pwItems(days).forEach(it=>{const r=w[it.ex];if(r&&+r.kg>0){it.ref=+r.kg;n++;}});
     try{await DB.saveRoutine(CP.cid,CP.routine.name||'Programa',days,ME.id);toast('Pesos aplicados: '+n);coachRender();}catch(x){console.warn(x);toast('No se pudo guardar el programa');}}
+},true);
+
+document.addEventListener('click',e=>{
+  const a=e.target.closest&&e.target.closest('[data-act="pwadd"]');
+  if(a){e.stopPropagation();RT.pk={mode:'pw',di:0,bk:'main',ii:-1,g:'Todos',t:'Fuerza',st:'Todos',pat:'',q:'',fav:false,tag:''};pkRender();return;}
+  const p=e.target.closest&&e.target.closest('[data-act="pwpick"]');
+  if(p){e.stopPropagation();const id=p.dataset.id;CP.pwx=CP.pwx||[];if(!CP.pwx.includes(id))CP.pwx.push(id);RT.pk=null;closeSheet();coachRender();
+    setTimeout(()=>{const r=[...document.querySelectorAll('.pwrow')].find(x=>x.dataset.ex===id);if(r){r.scrollIntoView({block:'center'});const k=r.querySelector('.pwkg');if(k)k.focus();}},120);}
 },true);
 
 boot();
