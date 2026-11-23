@@ -2324,6 +2324,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.c
   if(fail){return `<div class="accb"><b>No pudimos procesar tu pago</b><span>Actualiza tu tarjeta para no perder el acceso.</span><a href="${MANAGE}" target="_blank" rel="noopener" style="font-weight:700;color:inherit;text-decoration:underline;white-space:nowrap">Actualizar tarjeta</a></div>`+h;}
   const left=Math.max(0,Math.ceil((new Date(r.paid_until).getTime()+GRACE_D*86400000-Date.now())/86400000));
   return `<div class="accb"><b>Tu plan venció el ${accFmt(r.paid_until)}</b><span>Te quedan ${left} día${left===1?'':'s'} de gracia. Renueva para no perder el acceso.</span></div>`+h;};})();
+// Acceso y pago: «empieza» + periodo → vence (suma meses calendario; 31 ene + 1 mes = 28/29 feb)
+const ACC_M={mensual:1,trimestral:3,anual:12};
+function accAddM(ds,n){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(ds||'');if(!m)return '';let y=+m[1],mo=+m[2]-1+n,d=+m[3];y+=Math.floor(mo/12);mo=((mo%12)+12)%12;const last=new Date(Date.UTC(y,mo+1,0)).getUTCDate();d=Math.min(d,last);return y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+function accStartOf(v,per){return ACC_M[per]&&v?accAddM(v,-ACC_M[per]):'';}
+function accCalc(){const s=(document.getElementById('accS')||{}).value,p=(document.getElementById('accP')||{}).value,D=document.getElementById('accD');if(s&&ACC_M[p]&&D)D.value=accAddM(s,ACC_M[p]);}
+document.addEventListener('change',e=>{const i=e.target&&e.target.id;if(i==='accS'||i==='accP')accCalc();},true);
 // coach: ficha del cliente → Acceso
 function accSec(){try{
   const cid=CP.cid;if(!cid)return '';
@@ -2335,9 +2341,10 @@ function accSec(){try{
   const per=(r&&r.period)||'';
   return `<section class="sec"><div class="sec-h"><b>Acceso y pago</b></div>
    <div class="pfrow"><span><b style="color:${col}">${lab}</b><small>${r?`${r.source==='whop'?'Whop':'Manual'} · ${r.tier||''}${per&&per!=='manual'?' · '+per:''}${r.paid_until?' · vence '+accFmt(r.paid_until):''}${r.whop_status==='trialing'?' · en prueba':''}${r.cancel_at_period_end?' · CANCELADA (no se renueva)':''}`:'Sin registro de pago todavía'}</small></span></div>
-   <label class="pfl">Vence el (hasta las 11:59 pm)</label><input class="fld" type="date" id="accD" value="${v}">
-   <label class="pfl">Periodo</label><select class="fld" id="accP">${[['','—'],['mensual','Mensual'],['trimestral','Trimestral'],['anual','Anual'],['unico','Pago único'],['cuotas','En cuotas']].map(o=>`<option value="${o[0]}"${per===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>
-   <div class="note" style="margin-top:6px">Con Whop conectado esto se llena solo en cada pago. Aquí puedes ajustarlo a mano. Dejar la fecha vacía = sin vencimiento. Tras vencer hay ${GRACE_D} días de gracia.</div>
+   <label class="pfl">Empieza el</label><input class="fld" type="date" id="accS" value="${accStartOf(v,per)}">
+   <label class="pfl">Periodo</label><select class="fld" id="accP">${[['','—'],['mensual','Mensual (1 mes)'],['trimestral','Trimestral (3 meses)'],['anual','Anual (12 meses)'],['unico','Pago único'],['cuotas','En cuotas']].map(o=>`<option value="${o[0]}"${per===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>
+   <label class="pfl">Vence el (hasta las 11:59 pm) <small style="color:var(--gray)">· se calcula solo, puedes cambiarlo</small></label><input class="fld" type="date" id="accD" value="${v}">
+   <div class="note" style="margin-top:6px">Con Whop conectado esto se llena solo en cada pago. Aquí pones cuándo empieza y el periodo, y el vencimiento se calcula solo (puedes corregirlo a mano). Dejar el vencimiento vacío = sin vencimiento. Tras vencer hay ${GRACE_D} días de gracia.</div>
    <button class="btn solid" data-act="accsave" style="width:100%;margin-top:8px">Guardar acceso</button></section>`;}catch(e){return '';}}
 document.addEventListener('click',async e=>{const t=e.target.closest&&e.target.closest('[data-act="accsave"]');if(!t)return;e.stopPropagation();
   try{const d=(document.getElementById('accD')||{}).value||'',p=(document.getElementById('accP')||{}).value||null;
