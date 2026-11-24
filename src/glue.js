@@ -5380,13 +5380,36 @@ function trainGroups(){
     const dk=pk.filter(k=>done[k]),mk=pk.filter(k=>!done[k]),zs={on:dk,mid:mk};
     const nm=k=>k==='ch'?'Pecho':ZN[k];
     const chips=dk.map(k=>`<span>${nm(k)}</span>`).join('')+mk.map(k=>`<span style="background:#EFEAE2;color:#5A554E">${nm(k)} · falta</span>`).join('');
-    return {badge:nDone?`${dk.length} de ${pk.length} zonas`:'Aún sin sesiones',html:`<div class="wlmap"><figure>${bodyMap('front','',zs)}<figcaption>Frente</figcaption></figure><figure>${bodyMap('back','',zs)}<figcaption>Espalda</figcaption></figure></div><div class="wlk" style="margin-top:12px">${chips}</div><p class="hint">En rojo, lo que ya trabajaste esta semana. En claro, lo que tu plan todavía tiene pendiente.</p>`};
+    window.__wk={nDone,dk,mk,pk,mon,t};return {badge:nDone?`${dk.length} de ${pk.length} zonas`:'Aún sin sesiones',html:`<div class="wlmap"><figure>${bodyMap('front','',zs)}<figcaption>Frente</figcaption></figure><figure>${bodyMap('back','',zs)}<figcaption>Espalda</figcaption></figure></div><div class="wlk" style="margin-top:12px">${chips}</div><p class="hint">En rojo, lo que ya trabajaste esta semana. En claro, lo que tu plan todavía tiene pendiente.</p>${nDone?'<button class="btn solid" data-act="wkshare" style="width:100%;margin-top:10px;padding:13px">Compartir mi semana</button>':''}`};
   }catch(e){console.warn('zw',e);return null;}};
   /* cierre de sesión: zonas trabajadas */
   window.sessZonesHTML=function(){try{const d=DAYS[S.day];if(!d)return '';const ks=zoneKeysOf(d);if(!ks.length)return '';const zs={on:ks.map(x=>x.k),mid:[]};
     return `<div class="wlmap" style="margin:12px 0 8px"><figure>${bodyMap('front','',zs)}</figure><figure>${bodyMap('back','',zs)}</figure></div><div class="wlk" style="justify-content:center">${zoneNames(ks).map(n=>`<span>${n}</span>`).join('')}</div>`;}catch(e){return '';}};
   /* texto del aviso diario: «Hoy toca Tracción · hombros, espalda» para los próximos 8 días */
   window.remMsgMap=function(){const o={},t=today();for(let i=0;i<8;i++){const dt=addD(t,i);try{const d=withDate(dt,()=>{const x=DAYS[S.day];return x&&!x.x&&S.raw>=1?x:null;});if(d){const z=zoneNames(zoneKeysOf(d)).slice(0,3).map(q=>q.toLowerCase());o[dt]=String(d.name||'tu sesión')+(z.length?' · '+z.join(', '):'');}}catch(e){}}return o;};
+  window.wkShare=async function(){try{
+    toast('Preparando tu imagen…');const z=window.weekZonesCard(),W=window.__wk;if(!z||!W)return;
+    let sets=0,vol=0,tr=0;for(let i=0;i<7;i++){const dt=addD(W.mon,i);if(dt>W.t)break;const st=sessStats(dt);if(st&&st.sets>0){tr++;sets+=st.sets;vol+=st.vol||0;}}
+    const g=(typeof gam==='function')?gam():{streak:0},nm=String((S.user&&S.user.name)||'').trim().split(/\s+/)[0];
+    const zs={on:W.dk,mid:W.mk};
+    const svg=k=>bodyMap(k,'',zs).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" width="400" height="768" ').replace(/class="zn on"/g,'fill="#C0392B"').replace(/class="zn mid"/g,'fill="#7a4a43"').replace(/class="zn"/g,'fill="#3a3632"');
+    const toImg=h=>new Promise(r=>{const im=new Image();im.onload=()=>r(im);im.onerror=()=>r(null);im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(h);});
+    const [f,b]=await Promise.all([toImg(svg('front')),toImg(svg('back'))]);
+    const c=document.createElement('canvas');c.width=1080;c.height=1920;const x=c.getContext('2d');
+    x.fillStyle='#14110F';x.fillRect(0,0,1080,1920);x.fillStyle='#C0392B';x.fillRect(0,0,1080,14);
+    x.textAlign='center';x.fillStyle='#E0A99F';x.font='600 34px system-ui,sans-serif';x.fillText('ERRE COMPLETE',540,120);
+    x.fillStyle='#fff';x.font='800 84px system-ui,sans-serif';x.fillText(nm?('La semana de '+nm):'Mi semana',540,260);
+    x.fillStyle='#cfcac2';x.font='500 40px system-ui,sans-serif';x.fillText('en 30 segundos',540,320);
+    if(f)x.drawImage(f,60,380,470,903);if(b)x.drawImage(b,550,380,470,903);
+    const st=[[tr,'entrenos'],[sets,'series'],[vol?Math.round(vol).toLocaleString('es-CO'):'—','kilos'],[(g.streak||0)+' d','racha']];
+    st.forEach((q,i)=>{const cx=135+i*270;x.fillStyle='#fff';x.font='800 70px system-ui,sans-serif';x.fillText(String(q[0]),cx,1420);x.fillStyle='#9a948a';x.font='500 32px system-ui,sans-serif';x.fillText(q[1],cx,1470);});
+    const nmz=W.dk.map(k=>k==='ch'?'Pecho':ZN[k]).join(' · ');x.fillStyle='#E0A99F';x.font='600 40px system-ui,sans-serif';x.fillText(nmz.length>34?nmz.slice(0,34)+'…':nmz,540,1590);
+    x.fillStyle='#6b655d';x.font='500 34px system-ui,sans-serif';x.fillText('Entreno con el Método Complete',540,1800);
+    const blob=await new Promise(r=>c.toBlob(r,'image/png'));if(!blob){toast('No se pudo crear la imagen');return;}
+    const file=new File([blob],'mi-semana-erre.png',{type:'image/png'}),txt='Mi semana en ERRE Complete 💪';
+    try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:txt});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mi-semana-erre.png';document.body.appendChild(a);a.click();a.remove();toast('Imagen guardada. Súbela a tus historias 💪');
+  }catch(e){console.warn('wkshare',e);toast('No se pudo crear la imagen');}};
   window.trainZonesCard=function(){try{if(typeof S==='undefined'||S.raw<1||S.day<0)return '';const d=DAYS[S.day];if(!d)return '';const keys=zoneKeysOf(d);if(!keys.length)return '';
     const zs={on:keys.map(x=>x.k),mid:[]};
     return `<div class="grp">Zonas que trabajas hoy</div><div class="wlmap"><figure>${bodyMap('front','',zs)}<figcaption>Frente</figcaption></figure><figure>${bodyMap('back','',zs)}<figcaption>Espalda</figcaption></figure></div><div class="wlk" style="justify-content:center;margin:10px 0 4px">${keys.map(x=>`<span>${x.k==='ch'?'Pecho':ZN[x.k]}${x.n>1?' ·'+x.n:''}</span>`).join('')}</div><p class="hint" style="text-align:center;margin:0 0 12px">El número es cuántos ejercicios trabajan esa zona hoy.</p>`;}catch(e){return '';}};
@@ -5555,3 +5578,5 @@ function trainGroups(){
     return `<div class="pw1"><h3>${n===3?'Primera semana lista':'Tu primera semana'}</h3><small>${n===3?'Ya diste los tres pasos que más importan.':'Tres pasos para arrancar con el pie derecho.'}</small><div class="pwb"><em style="width:${Math.round(n/3*100)}%"></em></div>${it(tr,'Haz tu primer entrenamiento','tab','entrenar')}${it(pe,'Registra tu peso','wopen')}${it(pl,'Mira tu plato de alimentación','tab','alim')}</div>`;}catch(e){return '';}};
   const hv=homeView;homeView=function(){const h=hv.apply(this,arguments);const c=window.primeraSemana();return c?c+h:h;};
 })();
+
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="wkshare"]');if(!t)return;e.stopPropagation();window.wkShare();},true);
