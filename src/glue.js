@@ -941,7 +941,7 @@ document.addEventListener('click',async e=>{
       else if(r.user&&r.user.identities&&!r.user.identities.length){LG.mode='';LG.err='Ese correo ya tiene cuenta. Entra con tu contraseña o usa «¿Olvidaste tu contraseña?».';showLogin();}
       else{LG.mode='';LG.ok='Cuenta creada. Revisa tu correo para confirmarla y luego entra aquí con tu contraseña.';showLogin();}}
     catch(x){LG.busy=false;const m=x.message||'';LG.err=/already|registered/i.test(m)?'Ese correo ya tiene cuenta. Entra con tu contraseña.':/rate|limit/i.test(m)?'Demasiados intentos. Espera unos minutos.':/password/i.test(m)?'Contraseña muy débil. Usa al menos 6 caracteres.':'No pudimos crear la cuenta. Intenta de nuevo.';showLogin();}}
-  else if(a==='pendchk'){try{PROFILE=await DB.profile(ME.id);if(PROFILE.status==='pending'){toast('Aún pendiente. Tu coach te activará pronto.');}else{await enter({user:ME});}}catch(x){toast('No pudimos revisar. Intenta de nuevo.');}}
+  else if(a==='pendchk'){try{PROFILE=await DB.profile(ME.id);if(PROFILE.status==='pending'){toast('Aún no vemos tu pago. Puede tardar unos minutos.');}else{await enter({user:ME});}}catch(x){toast('No pudimos revisar. Intenta de nuevo.');}}
   else if(a==='pendout'){try{await DB.signOut();}catch(x){}location.reload();}
   else if(a==='lgforgot'){LG.mode='forgot';LG.err='';LG.ok='';const v=((document.getElementById('lgEmail')||{}).value||'').trim();if(v)LG.email=v;showLogin();}
   else if(a==='lgback'){LG.mode='';LG.err='';LG.ok='';showLogin();}
@@ -3313,9 +3313,10 @@ function pvHTML(){const {d,wk,P,rows,top}=pvData();
    ${rows.map(r=>`<div class="pvr">${typeof thumb==='function'?thumb(r.id):''}<span><b>${esc(r.n)}</b><small>${r.sets} series${r.reps&&r.reps!=='libre'?' • '+esc(String(r.reps))+' repeticiones':''}</small></span></div>`).join('')}
    <div class="pvfoot"><button class="pvw" data-act="pvwarm">Ver calentamiento</button><button class="pvgo" data-act="pvstart">Comenzar entrenamiento</button></div></section>`;}
 (function(){const tv=trainView;trainView=function(){
-  try{if(S.pv==='g_fuerza'&&S.raw>=1&&S.day>=0&&!(S.fb&&S.fb[fbKey('g_fuerza')])&&!(ipActive()&&S.tw==='g_fuerza'))return pvHTML();}catch(e){console.warn(e);}
+  try{if(S.pv==='g_fuerza'&&S.raw>=1&&S.day>=0&&!(S.fb&&S.fb[fbKey('g_fuerza')])&&!(ipActive()&&S.tw==='g_fuerza'))return pvHTML()+(typeof trainZonesCard==='function'?trainZonesCard():'');}catch(e){console.warn(e);}
   const h=tv.apply(this,arguments);
   try{if(S.tg&&S.tg===S.tw&&ipActive())return h+`<button class="disc" data-act="ipdel">Descartar entrenamiento</button>`;}catch(e){}
+  try{if(typeof trainZonesCard==='function')return h+trainZonesCard();}catch(e){}
   return h;};})();
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="pvback"],[data-act="pvstart"],[data-act="pvwarm"]');if(!t)return;e.stopPropagation();const a=t.dataset.act;
   if(a==='pvback'){S.pv=null;save();render();window.scrollTo(0,0);return;}
@@ -5331,7 +5332,7 @@ function trainGroups(){
     return `<svg class="dn" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9155" fill="none" stroke="#EDE8E0" stroke-width="6"/>${P.map(a=>{const c=`<circle cx="18" cy="18" r="15.9155" fill="none" stroke="${a[2]}" stroke-width="6" stroke-dasharray="${a[1]-.8} ${100-a[1]+.8}" stroke-dashoffset="${-off}"/>`;off+=a[1];return c;}).join('')}</svg>`;}
   const ZN={sh:'Hombros',ch:'Pecho',bk:'Espalda',ar:'Brazos',co:'Core',gl:'Glúteo',th:'Muslos',ca:'Pantorrillas'};
   const ZF={torso:{on:['sh','ch','ar'],mid:['co']},gluteo:{on:['gl','th','ca'],mid:['co']},balanceado:{on:['sh','ch','ar','co','gl','th','ca'],mid:[]}};
-  function bodyMap(view,fk){const z=ZF[fk]||ZF.balanceado,c=k=>z.on.includes(k)?' on':z.mid.includes(k)?' mid':'';
+  function bodyMap(view,fk,zs){const z=zs||ZF[fk]||ZF.balanceado,c=k=>z.on.includes(k)?' on':z.mid.includes(k)?' mid':'';
     const mir=d=>`<path class="zn${'${C}'}" d="${d}"/><path class="zn${'${C}'}" d="${d}" transform="translate(100 0) scale(-1 1)"/>`;
     const two=(k,d)=>mir(d).split('${C}').join(c(k));
     return `<svg class="bm" viewBox="0 0 100 192" aria-hidden="true"><circle class="zn" cx="50" cy="15" r="10.5"/>
@@ -5342,7 +5343,23 @@ function trainGroups(){
       <path class="zn${c('gl')}" d="M35 98L65 98L70 118L30 118Z"/>
       ${two('th','M30 120L49 120L46 152L33 152Z')}
       ${two('ca','M33.5 154L46 154L44 183Q44 187 40 187Q36 187 35 183Z')}</svg>`;}
-  function dayZones(d){try{const o=[];(d.blocks||[]).forEach(b=>{if(b.k!=='main'&&b.k!=='acc')return;(b.items||[]).forEach(it=>{const e=E[it.ex];if(e&&e.mus){String(e.mus).split(/[,/]/).forEach(m=>{m=m.trim();if(m&&!o.includes(m))o.push(m);});}});});return o.slice(0,4);}catch(e){return [];}}
+  const ZO=['sh','ch','bk','ar','co','gl','th','ca'];
+  function zoneOfMus(m){m=String(m||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(/pecho|pectoral|empuje horizontal|aperturas/.test(m))return 'ch';
+    if(/espalda|dorsal|traccion|trapecio|escapula/.test(m))return 'bk';
+    if(/hombro|deltoide|elevacion lateral|empuje vertical|manguito/.test(m))return 'sh';
+    if(/biceps|triceps|codo|antebrazo/.test(m))return 'ar';
+    if(/core|abdomen|oblicuo/.test(m))return 'co';
+    if(/gemelo|tobillo|pantorrilla/.test(m))return 'ca';
+    if(/gluteo|puente|abduccion|patada|cadera|bisagra/.test(m))return 'gl';
+    if(/cuadriceps|rodilla|sentadilla|zancada|femoral|isquio|pierna|aduccion/.test(m))return 'th';
+    return '';}
+  function zoneKeysOf(d){const c={};try{(d.blocks||[]).forEach(b=>{if(b.k!=='main'&&b.k!=='acc'&&String(b.k).indexOf('x_')!==0)return;(b.items||[]).forEach(it=>{const e=E[it.ex];if(!e)return;const k=zoneOfMus(e.mus);if(k)c[k]=(c[k]||0)+1;});});}catch(e){}return ZO.filter(k=>c[k]).map(k=>({k:k,n:c[k]}));}
+  function zoneNames(keys){return keys.map(x=>x.k==='ch'?'Pecho':ZN[x.k]);}
+  function dayZones(d){return zoneNames(zoneKeysOf(d)).slice(0,4);}
+  window.trainZonesCard=function(){try{if(typeof S==='undefined'||S.raw<1||S.day<0)return '';const d=DAYS[S.day];if(!d)return '';const keys=zoneKeysOf(d);if(!keys.length)return '';
+    const zs={on:keys.map(x=>x.k),mid:[]};
+    return `<div class="grp">Zonas que trabajas hoy</div><div class="wlmap"><figure>${bodyMap('front','',zs)}<figcaption>Frente</figcaption></figure><figure>${bodyMap('back','',zs)}<figcaption>Espalda</figcaption></figure></div><div class="wlk" style="justify-content:center;margin:10px 0 4px">${keys.map(x=>`<span>${x.k==='ch'?'Pecho':ZN[x.k]}${x.n>1?' ·'+x.n:''}</span>`).join('')}</div><p class="hint" style="text-align:center;margin:0 0 12px">El número es cuántos ejercicios trabajan esa zona hoy.</p>`;}catch(e){return '';}};
   function slides(){
     const u=S.user||{},f=u.data||{},nm=String(u.name||'').trim().split(/\s+/)[0]||'',cx=u.plan==='complete'||S.program==='complete',fem=u.sex==='Mujer';
     const main=u.main||'complete',gk=FS[main]?main:'complete',pk=main==='bajar'?'bajar':main==='aumentar'?'aumentar':'complete',wd=(u.sched||[]).slice().sort((a,b)=>a-b),days=wd.length||u.days||3;
@@ -5409,7 +5426,7 @@ function trainGroups(){
   const pvOn=()=>typeof PROFILE!=='undefined'&&PROFILE&&PROFILE.role==='client'&&PROFILE.status==='pending'&&S.user&&S.role!=='coach';
   function pvInfo(){const u=S.user||{},f=u.data||{},fem=u.sex==='Mujer',fk=f.focus||(fem?'gluteo':'balanceado'),wd=(u.sched||[]).slice().sort((a,b)=>a-b),days=wd.length||u.days||3;
     const zl=(ZF[fk]||ZF.balanceado).on.map(k=>k==='ch'?'Pecho y espalda':ZN[k]);return {u,f,fk,wd,days,zl,main:u.main||'complete',lv:u.level||'Principiante'};}
-  function pvDay(i){const d=S.pvDays&&S.pvDays[i%Math.max(1,S.pvDays.length)];if(!d)return null;const z=[];(d.ex||[]).forEach(id=>{const e=E[id];if(e&&e.mus)String(e.mus).split(/[,/]/).forEach(m=>{m=m.trim();if(m&&!z.includes(m))z.push(m);});});return {name:d.name||d.label,zones:z.slice(0,4)};}
+  function pvDay(i){const d=S.pvDays&&S.pvDays[i%Math.max(1,S.pvDays.length)];if(!d)return null;const dd={blocks:[{k:'main',items:(d.ex||[]).map(id=>({ex:id}))}]};return {name:d.name||d.label,zones:dayZones(dd)};}
   const lk=(ic,t,sub)=>`<button class="pvl" data-act="pvunlock"><span class="pvi">${ic}</span><span class="pvt"><b>${t}</b><small>${sub}</small></span><span class="pvk">🔒</span></button>`;
   function pvView(t){const I=pvInfo(),nm=String(I.u.name||'').trim().split(/\s+/)[0],fem=I.u.sex==='Mujer',cx=I.u.plan==='complete',nw=cx?6:5,pk=I.main==='bajar'?'bajar':I.main==='aumentar'?'aumentar':'complete';
     const dayRows=I.wd.map((di,i)=>{const d=pvDay(i);return `<button class="wldy pvl" data-act="pvunlock" style="--d:${.08*i}s"><span class="wdn">${DNL[di]}</span><div style="flex:1;text-align:left"><b>${d?esc(d.name):'Sesión '+(i+1)}</b><small>${d&&d.zones.length?d.zones.map(esc).join(' · '):I.zl.join(' · ')}</small></div><span class="pvk">🔒</span></button>`;}).join('');
@@ -5423,7 +5440,7 @@ function trainGroups(){
     return hero+`<div class="pvh">Tu primer entreno</div>${lk('🏋️',first?esc(first.name):'Sesión 1',(first&&first.zones.length?first.zones.join(' · '):I.zl.join(' · ')))}<div class="pvh">Otras tareas</div>${lk('🌬️','Respiración','Mañana y antes de dormir')}${lk('🌱','Hábitos','Pequeñas conductas diarias')}${lk('🍽️','Alimentación','Tu plato y tu lista de compras')}<div class="pvsp"></div>`;}
   const pvBar=()=>`<div class="pvbar"><span>🔒 Vista previa<b>Basic $24/mes · 7 días gratis</b></span><button data-act="pvunlock">Desbloquear</button></div>`;
   function pvSheet(){if(document.getElementById('pvsh'))return;const d=document.createElement('div');d.id='pvsh';
-    d.innerHTML=`<div class="wlbg" data-act="pvclose"></div><div class="wlsh" style="top:70px"><button class="wlx" data-act="pvclose">✕</button><h2 class="h2 wlh">Desbloquea tu plan</h2><p class="wlp">Tu programa ya está armado. Con Basic lo empiezas hoy.</p>${plansPublic('pend')}<button class="btn solid" data-act="pendchk" style="width:100%;padding:14px;margin-top:12px">Ya pagué: revisar</button></div>`;document.body.appendChild(d);}
+    d.innerHTML=`<div class="wlbg" data-act="pvclose"></div><div class="wlsh" style="top:70px"><button class="wlx" data-act="pvclose">✕</button><h2 class="h2 wlh">Desbloquea tu plan</h2><p class="wlp">Tu programa ya está armado. Con Basic lo empiezas hoy.</p>${plansPublic('pend')}<button class="btn solid" data-act="pendchk" style="width:100%;padding:14px;margin-top:12px">✅ Ya invertí en mi plan · activar</button></div>`;document.body.appendChild(d);}
   async function pvLoadDays(){try{if(S.pvDays||S.pvTry||!DB.previewBasic)return;S.pvTry=1;const I=pvInfo();const r=await DB.previewBasic(I.fk,I.days,I.lv);if(Array.isArray(r)&&r.length){S.pvDays=r;render();}}catch(e){console.warn('preview',e);}}
   const r2=render;render=function(){
     if(pvOn()){
