@@ -157,6 +157,7 @@ if(DB.saveRoutine){const _sr=DB.saveRoutine.bind(DB);DB.saveRoutine=async(cid,n,
 let ME=null,PROFILE=null,LG={step:'email',email:'',err:'',busy:false},CHATT=null;
 const APPURL=()=>{try{const u=location.origin+location.pathname.replace(/[^/]*$/,'');return /^https?:/.test(u)?u:undefined;}catch(e){return undefined;}};
 const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom','ctasks','circuits','lowE','prs','grips','cirColors','freeOn','freeOk','tz','prio','alimplan'];
+let HYD=false;/* true solo cuando ya se descargó lo guardado en la nube */
 const LAST={weights:{},steps:{},slices:{},prefs:'',fb:{},profile:'',chatKey:{},photos:{},upl:{}};
 let needs=false,syncing=false,pend=false,tmr=null;
 const R_GRP={g_fuerza:'fuerza',g_cardio:'cardio',g_calm:'calma'};
@@ -203,12 +204,14 @@ async function pushAll(){
     if(!m.id){const r=await DB.insertChat({client_id:uid,sender_id:uid,kind:m.kind==='session'?'session':'msg',body});m.id=r.id;m._sig=sig;if(m.key)LAST.chatKey[m.key]=r.id;}
     else if(m._sig!==sig){await DB.updateChat(m.id,body);m._sig=sig;if(m.key)LAST.chatKey[m.key]=m.id;}
   }
+  try{if(AV&&LAST.av!==AV){await DB.upsert('client_data',[{client_id:uid,key:'avatar',value:AV,updated_at:new Date().toISOString()}],'client_id,key');LAST.av=AV;}}catch(e){console.warn('avatar',e);}
   store.set('erre_state',S);
 }
 const SYNC={
   dirty(){if(!ME||!PROFILE||!PROFILE.consent_at||PROFILE.role==='coach')return;clearTimeout(tmr);tmr=setTimeout(SYNC.flush,900);},
   async flush(){
     if(!ME||!PROFILE||!PROFILE.consent_at)return;
+    if(PROFILE.role!=='coach'&&!HYD){tmr=setTimeout(SYNC.dirty,1500);return;}
     if(syncing){pend=true;return;}
     syncing=true;
     try{await pushAll();needs=false;}catch(e){console.warn('sync',e);needs=true;}
@@ -270,10 +273,12 @@ async function applyRemote(d){
   store.set('erre_photos',PH,true);
   S.fb&&Object.keys(S.fb).forEach(fk=>{const [date,,g]=fk.split('|'),e=S.fb[fk];if(R_GRP[g])LAST.fb[fk]=JSON.stringify({client_id:uid,log_date:date,grp:R_GRP[g],intensity:e.rpe||null,feel:R_FEEL[e.feel]||null,note:e.note||null,duration_min:e.dur||null,skip_reason:e.skip||null});});
   const pc=profileCols();if(pc)LAST.profile=JSON.stringify(pc);
+  try{const av=d.blobs.find(b=>b.key==='avatar');if(av&&typeof av.value==='string'&&av.value){AV=av.value;LAST.av=AV;store.set('erre_avatar',AV);}}catch(e){}
+  HYD=true;
 }
 function resetLocal(){
   Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,defaultsS());S.sel=today();S.off=0;
-  Object.keys(PH).forEach(k=>delete PH[k]);AV=null;store.set('erre_avatar',null);
+  Object.keys(PH).forEach(k=>delete PH[k]);AV=null;store.set('erre_avatar',null);HYD=false;
   for(const k in LAST)LAST[k]=(k==='prefs'||k==='profile')?'':{};
 }
 

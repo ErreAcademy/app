@@ -1358,7 +1358,7 @@ document.addEventListener('input',e=>{
   S.t0=S.t0||{};if(!S.t0[S.sel]){S.t0[S.sel]=Date.now();save();}
 });
 document.addEventListener('change',e=>{
-  if(e.target.dataset&&e.target.dataset.av){const f=e.target.files&&e.target.files[0];if(!f)return;resize(f,url=>{AV=url;store.set('erre_avatar',url);render();toast('Foto actualizada ✓');});return;}
+  if(e.target.dataset&&e.target.dataset.av){const f=e.target.files&&e.target.files[0];if(!f)return;resize(f,url=>{AV=url;store.set('erre_avatar',url);try{SYNC.dirty();}catch(x){}render();toast('Foto actualizada ✓');});return;}
   if(e.target.dataset&&e.target.dataset.ph){const k=e.target.dataset.ph,f=e.target.files&&e.target.files[0];if(!f)return;resize(f,url=>{const mk=phM||monthKey();PH[mk]=Object.assign({d:mk===monthKey()?today():mk+'-01'},PH[mk]||{});PH[mk][k]=url;store.set('erre_photos',PH);showPhotos();render();});return;}
   if(e.target.id==='stype'){const v=parseInt(e.target.value);if(v>=0){ts_=v;}return;}
   if(e.target.dataset&&e.target.dataset.chr){const k=cKey(DAYS[S.day]);S.cardio[k]=S.cardio[k]||{};const v=parseInt(e.target.value);S.cardio[k].hr=v>0?v:undefined;save();render();return;}
