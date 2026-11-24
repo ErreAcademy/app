@@ -189,7 +189,8 @@ async function pushAll(){
     if(k==='logs'&&v&&LAST.slices.logs&&j!==LAST.slices.logs){let n0=0;try{n0=Object.keys(JSON.parse(LAST.slices.logs)||{}).length;}catch(x){}
       if(Object.keys(v).length<n0&&!S._logsDel){console.warn('logs: se evitó sobrescribir con menos datos');S.logsGuard=(S.logsGuard||0)+1;continue;}}
     if(v!==null&&j!==LAST.slices[k])blobs.push({client_id:uid,key:k,value:v,updated_at:new Date().toISOString(),_j:j});}
-  const prefs={rem:S.rem,stepGoal:S.stepGoal,chatRead:S.chatRead,start:S.start},pj=JSON.stringify(prefs);
+  try{if(window.remMsgMap&&S.role!=='coach'&&S.rem&&S.rem.train&&S.rem.train.on)S.remmsg=window.remMsgMap();}catch(e){}
+  const prefs={rem:S.rem,stepGoal:S.stepGoal,chatRead:S.chatRead,start:S.start,remmsg:S.remmsg},pj=JSON.stringify(prefs);
   if(pj!==LAST.prefs)blobs.push({client_id:uid,key:'prefs',value:prefs,updated_at:new Date().toISOString(),_j:pj,_p:1});
   if(blobs.length){await DB.upsert('client_data',blobs.map(({_j,_p,...r})=>r),'client_id,key');blobs.forEach(b=>{if(b._p)LAST.prefs=b._j;else LAST.slices[b.key]=b._j;});S._logsDel=false;}
   const fbs=[];
@@ -262,7 +263,7 @@ async function applyRemote(d){
   S.weights={};d.weights.forEach(r=>S.weights[r.log_date]=+r.kg);LAST.weights=Object.assign({},S.weights);
   S.steps={};d.steps.forEach(r=>S.steps[r.log_date]=r.steps);LAST.steps=Object.assign({},S.steps);
   d.blobs.forEach(b=>{if(SLICES.includes(b.key)){S[b.key]=b.value;LAST.slices[b.key]=JSON.stringify(b.value);}
-    else if(b.key==='prefs'){Object.assign(S,b.value);LAST.prefs=JSON.stringify({rem:S.rem,stepGoal:S.stepGoal,chatRead:S.chatRead,start:S.start});}});
+    else if(b.key==='prefs'){Object.assign(S,b.value);LAST.prefs=JSON.stringify({rem:S.rem,stepGoal:S.stepGoal,chatRead:S.chatRead,start:S.start,remmsg:S.remmsg});}});
   cxSync();
   mergeChat(d.chat);
   if(d.call){const c=bogota(d.call.starts_at);S.call={date:c.date,time:c.time};}else S.call=null;
@@ -419,7 +420,7 @@ function cpHomeData(){
   C.forEach(c=>{
     if(c.status==='pending'){al.push({s:0,k:c.id+'|pend',cid:c.id,t:'Cuenta nueva por activar',q:'Se registró en la app. Ábrela, actívala y elige su plan.'});return;}
     const has=M.rt[c.id]&&M.rt[c.id].n,last=M.last[c.id],coachP=c.plan!=='basic',pf=prefs[c.id]||{};
-    if(!has)al.push({s:0,k:c.id+'|norut',cid:c.id,t:'Sin programa asignado',q:'Asígnale un programa para que pueda entrenar.'});
+    if(!has)al.push(c.plan==='complete'?{s:0,k:c.id+'|norut',cid:c.id,t:'Cliente Complete por tu link: arma su rutina',q:'Ya está activo y espera. Revisa su registro y cárgale el programa.'}:{s:0,k:c.id+'|norut',cid:c.id,t:'Sin programa asignado',q:'Asígnale un programa para que pueda entrenar.'});
     else{
       if(last){const n=diffD(tdy,last);if(n>=4)al.push({s:1,k:c.id+'|inact|'+last,cid:c.id,t:'Lleva '+n+' días sin entrenar',q:'Última sesión: '+fdate(last)+'.'});}
       else al.push({s:2,k:c.id+'|nosess',cid:c.id,t:'Aún no registra ninguna sesión',q:'Escríbele para que arranque.'});
@@ -5384,6 +5385,8 @@ function trainGroups(){
   /* cierre de sesión: zonas trabajadas */
   window.sessZonesHTML=function(){try{const d=DAYS[S.day];if(!d)return '';const ks=zoneKeysOf(d);if(!ks.length)return '';const zs={on:ks.map(x=>x.k),mid:[]};
     return `<div class="wlmap" style="margin:12px 0 8px"><figure>${bodyMap('front','',zs)}</figure><figure>${bodyMap('back','',zs)}</figure></div><div class="wlk" style="justify-content:center">${zoneNames(ks).map(n=>`<span>${n}</span>`).join('')}</div>`;}catch(e){return '';}};
+  /* texto del aviso diario: «Hoy toca Tracción · hombros, espalda» para los próximos 8 días */
+  window.remMsgMap=function(){const o={},t=today();for(let i=0;i<8;i++){const dt=addD(t,i);try{const d=withDate(dt,()=>{const x=DAYS[S.day];return x&&!x.x&&S.raw>=1?x:null;});if(d){const z=zoneNames(zoneKeysOf(d)).slice(0,3).map(q=>q.toLowerCase());o[dt]=String(d.name||'tu sesión')+(z.length?' · '+z.join(', '):'');}}catch(e){}}return o;};
   window.trainZonesCard=function(){try{if(typeof S==='undefined'||S.raw<1||S.day<0)return '';const d=DAYS[S.day];if(!d)return '';const keys=zoneKeysOf(d);if(!keys.length)return '';
     const zs={on:keys.map(x=>x.k),mid:[]};
     return `<div class="grp">Zonas que trabajas hoy</div><div class="wlmap"><figure>${bodyMap('front','',zs)}<figcaption>Frente</figcaption></figure><figure>${bodyMap('back','',zs)}<figcaption>Espalda</figcaption></figure></div><div class="wlk" style="justify-content:center;margin:10px 0 4px">${keys.map(x=>`<span>${x.k==='ch'?'Pecho':ZN[x.k]}${x.n>1?' ·'+x.n:''}</span>`).join('')}</div><p class="hint" style="text-align:center;margin:0 0 12px">El número es cuántos ejercicios trabajan esa zona hoy.</p>`;}catch(e){return '';}};
@@ -5510,7 +5513,17 @@ function trainGroups(){
 /* --- Progreso: zonas de la semana; cierre de sesión con confeti y zonas --- */
 (function(){
   const st=document.createElement('style');st.textContent=`.cfx{position:relative;height:0;overflow:visible;pointer-events:none}.cfx i{position:absolute;top:-6px;width:8px;height:12px;border-radius:2px;opacity:0;animation:cfx 1.6s ease-out forwards}#sumz .wlmap svg{max-height:120px}@keyframes cfx{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(190px) rotate(420deg)}}`;document.head.appendChild(st);
-  const pb=progBody;progBody=function(g,ms,nxt){const h=pb.apply(this,arguments);try{const z=window.weekZonesCard();if(!z)return h;return pgSec('pg.zw','Zonas de la semana',z.badge,z.html,true)+h;}catch(e){return h;}};
+  window.metaRingCard=function(){try{
+    if(S.role==='coach'||!S.user)return '';const f=S.user.data||{},gw=parseFloat(String(f.goalW||'').replace(',','.')),main=f.main||S.user.main;
+    if(!(gw>0)||!(main==='bajar'||main==='aumentar'))return '';
+    const ws=Object.keys(S.weights||{}).sort(),first=ws.length?S.weights[ws[0]]:null,sw=parseFloat(String(f.weight||'').replace(',','.'))||first;
+    if(!(sw>0)||sw===gw)return '';const cur=ws.length?S.weights[ws[ws.length-1]]:sw;
+    const pr=Math.max(0,Math.min(1,(sw-cur)/(sw-gw))),pct=Math.round(pr*100),left=Math.abs(cur-gw),moved=Math.abs(sw-cur),done=pr>=1;
+    const fm=n=>(Math.round(n*10)/10).toFixed(1).replace('.',',');const C=2*Math.PI*54;
+    const msg=done?'¡Llegaste a tu meta! Eso es disciplina.':pct===0?'Tu meta empieza hoy. Cada registro de peso la acerca.':pct<50?`Vas bien: ${fm(moved)} kg ${main==='bajar'?'menos':'más'} desde que empezaste.`:`Ya pasaste la mitad: ${fm(moved)} kg ${main==='bajar'?'menos':'más'}. Sigue así.`;
+    return `<div class="wlcard mring"><small>TU META</small><div class="mrw"><svg width="124" height="124" viewBox="0 0 130 130" role="img" aria-label="${pct}% de tu meta"><circle cx="65" cy="65" r="54" fill="none" stroke="#EFEAE2" stroke-width="12"/><circle cx="65" cy="65" r="54" fill="none" stroke="#C0392B" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C*pr).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 65 65)"/><text x="65" y="63" text-anchor="middle" font-size="28" font-weight="700" fill="#1C1B19">${pct}%</text><text x="65" y="83" text-anchor="middle" font-size="12" fill="#6b655d">de tu meta</text></svg><div><b>${fm(cur)} kg</b><small>hoy · empezaste en ${fm(sw)}</small><div class="mrl">${done?'Meta cumplida':`Te faltan <b>${fm(left)} kg</b> para ${fm(gw)}`}</div></div></div><p>${msg}</p></div>`;}catch(e){return '';}};
+  const _st=document.createElement('style');_st.textContent='.mring{margin:12px 0}.mring>small{color:var(--gray);letter-spacing:.06em;font-size:12px}.mrw{display:flex;align-items:center;gap:16px;margin-top:8px}.mrw>div>b{font-size:26px;display:block}.mrw>div>small{color:var(--gray);display:block;margin:2px 0 10px;font-size:13px}.mrl{background:#F1EDE6;border-radius:10px;padding:8px 10px;font-size:13px}.mring>p{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line,#E7E2DA);color:#5A554E;font-size:13px}';document.head.appendChild(_st);
+  const pb=progBody;progBody=function(g,ms,nxt){const h=pb.apply(this,arguments);try{const z=window.weekZonesCard(),r=window.metaRingCard();return r+(z?pgSec('pg.zw','Zonas de la semana',z.badge,z.html,true):'')+h;}catch(e){return h;}};
   const os=openSummary;openSummary=function(){os.apply(this,arguments);try{
     const c=document.querySelector('#sheet .celeb');if(!c||document.getElementById('sumz'))return;
     const g=(typeof gam==='function')?gam():null,cols=['#C0392B','#1C1B19','#E8A317','#2E9E5B','#E0A99F'];
