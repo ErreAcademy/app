@@ -4225,14 +4225,21 @@ function apply(v){const h=document.documentElement;if(v==='claro')h.removeAttrib
   try{localStorage.setItem(K,v);}catch(e){}
   document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.setAttribute('content',TH[v][2]));}
 apply(get());
+/* Tamaño de letra (24 nov): zoom suave de toda la app, se guarda en el dispositivo */
+const FK='erre_fs',FS={n:['A','Normal',1],g:['A','Grande',1.08],x:['A','Muy grande',1.18]};
+const fsGet=()=>{try{const v=localStorage.getItem(FK);return FS[v]?v:'n';}catch(e){return 'n';}};
+function fsApply(v){try{localStorage.setItem(FK,v);}catch(e){}document.documentElement.style.zoom=FS[v][2]===1?'':FS[v][2];}
+fsApply(fsGet());
+function fsRow(){const cur=fsGet();return `<b style="margin-top:14px">Tamaño de letra</b><div class="fsrow">${Object.keys(FS).map(k=>`<button class="thc fsb${cur===k?' on':''}" data-fs="${k}"><span style="font-size:${k==='n'?16:k==='g'?21:27}px;font-weight:700">A</span><i>${FS[k][1]}</i></button>`).join('')}</div>`;}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-fs]');if(!t)return;fsApply(t.dataset.fs);document.querySelectorAll('.thpk').forEach(x=>x.outerHTML=picker());});
 window.erreTheme=apply;window.erreThemeGet=get;
-function picker(){const cur=get();return `<div class="thpk"><b>Tema de la app</b><div>${Object.keys(TH).map(k=>`<button class="thc th-${k}${cur===k?' on':''}" data-theme="${k}"><span>${TH[k][0]}</span><i>${TH[k][1]}</i></button>`).join('')}</div></div>`;}
+function picker(){const cur=get();return `<div class="thpk"><b>Tema de la app</b><div>${Object.keys(TH).map(k=>`<button class="thc th-${k}${cur===k?' on':''}" data-theme="${k}"><span>${TH[k][0]}</span><i>${TH[k][1]}</i></button>`).join('')}</div>${fsRow()}</div>`;}
 window.erreThemePicker=picker;
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-theme]');if(!t)return;apply(t.dataset.theme);document.querySelectorAll('.thpk').forEach(x=>x.outerHTML=picker());});
 const pv=profileView;profileView=function(){let h=pv.apply(this,arguments);try{return h.replace(/(<details class="sec acc" data-pk="Mi plan"[\s\S]*?<\/details>)/,m=>m+`<section class="sec">${picker()}</section>`);}catch(e){return h;}};
 const cs=cpShell;cpShell=function(){let h=cs.apply(this,arguments);return h.replace('<div class="cpfoot">','<div class="cpfoot">'+picker());};
 const st=document.createElement('style');st.textContent=`
-.thpk b{display:block;font:700 14px Archivo,sans-serif;margin-bottom:8px}.thpk>div{display:flex;gap:8px}
+.thpk b{display:block;font:700 14px Archivo,sans-serif;margin-bottom:8px}.thpk>div{display:flex;gap:8px}.fsb{justify-content:flex-end}.fsb span{line-height:1}
 .thc{flex:1;border:2px solid #DCD6CC;background:#FBFAF8;border-radius:14px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;font:700 12px Archivo,sans-serif;color:#1C1B19}.thc span{font-size:22px}.thc i{font-style:normal}.thc.on{border-color:#C0392B;box-shadow:0 0 0 2px #C0392B inset}
 .cpfoot .thpk{margin-bottom:8px}.cpfoot .thpk b{font-size:11px}.cpfoot .thc{padding:6px 2px}.cpfoot .thc span{font-size:16px}.cpfoot .thc i{font-size:10px}
 html[data-theme]{color-scheme:dark}
