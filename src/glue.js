@@ -148,7 +148,7 @@ function realDB(){
     async delLesson(id){ok(await sb.from('lessons').delete().eq('id',id));},
     async accessAll(){return ok(await sb.from('client_access').select('client_id,email,tier,period,paid_until,payment_failed_at,cancel_at_period_end,source').not('client_id','is',null));},
     async clientInfo(){const r=await sb.rpc('coach_client_info');if(r.error)throw r.error;const o={};(r.data||[]).forEach(x=>o[x.id]=x);return o;},
-    async claimInvite(code){const r=await sb.rpc('claim_invite',{p_code:code});if(r.error)throw r.error;return r.data;},
+    async claimInvite(code){const r=await sb.functions.invoke('claim-invite',{body:{code}});if(r.error)throw r.error;return (r.data||{}).r;},
     async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level,status,birth_date,member_since,created_at').eq('role','client').order('full_name'));}
   };
 }
