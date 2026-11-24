@@ -5636,3 +5636,50 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   document.addEventListener('input',e=>{const i=e.target;if(!i||!i.dataset||i.dataset.pf!=='goalW'||!S.user)return;const n=Math.round(pn(i.value)*10)/10;
     if(i.value.trim()===''){setGoal(0);return;}if(n>=30&&n<=250)setGoal(n);},true);
 })();
+
+/* --- Referencia visual del ejercicio en el cronómetro (video del ejercicio) --- */
+(function(){
+  const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  let IDX=null;const idx=()=>{if(IDX)return IDX;IDX={};Object.keys(E).forEach(k=>{const n=nrm(E[k].n);if(!IDX[n])IDX[n]=k;});return IDX;};
+  const find=(e)=>{if(!e)return null;if(e.id&&E[e.id])return e.id;const b=String(e.n||'').replace(/^Calentamiento · /,'').replace(/ · (pierna )?(derecha|izquierda)$/,'');return idx()[nrm(b)]||null;};
+  const st=document.createElement('style');st.textContent=`
+  .cirref{display:flex;align-items:center;gap:12px;margin:14px 22px 0;padding:8px;border-radius:16px;background:rgba(128,128,128,.24);text-align:left;width:calc(100% - 44px);max-width:420px;border:0;color:inherit;font:inherit;cursor:pointer}
+  .cirref .rth{position:relative;flex:none;width:112px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#111}
+  .cirref .rth img{width:100%;height:100%;object-fit:cover;display:block}
+  .cirref .rth i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .cirref .rth i:after{content:'';width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M9 7l9 5-9 5z'/%3E%3C/svg%3E") center/22px no-repeat}
+  .cirref small{display:block;font:600 11px Archivo,sans-serif;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+  .cirref b{display:block;font:700 15px Archivo,sans-serif;margin-top:2px;line-height:1.2}
+  .cirref em{display:block;font:500 12px Archivo,sans-serif;opacity:.8;margin-top:3px;font-style:normal}
+  .cirvid{margin:14px 22px 0;width:calc(100% - 44px);max-width:420px;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000;position:relative}
+  .cirvid iframe{width:100%;height:100%;border:0}
+  .cirvid button{position:absolute;top:6px;right:6px;border:0;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;width:30px;height:30px;font-size:16px}`;
+  document.head.appendChild(st);
+  const cs0=cirSteps;cirSteps=function(c){const st=cs0(c),ex=c.ex.filter(e=>e&&e.w>0);
+    st.forEach(s=>{if(s.t==='work'){s.id=find(ex[s.i]);}});
+    st.forEach((s,k)=>{const n=st.slice(k+1).find(y=>y.t==='work');if(s.t!=='work'){s.nid=n?n.id:null;}else if(!s.nx){const f=st.slice(k+1).find(y=>y.t==='work'||y.t==='cool');s.nx=f?(f.t==='cool'?f.n:f.n):'';}});return st;};
+  const cd0=cirDraw;cirDraw=function(){cd0.apply(this,arguments);try{
+    const el=document.getElementById('cirrun');if(!el||!CR)return;const s=CR.st[CR.i];
+    const cur=s.t==='work'||s.t==='cool'?s.id:null,id=cur||s.nid;if(!id||!E[id]||!E[id].yt)return;
+    const e=E[id],nx=el.querySelector('.cirnx');if(!nx)return;
+    const lab=cur?'Cómo se hace':'Así es el siguiente',meta=[e.g,e.eq].filter(Boolean).join(' · ');
+    const html=CR.vid===CR.i?`<div class="cirvid"><iframe src="https://www.youtube-nocookie.com/embed/${e.yt}?autoplay=1&mute=1&loop=1&playlist=${e.yt}&controls=0&rel=0&playsinline=1" allow="autoplay;encrypted-media" allowfullscreen></iframe><button data-act="cirvidx" aria-label="Cerrar video">×</button></div>`
+      :`<button class="cirref" data-act="cirvid"><span class="rth"><img src="https://i.ytimg.com/vi/${e.yt}/hqdefault.jpg" alt="" onerror="this.style.display='none'"><i></i></span><span><small>${lab}</small><b>${esc(e.n.length>46?(s.t==='work'?s.n:e.n):e.n)}</b><em>${esc(meta)}</em></span></button>`;
+    nx.insertAdjacentHTML('beforebegin',html);}catch(x){console.warn(x);}};
+  document.addEventListener('click',ev=>{const t=ev.target.closest&&ev.target.closest('[data-act="cirvid"],[data-act="cirvidx"]');if(!t||!CR)return;ev.stopPropagation();CR.vid=t.dataset.act==='cirvid'?CR.i:-1;cirDraw();},true);
+})();
+
+/* --- Etiquetas #casa (sin material) y #casa-material (banda o mancuernas) para armar rutinas en casa --- */
+(function(){
+  const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const NOCASA=/dominad|colgad|paralelas|lastrad|rueda|hiperext|muscle|l sit|jalon|con peso|banco lumbar|granjero|banco inclinado|isquios sentado|escapulares|asistid/;
+  const NOMAT=/predicador|banco|plano|inclinado|muscle|dominad|paralelas|asistid|sentado/;
+  function homeTags(){let a=0,b=0;try{Object.keys(E).forEach(k=>{const e=E[k];if(!e||!e.n||/^x_/.test(k)||/antiguo/i.test(e.n))return;const n=nrm(e.n),eq=nrm(e.eq||'');let t=null;
+    if(/^h_nivel_[0-9]/.test(k)&&/mancuerna/.test(n))t='casa-material';
+    else if(/^h_nivel_[0-9]/.test(k))t='casa';
+    else if(eq==='peso corporal'&&!NOCASA.test(n))t='casa';
+    else if(/^(banda|mancuerna|mancuernas)$/.test(eq)&&!NOMAT.test(n))t='casa-material';
+    if(!t)return;e.tags=Array.isArray(e.tags)?e.tags:[];if(!e.tags.includes(t)){e.tags=e.tags.concat(t);}t==='casa'?a++:b++;});}catch(x){console.warn('homeTags',x);}return [a,b];}
+  let LAST=0;const ensure=()=>{const n=Object.keys(E).length;if(n!==LAST){LAST=n;homeTags();}};window.homeTags=ensure;ensure();addEventListener('load',()=>{ensure();setTimeout(ensure,1500);setTimeout(ensure,5000);});
+  if(typeof rtLoadCx==='function'){const l0=rtLoadCx;rtLoadCx=async function(){const r=await l0.apply(this,arguments);LAST=0;ensure();return r;};}
+})();
