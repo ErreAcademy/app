@@ -137,7 +137,7 @@ function realDB(){
       const [fb,hi,cd,ca,act]=await Promise.all([
         sf(sb.from('session_feedback').select('client_id,log_date,grp,intensity,feel,note,duration_min,skip_reason').gte('log_date',since).order('log_date',{ascending:false}).limit(150)),
         sf(sb.from('chat_messages').select('client_id,body,created_at').eq('kind','hito').order('created_at',{ascending:false}).limit(40)),
-        sf(sb.from('client_data').select('client_id,key,value').in('key',['prefs','excom'])),
+        sf(sb.from('client_data').select('client_id,key,value').in('key',['prefs','excom','logs'])),
         sf(sb.from('calls').select('client_id,starts_at').gte('starts_at',new Date().toISOString())),
         DB.coachAct()]);
       return {fb,hi,cd,ca,act};
@@ -214,7 +214,7 @@ const SYNC={
     if(PROFILE.role!=='coach'&&!HYD){tmr=setTimeout(SYNC.dirty,1500);return;}
     if(syncing){pend=true;return;}
     syncing=true;
-    try{await pushAll();needs=false;}catch(e){console.warn('sync',e);needs=true;}
+    try{await pushAll();needs=false;}catch(e){console.warn('sync',e);needs=true;setTimeout(()=>{if(needs)SYNC.dirty();},15000);}
     syncing=false;if(pend){pend=false;SYNC.dirty();}
   },
   async photos(){
@@ -907,6 +907,8 @@ async function boot(){
   catch(e){console.warn('boot',e);LG.err='No pudimos conectar. Revisa tu internet e intenta de nuevo.';showLogin();}
 }
 window.addEventListener('online',()=>SYNC.dirty());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&ME&&PROFILE&&PROFILE.role!=='coach'){clearTimeout(tmr);SYNC.flush();}});
+window.addEventListener('pagehide',()=>{if(ME&&PROFILE&&PROFILE.role!=='coach'){clearTimeout(tmr);SYNC.flush();}});
 document.addEventListener('click',async e=>{
   const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act;
   if(a==='lgsend'){const em=((document.getElementById('lgEmail')||{}).value||'').trim().toLowerCase();const pw=(document.getElementById('lgPass')||{}).value||'';
@@ -4924,6 +4926,9 @@ document.head.appendChild(st);
       if(a.period==='cortesia'){if(dl<0)add({s:1,k:c.id+'|cexp|'+pk,cid:c.id,t:'🎁 Su cortesía terminó hace '+(-dl)+' día'+(dl===-1?'':'s'),q:'Terminó el '+fdate(pk)+'. Decide si la extiendes o pasa a un plan.'});else if(dl<=3)add({s:1,k:c.id+'|csoon|'+pk,cid:c.id,t:'🎁 Su cortesía vence '+(dl===0?'hoy':dl===1?'mañana':'en '+dl+' días'),q:'Vence el '+fdate(pk)+'. ¿La extiendes o le ofreces un plan?'});return;}
       if(dl<0)add({s:0,k:c.id+'|exp|'+pk,cid:c.id,t:'💰 Plan vencido hace '+(-dl)+' día'+(dl===-1?'':'s')+' · por cobrar',q:'Venció el '+fdate(pk)+'. Confirma su renovación.'});
       else if(dl<=7)add({s:1,k:c.id+'|soon|'+pk,cid:c.id,t:'⏳ Su plan vence '+(dl===0?'hoy':dl===1?'mañana':'en '+dl+' días'),q:(a.cancel_at_period_end?'Ya canceló la renovación. ':'')+'Vence el '+fdate(pk)+'.'});});
+    try{const Hh=CP.home||{},lg={};(Hh.cd||[]).forEach(x=>{if(x.key==='logs')lg[x.client_id]=Object.keys(x.value||{});});
+      (Hh.fb||[]).forEach(f=>{if(f.grp!=='fuerza'||f.skip_reason||!lg[f.client_id]||!act.find(x=>x.id===f.client_id)||f.log_date<addD(tdy,-3))return;
+        if(!lg[f.client_id].some(k=>k.indexOf(f.log_date+'|')===0))add({s:0,k:f.client_id+'|nolog|'+f.log_date,cid:f.client_id,t:'⚠ Entrenó el '+fdate(f.log_date)+' pero no se ve su registro de series',q:'Puede haberse perdido el registro. Pídele que lo revise o lo cargue de nuevo.'});});}catch(e){}
     al.sort((a,b)=>a.s-b.s);
     return Object.assign({},r,{al,nh,hid});}catch(e){return r;}};
   const p1=cpHomePage;cpHomePage=function(){let h=p1.apply(this,arguments);try{

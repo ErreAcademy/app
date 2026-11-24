@@ -2182,7 +2182,7 @@ function realDB(){
       const [fb,hi,cd,ca,act]=await Promise.all([
         sf(sb.from('session_feedback').select('client_id,log_date,grp,intensity,feel,note,duration_min,skip_reason').gte('log_date',since).order('log_date',{ascending:false}).limit(150)),
         sf(sb.from('chat_messages').select('client_id,body,created_at').eq('kind','hito').order('created_at',{ascending:false}).limit(40)),
-        sf(sb.from('client_data').select('client_id,key,value').in('key',['prefs','excom'])),
+        sf(sb.from('client_data').select('client_id,key,value').in('key',['prefs','excom','logs'])),
         sf(sb.from('calls').select('client_id,starts_at').gte('starts_at',new Date().toISOString())),
         DB.coachAct()]);
       return {fb,hi,cd,ca,act};
@@ -2259,7 +2259,7 @@ const SYNC={
     if(PROFILE.role!=='coach'&&!HYD){tmr=setTimeout(SYNC.dirty,1500);return;}
     if(syncing){pend=true;return;}
     syncing=true;
-    try{await pushAll();needs=false;}catch(e){console.warn('sync',e);needs=true;}
+    try{await pushAll();needs=false;}catch(e){console.warn('sync',e);needs=true;setTimeout(()=>{if(needs)SYNC.dirty();},15000);}
     syncing=false;if(pend){pend=false;SYNC.dirty();}
   },
   async photos(){
@@ -2952,6 +2952,8 @@ async function boot(){
   catch(e){console.warn('boot',e);LG.err='No pudimos conectar. Revisa tu internet e intenta de nuevo.';showLogin();}
 }
 window.addEventListener('online',()=>SYNC.dirty());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&ME&&PROFILE&&PROFILE.role!=='coach'){clearTimeout(tmr);SYNC.flush();}});
+window.addEventListener('pagehide',()=>{if(ME&&PROFILE&&PROFILE.role!=='coach'){clearTimeout(tmr);SYNC.flush();}});
 document.addEventListener('click',async e=>{
   const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act;
   if(a==='lgsend'){const em=((document.getElementById('lgEmail')||{}).value||'').trim().toLowerCase();const pw=(document.getElementById('lgPass')||{}).value||'';
@@ -3688,12 +3690,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='24nov-0833';
+const APP_VER='24nov-0837';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='24nov-0833'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='24nov-0837'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -6969,6 +6971,9 @@ document.head.appendChild(st);
       if(a.period==='cortesia'){if(dl<0)add({s:1,k:c.id+'|cexp|'+pk,cid:c.id,t:'🎁 Su cortesía terminó hace '+(-dl)+' día'+(dl===-1?'':'s'),q:'Terminó el '+fdate(pk)+'. Decide si la extiendes o pasa a un plan.'});else if(dl<=3)add({s:1,k:c.id+'|csoon|'+pk,cid:c.id,t:'🎁 Su cortesía vence '+(dl===0?'hoy':dl===1?'mañana':'en '+dl+' días'),q:'Vence el '+fdate(pk)+'. ¿La extiendes o le ofreces un plan?'});return;}
       if(dl<0)add({s:0,k:c.id+'|exp|'+pk,cid:c.id,t:'💰 Plan vencido hace '+(-dl)+' día'+(dl===-1?'':'s')+' · por cobrar',q:'Venció el '+fdate(pk)+'. Confirma su renovación.'});
       else if(dl<=7)add({s:1,k:c.id+'|soon|'+pk,cid:c.id,t:'⏳ Su plan vence '+(dl===0?'hoy':dl===1?'mañana':'en '+dl+' días'),q:(a.cancel_at_period_end?'Ya canceló la renovación. ':'')+'Vence el '+fdate(pk)+'.'});});
+    try{const Hh=CP.home||{},lg={};(Hh.cd||[]).forEach(x=>{if(x.key==='logs')lg[x.client_id]=Object.keys(x.value||{});});
+      (Hh.fb||[]).forEach(f=>{if(f.grp!=='fuerza'||f.skip_reason||!lg[f.client_id]||!act.find(x=>x.id===f.client_id)||f.log_date<addD(tdy,-3))return;
+        if(!lg[f.client_id].some(k=>k.indexOf(f.log_date+'|')===0))add({s:0,k:f.client_id+'|nolog|'+f.log_date,cid:f.client_id,t:'⚠ Entrenó el '+fdate(f.log_date)+' pero no se ve su registro de series',q:'Puede haberse perdido el registro. Pídele que lo revise o lo cargue de nuevo.'});});}catch(e){}
     al.sort((a,b)=>a.s-b.s);
     return Object.assign({},r,{al,nh,hid});}catch(e){return r;}};
   const p1=cpHomePage;cpHomePage=function(){let h=p1.apply(this,arguments);try{
