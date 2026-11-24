@@ -5322,9 +5322,9 @@ function trainGroups(){
       <div class="wlcard"><b>Así se adapta cada semana</b><div class="wlbars">${sets.map((s,i)=>`<div class="${i===nw-1?'dl':''}" style="height:${s*30}px"></div>`).join('')}</div><div class="wlbl">${sets.map((s,i)=>`<span>${i===nw-1?'Descarga':'Sem '+(i+1)}</span>`).join('')}</div>
       <p class="wlp" style="margin:10px 0 0;font-size:13px">Series de tus ejercicios principales. Subes de a poco y la última semana baja para que tu cuerpo se adapte y subas más fuerte.</p></div>`;
     const P=PLATE[pk];
-    const S4=`<h2 class="wlh">Tu alimentación</h2><p class="wlp">Comida real, por porciones, sin contar calorías. ${ff[2]}</p>
+    const S4=`<h2 class="wlh">Tu alimentación</h2><p class="wlp">Comida real, por porciones. ${ff[2]} Los números de calorías son una referencia, no una obligación.</p>
       <div class="wlcard wldn">${donut(pk)}<div class="wldl">${P.map(a=>`<div><i style="background:${a[2]}"></i>${a[0]}<b>${a[1]}%</b></div>`).join('')}</div></div>
-      <div class="wlcard"><b>Tu plato, en porciones de tu mano</b><p class="wlp" style="margin:6px 0 0;font-size:13px">🍗 Proteína: una palma · 🍚 Carbo: un pocillo · 🥑 Grasa: una cucharada · 🥦 Vegetales: libres. Agua todo el día.</p></div>`;
+      <div class="wlcard"><b>Tu plato, en porciones de tu mano</b><p class="wlp" style="margin:6px 0 0;font-size:13px">🍗 Proteína: una palma · 🍚 Carbo: un pocillo · 🥑 Grasa: una cucharada · 🥦 Vegetales: libres. Agua todo el día. En la app tienes tu plan con opciones y lista de compras.</p></div>`;
     const S5=`<h2 class="wlh">Los hábitos que lo hacen posible</h2><p class="wlp">El plan funciona cuando lo sostienes. Estos son tus apoyos.</p>
       ${row('😴','Sueño','Duerme tus horas','Es cuando recuperas y te adaptas. También es parte del entrenamiento.')}
       ${row('🚶','Movimiento diario','Tu meta de pasos','Caminar más suma gasto y energía sin desgastarte.')}
