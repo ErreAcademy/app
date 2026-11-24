@@ -3712,12 +3712,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='24nov-1612';
+const APP_VER='24nov-1619';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='24nov-1612'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='24nov-1619'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -6979,9 +6979,19 @@ const ICON={
  stair:P(ARMS+`<g class="cvl1"><path d="M56 50 L46 60 L52 70"/></g><g class="cvl2"><path d="M56 50 L68 58 L68 70"/></g>`)+`<path d="M14 82 H40 V74 H62 V66 H84 V58 H106"/>`,
  row:`<circle cx="46" cy="30" r="6.5"/><path d="M46 38 L62 58 L36 58"/><g class="cvoar"><path d="M60 46 L84 54 M84 50 V60"/></g><path d="M18 72 H100"/><path d="M30 64 H70" opacity=".5"/>`,
  swim:`<circle cx="76" cy="30" r="6.5"/><g class="cvsw"><path d="M70 34 Q52 22 36 38 M66 38 L28 48"/></g><path class="cvwave" d="M8 56 q10 -8 20 0 t20 0 t20 0 t20 0 t20 0"/><path class="cvwave2" d="M8 68 q10 -8 20 0 t20 0 t20 0 t20 0 t20 0"/>`,
+ lazo:`<g class="cvjmp"><circle cx="58" cy="18" r="6.5"/><path d="M58 26 L58 48"/><path d="M58 32 L46 46 M58 32 L70 46"/><path d="M58 48 L50 66 M58 48 L66 66"/></g><path class="cvrA" d="M36 46 Q58 104 80 46"/><path class="cvrB" d="M36 46 Q24 -14 58 -6 Q92 -14 80 46"/><path d="M12 78 H106"/>`,
+ box:`<circle cx="52" cy="20" r="6.5"/><path d="M52 28 L50 52"/><g class="cvpn1"><path d="M52 34 L76 36"/><circle cx="80" cy="36" r="5.5"/></g><g class="cvpn2"><path d="M52 34 L38 44"/><circle cx="34" cy="46" r="5.5"/></g><path d="M50 52 L40 70 M50 52 L62 70"/><path d="M12 78 H106"/>`,
+ dance:`<g class="cvdn"><circle cx="58" cy="18" r="6.5"/><path d="M58 26 L58 50"/><path d="M58 32 L44 20 M58 32 L74 24"/><path d="M58 50 L48 70 M58 50 L68 68"/></g><path class="cvnote" d="M14 30 v-12 l8 -2 v12 M96 40 v-12 l8 -2 v12"/><circle cx="12" cy="31" r="2.5"/><circle cx="94" cy="41" r="2.5"/><path d="M12 78 H106"/>`,
+ step:P(ARMS+`<g class="cvl1"><path d="M56 50 L46 62 L52 66"/></g><g class="cvl2"><path d="M56 50 L68 62 L68 68"/></g>`)+`<rect x="74" y="66" width="30" height="12" rx="2"/><path d="M12 78 H106"/>`,
  class:P(`<g class="cva1"><path d="M58 33 L44 18"/></g><g class="cva2"><path d="M58 33 L72 18"/></g><g class="cvl1"><path d="M56 50 L44 70"/></g><g class="cvl2"><path d="M56 50 L70 70"/></g>`)+`<path d="M20 24 l3 6 l-6 -2 z M98 30 l3 6 l-6 -2 z" opacity=".6"/>`
 };
-const MAP={camin_aire:'walk',camin_cam:'tread',bici_est:'bike',bici:'bike',trot_cam:'tread',trot_aire:'walk',eliptica:'ellip',escaladora:'stair',remo:'row',natacion:'swim',senderismo:'walk',clase:'class',hyrox:'row'};
+Object.assign(CMODS,{
+ lazo:{n:'Saltar lazo',b:'Saltos pequeños y relajados, con pausas cuando las necesites. Aterriza suave en la punta del pie.',m:'Ritmo constante en bloques de 1 a 2 minutos, con descansos cortos.',warn:'Es de más impacto. Si tienes molestia en rodillas, tobillos o espalda, elige otra opción y avísale a tu coach.'},
+ boxeo:{n:'Boxeo o sombra',b:'Golpes sueltos y fluidos, sin buscar fuerza. Respira con cada golpe.',m:'Combinaciones constantes en rounds de 2 a 3 minutos, con pausa corta.',warn:'Si lo haces con mucha intensidad pasa a ser cardio intenso. Primero confírmalo con tu coach.'},
+ baile:{n:'Baile',b:'Muévete al ritmo que te guste, sin parar y sin apuro.',m:'Ritmo constante, que acelere un poco el pulso.'},
+ escalon:{n:'Subir escalón',b:'Sube y baja de un escalón bajo con ritmo suave y paso firme.',m:'Ritmo constante con escalón medio. Alterna la pierna que sube primero.'}
+});
+const MAP={camin_aire:'walk',camin_cam:'tread',bici_est:'bike',bici:'bike',trot_cam:'tread',trot_aire:'walk',eliptica:'ellip',escaladora:'stair',remo:'row',natacion:'swim',senderismo:'walk',clase:'class',hyrox:'row',lazo:'lazo',boxeo:'box',baile:'dance',escalon:'step'};
 const icon=(id,cls)=>`<svg class="cvsvg ${cls||''}" viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[MAP[id]||'tread']}</svg>`;
 const TALK={1:'Podrías cantar',2:'Hablas fluido',3:'Frases cortas',4:'Palabras sueltas',5:'No puedes hablar'};
 function vids(t){
@@ -6994,7 +7004,7 @@ function vids(t){
 function wrapC(h,d){
   try{const wk=Math.min(S.week,PERIOD[S.program].weeks),t=cxTier(cTier(d,wk)),c=S.cardio[cKey(d)]||{},mod=c.mod||d.cardioDefault||'camin_cam',m=CMODS[mod]||CMODS.camin_cam,z=t?TIERZONE[t]:2,Z=ZONES[z-1];
     const hero=`<div class="cvh" style="--zc:${ZC[z]}"><div class="cvi">${icon(mod)}</div><div class="cvx"><small>${t?'Hoy haces':'Movimiento suave'}</small><b>${m.n}</b><span>${t?cDur(d,t):'15–35 min'} · ${Z.s}</span><em>🗣 ${TALK[z]}</em></div><svg class="cvecg" viewBox="0 0 240 24" preserveAspectRatio="none"><path d="M0 12 H60 l6 -9 l8 20 l8 -16 l6 5 H130 l6 -9 l8 20 l8 -16 l6 5 H240"/></svg></div>`;
-    const pick=`<div class="cvpl">¿Qué vas a hacer hoy?</div><div class="cvpk">${Object.keys(CMODS).filter(id=>!['trot_aire','bici','senderismo'].includes(id)).map(id=>`<button class="cvpb${id===mod?' on':''}" data-act="cmod" data-v="${id}" style="--zc:${ZC[z]}">${icon(id,'sm')}<span>${({camin_aire:'Caminar afuera',camin_cam:'Caminadora',bici_est:'Bici estática',trot_cam:'Trotar',eliptica:'Elíptica',escaladora:'Escaladora',remo:'Remo',natacion:'Natación',clase:'Clase grupal',hyrox:'Hyrox'})[id]||CMODS[id].n}</span></button>`).join('')}</div>`;
+    const pick=`<div class="cvpl">¿Qué vas a hacer hoy?</div><div class="cvpk">${Object.keys(CMODS).filter(id=>!['trot_aire','bici','senderismo'].includes(id)).map(id=>`<button class="cvpb${id===mod?' on':''}" data-act="cmod" data-v="${id}" style="--zc:${ZC[z]}">${icon(id,'sm')}<span>${({camin_aire:'Caminar afuera',camin_cam:'Caminadora',bici_est:'Bici estática',trot_cam:'Trotar',eliptica:'Elíptica',escaladora:'Escaladora',remo:'Remo',natacion:'Natación',clase:'Clase grupal',hyrox:'Hyrox',lazo:'Saltar lazo',boxeo:'Boxeo',baile:'Baile',escalon:'Escalón'})[id]||CMODS[id].n}</span></button>`).join('')}</div>`;
     const V=(t&&t!=='Intenso')?vids(t):[];
     const vid=V.length?`<div class="cvpl">Cardio guiado en video <small>(en casa, sin equipo)</small></div><div class="cvv">${V.map(v=>`<button class="cvvb" data-cvv="${v.k}">${typeof thumb==='function'?thumb(v.k):''}<span><b>${esc(v.nm)}</b><small>${v.mn?v.mn+' min · ':''}${v.lv<=1?'Sin impacto':'Moderado'}</small></span></button>`).join('')}</div>`:'';
     h=h.replace('</em></div></div>','</em></div></div>'+hero+cNoteHTML(d));
@@ -7024,6 +7034,10 @@ const st=document.createElement('style');st.textContent=`
 .cvoar{animation:cvoar 1.6s ease-in-out infinite alternate}@keyframes cvoar{from{transform:translateX(-10px)}to{transform:translateX(6px)}}
 .cvwave{animation:cvwv 1.6s linear infinite}.cvwave2{animation:cvwv 2.2s linear infinite reverse;opacity:.6}@keyframes cvwv{from{transform:translateX(0)}to{transform:translateX(-20px)}}
 .cvsw{animation:cvoar 1.2s ease-in-out infinite alternate}.cvsun{animation:cvpls 2s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}@keyframes cvpls{to{transform:scale(1.18)}}
+.cvrA{animation:cvrA .8s steps(1) infinite}.cvrB{animation:cvrB .8s steps(1) infinite}@keyframes cvrA{0%{opacity:1}50%{opacity:0}}@keyframes cvrB{0%{opacity:0}50%{opacity:1}}.cvjmp{animation:cvjmp .4s ease-in-out infinite alternate}@keyframes cvjmp{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+
+.cvpn1,.cvpn2{animation:cvpun .6s ease-in-out infinite alternate}.cvpn2{animation-direction:alternate-reverse}@keyframes cvpun{from{transform:translateX(-5px)}to{transform:translateX(7px)}}
+.cvdn{transform-box:fill-box;transform-origin:50% 100%;animation:cvdn 1s ease-in-out infinite alternate}@keyframes cvdn{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}.cvnote{animation:cvpls 1.2s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
 @media (prefers-reduced-motion:reduce){.cvh *,.cvpb *{animation:none!important}}`;
 document.head.appendChild(st);
 })();
@@ -7582,14 +7596,14 @@ function trainGroups(){
 (function(){
   const st=document.createElement('style');st.textContent=`.cfx{position:relative;height:0;overflow:visible;pointer-events:none}.cfx i{position:absolute;top:-6px;width:8px;height:12px;border-radius:2px;opacity:0;animation:cfx 1.6s ease-out forwards}#sumz .wlmap svg{max-height:120px}@keyframes cfx{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(190px) rotate(420deg)}}`;document.head.appendChild(st);
   window.metaRingCard=function(){try{
-    if(S.role==='coach'||!S.user)return '';const f=S.user.data||{},gw=parseFloat(String(f.goalW||'').replace(',','.')),main=f.main||S.user.main;
-    if(!(gw>0)||!(main==='bajar'||main==='aumentar'))return '';
-    const ws=Object.keys(S.weights||{}).sort(),first=ws.length?S.weights[ws[0]]:null,sw=parseFloat(String(f.weight||'').replace(',','.'))||first;
+    if(S.role==='coach'||!S.user)return '';const f=S.user.data||{},pn=v=>parseFloat(String(v==null?'':v).replace(',','.')),gw=pn(f.goalW);
+    if(!(gw>0)){return `<div class="wlcard mring"><small>TU META</small><p style="margin:8px 0 12px;border:0;padding:0;font-size:14px">Pon un peso objetivo y mira aquí cuánto te falta, con tu avance en un anillo.</p><button class="btn solid" data-act="wgoal" style="width:100%;padding:13px">Definir mi meta de peso</button></div>`;}
+    const ws=Object.keys(S.weights||{}).sort(),first=ws.length?S.weights[ws[0]]:null,sw=pn(f.goalStart)||pn(f.weight)||first,main=gw<sw?'bajar':'aumentar';
     if(!(sw>0)||sw===gw)return '';const cur=ws.length?S.weights[ws[ws.length-1]]:sw;
     const pr=Math.max(0,Math.min(1,(sw-cur)/(sw-gw))),pct=Math.round(pr*100),left=Math.abs(cur-gw),moved=Math.abs(sw-cur),done=pr>=1;
     const fm=n=>(Math.round(n*10)/10).toFixed(1).replace('.',',');const C=2*Math.PI*54;
     const msg=done?'¡Llegaste a tu meta! Eso es disciplina.':pct===0?'Tu meta empieza hoy. Cada registro de peso la acerca.':pct<50?`Vas bien: ${fm(moved)} kg ${main==='bajar'?'menos':'más'} desde que empezaste.`:`Ya pasaste la mitad: ${fm(moved)} kg ${main==='bajar'?'menos':'más'}. Sigue así.`;
-    return `<div class="wlcard mring"><small>TU META</small><div class="mrw"><svg width="124" height="124" viewBox="0 0 130 130" role="img" aria-label="${pct}% de tu meta"><circle cx="65" cy="65" r="54" fill="none" stroke="#EFEAE2" stroke-width="12"/><circle cx="65" cy="65" r="54" fill="none" stroke="#C0392B" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C*pr).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 65 65)"/><text x="65" y="63" text-anchor="middle" font-size="28" font-weight="700"  style="fill:var(--ink,#1C1B19)">${pct}%</text><text x="65" y="83" text-anchor="middle" font-size="12" fill="#6b655d">de tu meta</text></svg><div><b>${fm(cur)} kg</b><small>hoy · empezaste en ${fm(sw)}</small><div class="mrl">${done?'Meta cumplida':`Te faltan <b>${fm(left)} kg</b> para ${fm(gw)}`}</div></div></div><p>${msg}</p></div>`;}catch(e){return '';}};
+    return `<div class="wlcard mring"><small>TU META</small><div class="mrw"><svg width="124" height="124" viewBox="0 0 130 130" role="img" aria-label="${pct}% de tu meta"><circle cx="65" cy="65" r="54" fill="none" stroke="#EFEAE2" stroke-width="12"/><circle cx="65" cy="65" r="54" fill="none" stroke="#C0392B" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C*pr).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 65 65)"/><text x="65" y="63" text-anchor="middle" font-size="28" font-weight="700"  style="fill:var(--ink,#1C1B19)">${pct}%</text><text x="65" y="83" text-anchor="middle" font-size="12" fill="#6b655d">de tu meta</text></svg><div><b>${fm(cur)} kg</b><small>hoy · empezaste en ${fm(sw)}</small><div class="mrl">${done?'Meta cumplida':`Te faltan <b>${fm(left)} kg</b> para ${fm(gw)}`}</div></div></div><p>${msg}</p><button class="lblbtn" data-act="wgoal" style="color:var(--gray);margin-top:6px">Cambiar mi meta</button></div>`;}catch(e){return '';}};
   const _st=document.createElement('style');_st.textContent='.mring{margin:12px 0}.mring>small{color:var(--gray);letter-spacing:.06em;font-size:12px}.mrw{display:flex;align-items:center;gap:16px;margin-top:8px}.mrw>div>b{font-size:26px;display:block}.mrw>div>small{color:var(--gray);display:block;margin:2px 0 10px;font-size:13px}.mrl{background:color-mix(in srgb,#F1EDE6 var(--tm,100%),var(--card,#FBFAF8));border-radius:10px;padding:8px 10px;font-size:13px}.mring>p{margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line,#E7E2DA);color:var(--gray,#5A554E);font-size:13px}';document.head.appendChild(_st);
   const pb=progBody;progBody=function(g,ms,nxt){const h=pb.apply(this,arguments);try{const z=window.weekZonesCard(),r=window.metaRingCard();return r+(z?pgSec('pg.zw','Zonas de la semana',z.badge,z.html,true):'')+h;}catch(e){return h;}};
   const os=openSummary;openSummary=function(){os.apply(this,arguments);try{
@@ -7625,6 +7639,48 @@ function trainGroups(){
 })();
 
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="wkshare"]');if(!t)return;e.stopPropagation();window.wkShare();},true);
+
+/* --- Meta de peso editable: en la hoja de Peso, en Progreso y en Perfil (Mis metas) --- */
+(function(){
+  const pn=v=>parseFloat(String(v==null?'':v).replace(',','.')),fm=n=>(Math.round(n*10)/10).toFixed(1).replace('.',',');
+  const curW=()=>{const ws=Object.keys(S.weights||{}).sort();return ws.length?S.weights[ws[ws.length-1]]:pn(((S.user||{}).data||{}).weight)||null;};
+  const setGoal=(n)=>{const u=S.user;if(!u)return;u.data=u.data||{};if(n>0){const had=pn(u.data.goalW)>0;u.data.goalW=String(n);if(!had||!(pn(u.data.goalStart)>0)){const c=curW();if(c)u.data.goalStart=String(c);}}else{delete u.data.goalW;delete u.data.goalStart;}save();try{SYNC.dirty();}catch(e){}};
+  const st=document.createElement('style');st.textContent='.gl-row{display:flex;gap:8px;align-items:center;margin:10px 0}.gl-row input{flex:1}.gl-q{display:flex;gap:8px;margin:8px 0 4px}.gl-q button{flex:1;padding:10px;border-radius:12px;border:1.5px solid var(--line,#ddd);background:var(--card,#fff);font:600 14px Archivo,sans-serif;color:inherit}.pmg{background:color-mix(in srgb,#F6F2EB var(--tm,100%),var(--card,#FBFAF8));border-radius:12px;padding:10px 12px;margin:6px 0 4px;font-size:13px;color:var(--gray,#5A554E)}.pmg b{color:var(--ink,#1C1B19)}';document.head.appendChild(st);
+  function goalSheet(){const u=S.user||{},d=u.data||{},g=pn(d.goalW),c=curW();
+    sheet(`<h3>Tu meta de peso</h3><div class="sub">${c?'Hoy estás en <b>'+fm(c)+' kg</b>. ':''}Ponla en kilos; la app calcula tu avance sola.</div>
+     <div class="gl-row"><input class="fld" id="wgin" inputmode="decimal" placeholder="Ej. 68" value="${g>0?String(g).replace('.',','):''}"><b>kg</b></div>
+     ${c?`<div class="gl-q"><button data-act="wgq" data-d="-2">−2 kg</button><button data-act="wgq" data-d="-5">−5 kg</button><button data-act="wgq" data-d="3">+3 kg</button></div>`:''}
+     <div class="sub" id="wgerr" style="color:#B3261E;min-height:18px"></div>
+     <button class="btn solid" data-act="wgsave" style="width:100%;padding:14px">Guardar meta</button>
+     ${g>0?'<button class="btn" data-act="wgdel" style="width:100%;margin-top:8px">Quitar mi meta</button>':''}
+     <button class="btn" data-act="close" style="width:100%;margin-top:8px">Cancelar</button>`);}
+  window.goalSheet=goalSheet;
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="wgoal"],[data-act="wgq"],[data-act="wgsave"],[data-act="wgdel"]');if(!t)return;e.stopPropagation();e.preventDefault();
+    const a=t.dataset.act;
+    if(a==='wgoal'){goalSheet();return;}
+    if(a==='wgq'){const c=curW(),i=document.getElementById('wgin');if(c&&i)i.value=fm(c+(+t.dataset.d)).replace(',',',');return;}
+    if(a==='wgdel'){setGoal(0);closeSheet();render();toast('Meta quitada');return;}
+    if(a==='wgsave'){const i=document.getElementById('wgin'),n=Math.round(pn(i&&i.value)*10)/10,er=document.getElementById('wgerr');
+      if(!(n>=30&&n<=250)){if(er)er.textContent='Escribe un peso entre 30 y 250 kg.';return;}
+      const c=curW();if(c&&Math.abs(n-c)<0.1){if(er)er.textContent='Tu meta es igual a tu peso de hoy. Elige otro número.';return;}
+      setGoal(n);closeSheet();render();toast('Meta guardada: '+fm(n)+' kg');}
+  },true);
+  /* hoja de peso: fila de meta */
+  const sw0=showWeight;showWeight=function(){sw0.apply(this,arguments);try{const u=S.user;if(!u||S.role==='coach')return;const g=pn((u.data||{}).goalW),b=document.querySelector('#sheet [data-act="wok"]');if(!b||document.getElementById('wgrow'))return;
+    b.insertAdjacentHTML('beforebegin',`<button class="lblbtn" id="wgrow" data-act="wgoal" style="display:block;margin:6px auto 0;color:var(--ink,var(--ink,#1C1B19))">🎯 ${g>0?'Meta de peso: '+fm(g)+' kg · cambiar':'Definir mi meta de peso'}</button>`);}catch(e){}};
+  /* perfil: Mis metas ampliado */
+  const pv=profileView;profileView=function(){let h=pv.apply(this,arguments);try{
+    const u=S.user||{},d=u.data||{},g=pn(d.goalW),c=curW(),sw=pn(d.goalStart)||pn(d.weight)||c;
+    let prog='';if(g>0&&c&&sw&&sw!==g){const pr=Math.max(0,Math.min(1,(sw-c)/(sw-g)));prog=`<div class="pmg">Hoy <b>${fm(c)} kg</b> · empezaste en ${fm(sw)} · te faltan <b>${fm(Math.abs(c-g))} kg</b> (${Math.round(pr*100)} % de tu meta)</div>`;}
+    const body=`<div class="pfrow"><span><b>Objetivo principal</b><small>${esc((typeof GN!=='undefined'&&GN[u.main])||'Sin definir')} · lo cambias en Entrenamiento</small></span></div>
+      <label class="pfl">Meta de peso (kg)</label><input class="fld" inputmode="decimal" placeholder="Ej. 68" data-pf="goalW" value="${g>0?String(g).replace('.',','):''}">${prog||'<div class="note">Pon un peso objetivo y verás tu avance en un anillo dentro de Progreso.</div>'}
+      <label class="pfl">Meta diaria de pasos</label><input class="fld" inputmode="numeric" data-pf="stepGoal" value="${S.stepGoal}">
+      <label class="pfl">Frecuencia cardíaca máxima (lpm, opcional)</label><input class="fld" inputmode="numeric" placeholder="${(typeof fcMax==='function'&&fcMax())?'Estimada: '+fcMax():'Ej. 190'}" data-pf="fcmax" value="${u.fcmax||''}">`;
+    const re=/(<details class="sec acc" data-pk="Mis metas"[^>]*><summary><span>Mis metas)(?:<small>[^<]*<\/small>)?(<\/span><\/summary><div class="accbody">)[\s\S]*?(<\/div><\/details>)/;
+    if(!re.test(h))return h;return h.replace(re,(m,a,b,c)=>a+'<small>Peso, pasos y frecuencia cardíaca</small>'+b+body+c);}catch(e){return h;}};
+  document.addEventListener('input',e=>{const i=e.target;if(!i||!i.dataset||i.dataset.pf!=='goalW'||!S.user)return;const n=Math.round(pn(i.value)*10)/10;
+    if(i.value.trim()===''){setGoal(0);return;}if(n>=30&&n<=250)setGoal(n);},true);
+})();
 
 /* ================= ERRE · Rutinas del coach: editor + plantillas + biblioteca ================= */
 /* Ejercicios extra (se suman a la biblioteca base E) */
