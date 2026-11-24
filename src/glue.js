@@ -987,7 +987,7 @@ function checkMilestones(){
   if(!S.msSeen){S.msSeen=done.map(m=>m.t);S.lvSeen=g.li;store.set('erre_state',S);return;}
   const fresh=done.filter(m=>!S.msSeen.includes(m.t)),up=g.li>(S.lvSeen||0);
   if(!fresh.length&&!up)return;
-  S.msSeen=done.map(m=>m.t);S.lvSeen=g.li;store.set('erre_state',S);showMilestone(fresh,up?{n:g.li+1,name:g.name}:null);
+  S.msSeen=Array.from(new Set((S.msSeen||[]).concat(done.map(m=>m.t))));S.lvSeen=Math.max(S.lvSeen||0,g.li);store.set('erre_state',S);showMilestone(fresh,up?{n:g.li+1,name:g.name}:null);
 }
 function showMilestone(list,lv){
   msBusy=true;const top=lv&&!list.length?null:list[0];
