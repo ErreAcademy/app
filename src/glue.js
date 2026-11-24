@@ -2438,6 +2438,12 @@ const obVisCss=document.createElement('style');obVisCss.textContent=`
 .gck{position:absolute;top:8px;right:10px;font-style:normal;background:var(--red-strong,#C0392B);color:#fff;width:20px;height:20px;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center}
 .gom{margin-top:14px;padding:14px 16px;border-radius:14px;background:var(--ink,#1C1B19);color:#fff;font-size:15px;font-weight:600;line-height:1.35;animation:gomIn .35s ease}
 @keyframes gomIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.wzhalf{display:inline-block;background:var(--ink,#1C1B19);color:#fff;font-size:12px;font-weight:700;padding:5px 12px;border-radius:99px;margin:4px 0 2px}
+.gdiff{text-align:center;margin-top:10px;color:var(--gray);font-size:15px}.gdiff b{color:var(--red-strong,#C0392B);font-size:18px}
+.phg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}.phs{border:2px dashed var(--line);border-radius:16px;background:var(--card);aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;overflow:hidden;position:relative}
+.phs.has{border-style:solid;border-color:var(--red-strong,#C0392B)}.phs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.phs b{font-size:12px;position:relative;background:rgba(255,255,255,.85);padding:2px 8px;border-radius:99px}.phi{font-size:28px}
+.smc{display:flex;gap:14px;align-items:center;border:2px solid var(--red-strong,#C0392B);border-radius:20px;padding:14px;background:linear-gradient(180deg,var(--red-tint,#FBEDEA),var(--card,#fff))}
+.smf svg{width:60px;height:114px}.smb{flex:1}.smr{padding:7px 0;border-bottom:1px solid var(--line)}.smr:last-child{border:0}.smr small{display:block;color:var(--gray);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.smr b{font-size:15px}
 .sxg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
 .sxc,.fzc,.lvc,.tmc{border:2px solid var(--line);border-radius:18px;background:var(--card);display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px 12px;font-family:inherit;color:inherit;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
 .sxc:active,.fzc:active,.lvc:active,.tmc:active{transform:scale(.97)}
@@ -2463,6 +2469,18 @@ const GSUB={bajar:'Menos grasa, más definición',complete:'Recomponer: músculo
 function goalCards(f){const gl=f.goals||[],m=gl.includes(f.main)?f.main:gl[0];
   return `<div class="gog">${GOALS.map(g=>`<button class="goc${gl.includes(g[0])?' on':''}" data-act="obgoal" data-v="${g[0]}">${GICO[g[0]]}<b>${g[1]}</b><small>${GSUB[g[0]]||g[2]}</small>${gl.includes(g[0])?'<i class="gck">✓</i>':''}</button>`).join('')}</div>`+
   (m?`<div class="gom">${GMSG[m]}</div>`:'')+(gl.length>1?lab('¿Cuál es tu prioridad principal?')+chipsH('main',gl.map(x=>[x,GN[x]]),f.main):'');}
+
+const NMT=['¿Cuándo naciste?','¿Cuánto pesas hoy?','¿Cuál es tu objetivo?','¿Cuánto te gustaría pesar?','¿Qué días puedes entrenar?','¿Cuál es tu nivel?'];
+function nmT(t,f){const n=String(f.name||'').trim().split(/\s+/)[0];if(!n||NMT.indexOf(t)<0)return t;return esc(n.charAt(0).toUpperCase()+n.slice(1))+', ¿'+t.charAt(1).toLowerCase()+t.slice(2);}
+function goalDiff(f){const a=+f.weight,b=+f.goalW;if(!(a>0&&b>0))return '';const d=Math.round((b-a)*10)/10;if(!d)return 'Mantener tu peso actual.';return `<b>${Math.abs(d).toString().replace('.',',')} kg ${d<0?'menos':'más'}</b> que hoy`;}
+(function(){const r0=rlSet;rlSet=function(f){const x=r0.apply(this,arguments);if(f==='goalW'){const e=document.querySelector('[data-gd]');if(e)e.innerHTML=goalDiff(S.ob.form);}return x;};})();
+function obPhotos(){const mk=monthKey(),r=PH[mk]||{};
+  return `<div class="phg">${[['front','De frente'],['side','De lado'],['back','De espalda']].map(a=>`<label class="phs${r[a[0]]?' has':''}">${r[a[0]]?`<img src="${r[a[0]]}" alt="${a[1]}">`:'<span class="phi">📷</span>'}<input type="file" accept="image/*" data-obph="${a[0]}" hidden><b>${a[1]}</b></label>`).join('')}</div><p class="hint">Con buena luz y ropa deportiva. Si hoy no quieres, sigue: la puedes subir después en tu progreso.</p>`;}
+document.addEventListener('change',e=>{const k=e.target&&e.target.dataset&&e.target.dataset.obph;if(!k)return;e.stopPropagation();const fl=e.target.files&&e.target.files[0];if(!fl)return;
+  resize(fl,url=>{const mk=monthKey();PH[mk]=Object.assign({d:today()},PH[mk]||{});PH[mk][k]=url;store.set('erre_photos',PH);try{SYNC.photos();}catch(x){}render();});},true);
+function obSummary(o){const f=o.form||{},ks=f.sex==='Mujer'?'f':'m',fk=f.focus||(f.sex==='Mujer'?'gluteo':'balanceado'),zn={balanceado:'all',gluteo:'lower',torso:'upper'}[fk]||'all',wd=(f.wd||[]).slice().sort((a,b)=>a-b);
+  const row=(a,b)=>`<div class="smr"><small>${a}</small><b>${b}</b></div>`,gl=(f.goals&&f.goals.length?f.goals:['complete']).map(x=>GN[x]).join(' + ');
+  return `<div class="smc"><div class="smf">${bodySvg(ks,zn)}</div><div class="smb">${row('Objetivo',gl)}${(f.main==='bajar'||f.main==='aumentar')&&f.goalW?row('Meta de peso',String(f.goalW).replace('.',',')+' kg'):''}${row('Entrenas',wd.length+' día'+(wd.length===1?'':'s')+' · '+wd.map(i=>DNL[i]).join(' · '))}${row('Nivel',f.level||'Principiante')}${row('Énfasis',FOCN[fk]||'Cuerpo balanceado')}</div></div>`;}
 function sexCards(f){return `<div class="sxg">${[['Mujer','f'],['Hombre','m']].map(a=>`<button class="sxc${f.sex===a[0]?' on':''}" data-act="obset" data-f="sex" data-v="${a[0]}">${bodySvg(a[1],'all')}<b>${a[0]}</b></button>`).join('')}</div>`;}
 function focusCards(f){const k=f.sex==='Mujer'?'f':'m',fk=f.focus||(f.sex==='Mujer'?'gluteo':'balanceado');
   return `<div class="fzg">${[['balanceado','Cuerpo completo','Sin énfasis','all'],['gluteo','Glúteo y pierna','Más pierna','lower'],['torso','Torso','Espalda, pecho, brazos','upper']].map(g=>`<button class="fzc${fk===g[0]?' on':''}" data-act="obset" data-f="focus" data-v="${g[0]}">${bodySvg(k,g[3])}<b>${g[1]}</b><small>${g[2]}</small></button>`).join('')}</div>`;}
@@ -2486,6 +2504,7 @@ function timeCards(f){return `<div class="tmg">${[['Mañana','sun'],['Tarde','du
     L.push({t:'¿Cuánto pesas hoy?',s:'Desliza la regla, usa − y +, o escríbelo. Ajusta a tu peso real.',b:()=>rulerH('weight','kg',30,200,0.1,70,1),
       ok:()=>!(+f.weight>=30&&+f.weight<=300)?'Indica tu peso.':''});
     L.push({t:'¿Cuál es tu objetivo?',s:'Puedes elegir más de uno.',b:()=>goalCards(f),ok:err});
+    if(f.main==='bajar'||f.main==='aumentar'){const w0=+f.weight||70,dg=f.main==='bajar'?-5:3;L.push({t:'¿Cuánto te gustaría pesar?',s:f.main==='bajar'?'Una meta concreta te da algo que medir. La puedes ajustar después.':'Una meta concreta te da algo que medir. La puedes ajustar después.',b:()=>rulerH('goalW','kg',30,200,0.1,Math.max(30,Math.round(w0+dg)),1)+`<div class="gdiff" data-gd="1">${goalDiff(f)}</div>`,ok:()=>''});}
     L.push({t:o.plan==='basic'?'¿En qué te quieres enfocar?':'¿Dónde quieres notar más cambio?',s:o.plan==='basic'?'Siempre trabajas todo el cuerpo; esto cambia el énfasis. Lo puedes cambiar después en tu perfil.':'Siempre trabajas todo el cuerpo; tu coach lo tendrá en cuenta al armar tu programa.',b:()=>focusCards(f),ok:err});
     L.push({t:o.plan==='complete'?'Tu experiencia entrenando':'¿Cuál es tu nivel?',s:'',b:()=>levelCards(f)+`<p class="hint">${LV[f.level]||''}</p><button class="lblbtn" data-act="oblv" style="color:var(--red-strong)">${o.lvl?'Ocultar ▴':'¿No sabes cuál elegir? ▾'}</button>${o.lvl?`<div class="note">${Object.entries(LV).map(([k,v])=>`<b>${k}:</b> ${v}`).join('<br>')}</div>`:''}`,ok:err});
     L.push({t:'¿Qué días puedes entrenar?',s:'',b:()=>dayCircles(f)+(o.plan==='basic'?'<p class="hint">En Basic entrenas hasta 5 días de fuerza; los demás son descanso activo.</p>':''),ok:()=>(f.wd||[]).length<1?'Elige al menos un día para entrenar.':''});
@@ -2493,15 +2512,17 @@ function timeCards(f){return `<div class="tmg">${[['Mañana','sun'],['Tarde','du
     L.push({t:'¿Cómo nos conociste?',s:'Opcional. Nos ayuda a saber dónde encontrarte. Puedes saltar este paso.',b:()=>chipsH('src',['Instagram','YouTube','TikTok','WhatsApp','Un amigo o conocido','Juanjo Herrera (coach)','Una IA (ChatGPT, Claude…)','Otro'],f.src)+(f.src==='Otro'?inp('srcTxt',f.srcTxt,'¿Cuál?'):''),ok:()=>''});
     L.push({t:'Tu salud',s:'Tu coach lo revisa antes de asignarte ejercicios.',b:()=>lab('¿Tienes alguna molestia o lesión?')+chipsH('pain',['No','Sí'],f.pain)+(f.pain==='Sí'?inp('painTxt',f.painTxt,'¿Dónde y desde cuándo?'):'')+(f.sex==='Mujer'?lab('¿Estás embarazada?')+chipsH('preg',['No','Sí'],f.preg)+(f.preg==='Sí'?lab('¿Cuántas semanas llevas?')+inp('pregW',f.pregW,'Semanas (1 a 42)')+lab('¿Tu médico/a te autorizó a hacer ejercicio?')+chipsH('pregOk',['Sí','Aún no'],f.pregOk)+'<p class="hint">Adaptamos tu entrenamiento, el cardio y la alimentación.</p>':''):'')+(full?lab('Cirugías o condiciones médicas')+area('medical',f.medical,'Si no tienes, déjalo en blanco'):''),ok:err});
     if(full) L.push({t:'Tu día a día',s:'',b:()=>lab('Sueño promedio')+chipsH('sleep',['Menos de 6 h','6-7 h','7-8 h','Más de 8 h'],f.sleep)+lab('Estrés')+chipsH('stress',['Bajo','Medio','Alto'],f.stress)+lab('Comidas al día')+chipsH('meals',['2','3','4','5 o más'],f.meals)+lab('Restricciones o alergias alimentarias')+area('diet',f.diet,'Si no tienes, déjalo en blanco'),ok:err});
+    L.push({t:'Tu foto de inicio',s:'Opcional. Es privada: solo tú y tu coach la ven. Dentro de unas semanas la comparas con tu avance. Puedes saltar este paso.',b:()=>obPhotos(),ok:()=>''});
+    L.push({t:'Tu plan está casi listo',s:'Revisa que todo esté bien y crea tu plan.',b:()=>obSummary(o),ok:()=>''});
     return L;
   }
   renderOnboarding=function(){
     const o=S.ob;if(!o||o.step!=='form')return rend0.apply(this,arguments);
     const L=steps(o),n=L.length;o.fi=Math.max(0,Math.min(o.fi||0,n-1));const s=L[o.fi],last=o.fi===n-1;
-    const head=`<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Complete</h1><small>Método Complete</small></div></header>`;
+    const f=o.form||{},head=`<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Complete</h1><small>Método Complete</small></div></header>`;
     $('#app').innerHTML=head+`<button class="lblbtn" data-act="obprev" style="color:var(--gray);margin:6px 0 0">‹ Atrás</button>
      <div class="wzp"><div class="wzb"><i style="width:${Math.round((o.fi+1)/n*100)}%"></i></div><small>Paso ${o.fi+1} de ${n}</small></div>
-     <h2 class="h2 wzq">${s.t}</h2>${s.s?`<p class="wzs">${s.s}</p>`:''}${s.b()}
+     ${(o.fi===Math.ceil(n/2)&&n>6)?'<div class="wzhalf">💪 Vas por la mitad</div>':last?'<div class="wzhalf">🏁 Último paso</div>':''}<h2 class="h2 wzq">${nmT(s.t,f)}</h2>${s.s?`<p class="wzs">${s.s}</p>`:''}${s.b()}
      ${o.err?`<div class="note" style="background:var(--red-tint);color:var(--red-strong);margin-top:12px">${o.err}</div>`:''}
      <div class="wzn"><button class="btn solid" data-act="${last?'obsubmit':'obnext'}">${last?'Crear mi plan':'Siguiente'}</button></div>`;
   };
@@ -5250,3 +5271,77 @@ function trainGroups(){
   });
   return {gs,done:gs.filter(x=>x.ok).length,total:gs.length,part:gs.some(x=>x.part||x.ok)};
 }
+
+/* ---------- BIENVENIDA VISUAL tras el registro: explica por qué el plan se ajusta a ti ---------- */
+(function(){
+  const st=document.createElement('style');st.textContent=`
+.wl{animation:wlIn .35s ease}@keyframes wlIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.wldots{display:flex;gap:6px;justify-content:center;margin:10px 0 4px}.wldots i{width:7px;height:7px;border-radius:99px;background:var(--line);transition:all .2s}.wldots i.on{width:22px;background:var(--red-strong,#C0392B)}
+.wlh{font-family:'Archivo';font-stretch:125%;text-transform:uppercase;font-size:24px;line-height:1.15;margin:10px 0 6px}
+.wlp{color:var(--gray);font-size:15px;line-height:1.4;margin:0 0 14px}
+.wlk{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}.wlk span{background:var(--ink,#1C1B19);color:#fff;font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px}
+.wlpil{display:grid;grid-template-columns:1fr 1fr;gap:10px}.wlpil div{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px 10px;text-align:center;font-weight:700;font-size:14px}.wlpil em{display:block;font-style:normal;font-size:26px;margin-bottom:4px}
+.wlrow{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:12px;margin-bottom:9px}
+.wlrow .wi{flex:none;width:38px;height:38px;border-radius:12px;background:var(--red-tint,#FBEDEA);display:flex;align-items:center;justify-content:center;font-size:19px}
+.wlrow small{display:block;color:var(--gray);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.wlrow b{display:block;font-size:15px;margin:1px 0 2px}.wlrow p{margin:0;font-size:13px;color:var(--gray);line-height:1.35}
+.wlwk{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:4px 0 12px}.wlwk span{aspect-ratio:1;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gray);background:var(--card)}.wlwk span.on{background:var(--red-strong,#C0392B);border-color:var(--red-strong,#C0392B);color:#fff}
+.wlbars{display:flex;align-items:flex-end;gap:8px;height:92px;margin:8px 0 4px;padding:0 4px}.wlbars div{flex:1;border-radius:8px 8px 3px 3px;background:var(--red-strong,#C0392B);position:relative;transition:height .5s}.wlbars div.dl{background:#B9B3AA}
+.wlbl{display:flex;gap:8px;padding:0 4px;font-size:11px;color:var(--gray);text-align:center}.wlbl span{flex:1}
+.wlfig{display:flex;gap:14px;align-items:center;margin:4px 0 12px}.wlfig svg{width:64px;height:122px;flex:none}
+.wlcard{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px;margin-bottom:10px}
+.wldn{display:flex;gap:16px;align-items:center}.wldn svg.dn{width:130px;height:130px;flex:none;transform:rotate(-90deg)}.wldl{flex:1;font-size:14px}.wldl div{display:flex;align-items:center;gap:8px;margin:5px 0}.wldl i{width:12px;height:12px;border-radius:4px;flex:none}.wldl b{margin-left:auto}
+.wlnav{display:flex;gap:10px;margin-top:14px}.wlnav .btn{flex:1;padding:14px}.wlskip{display:block;margin:10px auto 0;color:var(--gray)}
+`;document.head.appendChild(st);
+  const FS={bajar:['Bajar peso','Fuerza para proteger tu músculo mientras bajas grasa. Cardio suave que suma gasto sin agotarte.','Más proteína y vegetales: te llenan y cuidan tu músculo.'],
+    complete:['Complete','Fuerza progresiva para ganar músculo y bajar grasa a la vez. Cardio de base para sostener tu capacidad.','Equilibrio: carbo, proteína y vegetales parejos.'],
+    aumentar:['Aumentar','Más volumen y subida de carga para construir músculo. Cardio suave y poco, para no gastar lo que necesitas para crecer.','Más carbo: la energía para entrenar fuerte y crecer.'],
+    salud:['Salud','Movilidad y fuerza para moverte mejor y tener energía. Cardio suave para cuidar tu corazón.','Equilibrio: comida real, sin extremos.']};
+  const PLATE={aumentar:[['Carbo',35,'#B98A3C'],['Proteína',30,'#C0392B'],['Vegetales',25,'#4E7D63'],['Grasa',10,'#5A554E']],complete:[['Carbo',30,'#B98A3C'],['Proteína',30,'#C0392B'],['Vegetales',30,'#4E7D63'],['Grasa',10,'#5A554E']],bajar:[['Proteína',35,'#C0392B'],['Vegetales',35,'#4E7D63'],['Carbo',15,'#B98A3C'],['Grasa',15,'#5A554E']]};
+  const LVT={Principiante:'máquinas y poleas, para aprender el movimiento con seguridad',Intermedio:'mancuernas, Smith y ejercicios unilaterales',Avanzado:'barra libre, dominadas y trabajo con lastre'};
+  function donut(k){let off=0;const P=PLATE[k]||PLATE.complete;
+    return `<svg class="dn" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9155" fill="none" stroke="#EDE8E0" stroke-width="6"/>${P.map(a=>{const c=`<circle cx="18" cy="18" r="15.9155" fill="none" stroke="${a[2]}" stroke-width="6" stroke-dasharray="${a[1]-.8} ${100-a[1]+.8}" stroke-dashoffset="${-off}"/>`;off+=a[1];return c;}).join('')}</svg>`;}
+  function slides(){
+    const u=S.user||{},f=u.data||{},nm=String(u.name||'').trim().split(/\s+/)[0]||'',cx=u.plan==='complete'||S.program==='complete',fem=u.sex==='Mujer';
+    const main=u.main||'complete',gk=FS[main]?main:'complete',pk=main==='bajar'?'bajar':main==='aumentar'?'aumentar':'complete',wd=(u.sched||[]).slice().sort((a,b)=>a-b),days=wd.length||u.days||3;
+    const fk=f.focus||(fem?'gluteo':'balanceado'),zn={balanceado:'all',gluteo:'lower',torso:'upper'}[fk]||'all',ks=fem?'f':'m',lv=u.level||'Principiante';
+    const ff=FS[gk],row=(ic,a,b,c)=>`<div class="wlrow"><div class="wi">${ic}</div><div><small>${a}</small><b>${b}</b><p>${c}</p></div></div>`;
+    const gW=(main==='bajar'||main==='aumentar')&&f.goalW&&f.weight?`<div class="wlk"><span>${String(f.weight).replace('.',',')} kg → ${String(f.goalW).replace('.',',')} kg</span></div>`:'';
+    const sets=cx?[2,3,3,3,2,2]:[2,3,3,3,2],nw=sets.length;
+    const S1=`<h2 class="wlh">${esc(nm?nm+', ':'')}bienvenid${fem?'a':'o'} a ERRE</h2><p class="wlp">Esto no es una rutina cualquiera. Tu plan salió de lo que nos contaste, y en 1 minuto te explicamos por qué.</p>
+      <div class="wlpil"><div><em>🧘</em>Movilidad</div><div><em>🏋️</em>Fuerza</div><div><em>🫀</em>Resistencia</div><div><em>🎯</em>Dominio corporal</div></div>
+      <p class="wlp" style="margin-top:14px">Las cuatro capacidades del <b>Método Complete</b>. Tu plan las trabaja juntas.</p>`;
+    const S2=`<h2 class="wlh">Tu plan se ajusta a ti</h2><p class="wlp">Cada dato que nos diste cambió algo de tu programa.</p>${gW}
+      ${row('🎯','Tu objetivo · '+ff[0],'Por eso entrenas así',ff[1])}
+      ${row('📅','Tus días · '+days+' por semana',days+' sesiones de fuerza',(cx?'Tu coach arma las sesiones para esos días.':'Armamos las sesiones para esos días; los demás son descanso activo.'))}
+      ${row('📈','Tu nivel · '+lv,cx?'Tu coach ajusta los ejercicios':'Ejercicios de nivel '+lv.toLowerCase(),cx?'Según tu experiencia, tus lesiones y cómo respondes.':'Hoy: '+LVT[lv]+'.')}
+      ${row('⭐','Tu énfasis · '+(FOCN[fk]||'Cuerpo balanceado'),'Se nota donde lo pediste','Siempre trabajas todo el cuerpo; el énfasis cambia dónde ponemos más volumen.')}
+      ${u.pain==='Sí'?row('🩹','Tu molestia o lesión','La tenemos en cuenta','Tu coach la revisa antes de asignarte ejercicios.'):''}`;
+    const S3=`<h2 class="wlh">Tu entrenamiento</h2><p class="wlp">${days} días a la semana, con progresión que sube de a poco.</p>
+      <div class="wlfig">${bodySvg(ks,zn)}<div><b>${FOCN[fk]||'Cuerpo balanceado'}</b><p class="wlp" style="margin:4px 0 0">Siempre todo el cuerpo, con más volumen en tu énfasis.</p></div></div>
+      <div class="wlwk">${DNL.map((n,i)=>`<span class="${wd.includes(i)?'on':''}">${n}</span>`).join('')}</div>
+      <div class="wlcard"><b>Así se adapta cada semana</b><div class="wlbars">${sets.map((s,i)=>`<div class="${i===nw-1?'dl':''}" style="height:${s*30}px"></div>`).join('')}</div><div class="wlbl">${sets.map((s,i)=>`<span>${i===nw-1?'Descarga':'Sem '+(i+1)}</span>`).join('')}</div>
+      <p class="wlp" style="margin:10px 0 0;font-size:13px">Series de tus ejercicios principales. Subes de a poco y la última semana baja para que tu cuerpo se adapte y subas más fuerte.</p></div>`;
+    const P=PLATE[pk];
+    const S4=`<h2 class="wlh">Tu alimentación</h2><p class="wlp">Comida real, por porciones, sin contar calorías. ${ff[2]}</p>
+      <div class="wlcard wldn">${donut(pk)}<div class="wldl">${P.map(a=>`<div><i style="background:${a[2]}"></i>${a[0]}<b>${a[1]}%</b></div>`).join('')}</div></div>
+      <div class="wlcard"><b>Tu plato, en porciones de tu mano</b><p class="wlp" style="margin:6px 0 0;font-size:13px">🍗 Proteína: una palma · 🍚 Carbo: un pocillo · 🥑 Grasa: una cucharada · 🥦 Vegetales: libres. Agua todo el día.</p></div>`;
+    const S5=`<h2 class="wlh">Los hábitos que lo hacen posible</h2><p class="wlp">El plan funciona cuando lo sostienes. Estos son tus apoyos.</p>
+      ${row('😴','Sueño','Duerme tus horas','Es cuando recuperas y te adaptas. También es parte del entrenamiento.')}
+      ${row('🚶','Movimiento diario','Tu meta de pasos','Caminar más suma gasto y energía sin desgastarte.')}
+      ${row('🌬️','Respiración','Mañana y antes de dormir','Regula tu sistema nervioso y te ayuda a descansar mejor.')}
+      ${row('📊','Constancia','La tendencia, no un día perfecto','Una o dos conductas a la vez: proteína en tus comidas y agua durante el día.')}`;
+    return [S1,S2,S3,S4,S5];
+  }
+  function wlRender(){
+    const o=S.ob,L=slides();o.ws=Math.max(0,Math.min(o.ws||0,L.length-1));const last=o.ws===L.length-1;
+    const head=`<header class="top">${logo('#C0392B')}<div class="who"><h1 style="font-size:16px">ERRE Complete</h1><small>Método Complete</small></div></header>`;
+    $('#app').innerHTML=head+`<div class="wldots">${L.map((x,i)=>`<i class="${i===o.ws?'on':''}"></i>`).join('')}</div><div class="wl" key="${o.ws}">${L[o.ws]}</div>
+      <div class="wlnav">${o.ws>0?'<button class="btn" data-act="wlprev">Atrás</button>':''}<button class="btn solid" data-act="${last?'wldone':'wlnext'}">${last?'Continuar':'Siguiente'}</button></div>
+      ${last?'':'<button class="lblbtn wlskip" data-act="wldone">Saltar</button>'}`;
+  }
+  const os=obSubmit;obSubmit=function(){const r=os.apply(this,arguments);try{if(r!==false&&S.ob&&S.ob.step==='done'){S.ob.step='welcome';S.ob.ws=0;}}catch(e){}return r;};
+  const r1=render;render=function(){try{if(S.ob&&S.ob.step==='welcome'&&S.user){wlRender();return;}}catch(e){console.warn(e);}return r1.apply(this,arguments);};
+  document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="wlnext"],[data-act="wlprev"],[data-act="wldone"]');if(!t||!S.ob)return;e.stopPropagation();e.preventDefault();
+    const a=t.dataset.act;if(a==='wlnext')S.ob.ws=(S.ob.ws||0)+1;else if(a==='wlprev')S.ob.ws=Math.max(0,(S.ob.ws||0)-1);else{S.ob.step='done';}
+    save();render();window.scrollTo(0,0);},true);
+})();
