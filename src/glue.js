@@ -148,6 +148,7 @@ function realDB(){
     async delLesson(id){ok(await sb.from('lessons').delete().eq('id',id));},
     async accessAll(){return ok(await sb.from('client_access').select('client_id,email,tier,period,paid_until,payment_failed_at,cancel_at_period_end,source').not('client_id','is',null));},
     async clientInfo(){const r=await sb.rpc('coach_client_info');if(r.error)throw r.error;const o={};(r.data||[]).forEach(x=>o[x.id]=x);return o;},
+    async claimInvite(code){const r=await sb.rpc('claim_invite',{p_code:code});if(r.error)throw r.error;return r.data;},
     async clients(uid){return ok(await sb.from('profiles').select('id,full_name,plan,goal,level,status,birth_date,member_since,created_at').eq('role','client').order('full_name'));}
   };
 }
@@ -312,6 +313,12 @@ function plansPublic(){
   </details>`;
 }
 function loginView(){
+  const _inv=(()=>{try{return !!localStorage.getItem('erre_inv');}catch(e){return false;}})();
+  if(_inv&&!LG._invSet){LG._invSet=true;if(!LG.mode)LG.mode='signup';}
+  const h=loginView0();
+  return _inv&&LG.mode!=='forgot'&&LG.mode!=='code'?h.replace('</header>','</header><div class="invbn"><span>Invitación de Juanjo</span><b>Tu plan Complete se diseña a mano para ti</b><small>Crea tu cuenta y llena tu registro. Tu coach prepara tu rutina.</small></div>'):h;
+}
+function loginView0(){
   const e=LG.err?`<div class="note" style="border-color:var(--red);color:var(--red-strong)">${LG.err}</div>`:'',ok=LG.ok?`<div class="note" style="border-color:#2E9D6B;color:#1F7A52">${LG.ok}</div>`:'';
   const bar=typeof pwaBar==='function'?pwaBar():'';
   if(LG.mode==='forgot')return authHead()+bar+`<button class="lblbtn" data-act="lgback" style="color:var(--gray);margin:10px 0 0">‹ Volver</button><h2 class="h2" style="margin-top:6px">¿Olvidaste tu contraseña?</h2><p class="lead">Escribe tu correo y te enviamos un código para entrar.</p>${e}${ok}
@@ -320,7 +327,7 @@ function loginView(){
   if(LG.mode==='code')return authHead()+bar+`<button class="lblbtn" data-act="lgback" style="color:var(--gray);margin:10px 0 0">‹ Volver</button><h2 class="h2" style="margin-top:6px">Escribe tu código</h2><p class="lead">Te lo enviamos a <b>${esc(LG.email)}</b>. Revisa también spam. Cuando entres, cambia tu contraseña en Perfil → Mi cuenta.</p>${e}${ok}
     <input class="fld" id="lgCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Código" style="font-size:22px;letter-spacing:.2em;text-align:center">
     <button class="btn solid" data-act="lgverify" style="width:100%;padding:14px;margin-top:14px"${LG.busy?' disabled':''}>${LG.busy?'Entrando…':'Entrar'}</button>`;
-  if(LG.mode==='signup')return authHead()+bar+`<button class="lblbtn" data-act="lgback" style="color:var(--gray);margin:10px 0 0">‹ Volver</button><h2 class="h2" style="margin-top:6px">Crear cuenta</h2><p class="lead">Empiezas con el plan Basic. Tu coach activa tu cuenta y te asigna tu plan.</p>${e}${ok}
+  if(LG.mode==='signup')return authHead()+bar+`<button class="lblbtn" data-act="lgback" style="color:var(--gray);margin:10px 0 0">‹ Volver</button><h2 class="h2" style="margin-top:6px">Crear cuenta</h2><p class="lead">${(()=>{try{return localStorage.getItem('erre_inv')?'Tu coach activa tu plan Complete apenas termines.':'Empiezas con el plan Basic. Tu coach activa tu cuenta y te asigna tu plan.';}catch(e){return '';}})()}</p>${e}${ok}
     <label class="pfl">Nombre</label><input class="fld" id="lgName" autocomplete="name" placeholder="Tu nombre" value="${esc(LG.name||'')}">
     <label class="pfl" style="margin-top:10px">Correo</label><input class="fld" id="lgEmail" type="email" inputmode="email" autocomplete="username" placeholder="tu@correo.com" value="${LG.email}">
     <label class="pfl" style="margin-top:10px">Contraseña (mínimo 6)</label><div class="pweye"><input class="fld" id="lgPass" type="password" autocomplete="new-password" placeholder="Crea una contraseña"><button type="button" class="eyeb" data-act="lgeye" aria-label="Ver contraseña">👁</button></div>
@@ -887,9 +894,13 @@ document.addEventListener('click',async e=>{
       CP.d=await DB.clientDetail(CP.cid);CP.err='';coachRender();toast('Llamada agendada. El cliente fue avisado ✓');}catch(x){CP.err='No se pudo agendar la llamada.';coachRender();}}
 },true);
 
+/* --- link de invitación Complete: ?plan=complete&c=CODIGO --- */
+try{const mm=location.search.match(/[?&]c=([A-Za-z0-9]{4,20})/);if(mm&&/[?&]plan=complete/.test(location.search)){localStorage.setItem('erre_inv',mm[1].toUpperCase());LGINV=true;history.replaceState(history.state,'',location.pathname+location.hash);}}catch(e){}
+var LGINV=LGINV||false;
 async function enter(ses){
   ME=ses.user;const uid=ME.id;
-  PROFILE=await DB.profile(uid);try{await pushRefresh();}catch(e){console.warn('push',e);}
+  PROFILE=await DB.profile(uid);
+  try{const inv=localStorage.getItem('erre_inv');if(inv&&PROFILE&&PROFILE.role==='client'){if(PROFILE.status==='pending'){const r=await DB.claimInvite(inv);if(r==='ok'){PROFILE=await DB.profile(uid);if(!S.user)S.cxInvite=true;}}localStorage.removeItem('erre_inv');}}catch(e){console.warn('invite',e);}try{await pushRefresh();}catch(e){console.warn('push',e);}
   if(store.get('erre_uid')!==uid){resetLocal();store.set('erre_uid',uid);}
   if(PROFILE.role==='coach'){await coachHome();return;}
   if(PROFILE.status==='archived'){$('#app').innerHTML=authHead()+`<h2 class="h2" style="margin-top:14px">Tu cuenta está en pausa</h2><p class="lead">Tu acceso está pausado por ahora. Escríbele a tu coach para retomarlo.</p><a class="btn solid" style="display:block;text-align:center;padding:14px;margin-top:14px;text-decoration:none" href="https://wa.me/${COACH_WA}?text=${encodeURIComponent('Hola Juanjo, quiero retomar mi cuenta en la app ('+(ME.email||'')+').')}" target="_blank" rel="noopener">Escribirle a mi coach</a><button class="lblbtn" data-act="pendout" style="display:block;margin:12px auto 0;color:var(--gray)">Cerrar sesión</button>`;return;}
@@ -5415,7 +5426,8 @@ function trainGroups(){
   const r1=render;render=function(){const x=r1.apply(this,arguments);try{wlCheck();}catch(e){console.warn(e);}return x;};
   function wlCheck(){
     const act=typeof PROFILE==='undefined'||!PROFILE||PROFILE.status!=='pending';
-    const ok=S&&S.user&&!S.ob&&!S.profile&&S.role!=='coach'&&(typeof PROFILE==='undefined'||!PROFILE||PROFILE.role!=='coach')&&(S.user.wlPend||(S.user.pvWas&&act));
+    const nor=S&&S.user&&S.program==='complete'&&!(typeof DAYS!=='undefined'&&DAYS&&DAYS.length);
+    const ok=!nor&&S&&S.user&&!S.ob&&!S.profile&&S.role!=='coach'&&(typeof PROFILE==='undefined'||!PROFILE||PROFILE.role!=='coach')&&(S.user.wlPend||(S.user.pvWas&&act));
     if(ok&&!document.getElementById('wlov')){S.wl=S.wl||{ws:0};wlOpen();}
   }
   function wlOpen(){const d=document.createElement('div');d.id='wlov';d.innerHTML='<div class="wlbg"></div><div class="wlsh"><div id="wlin"></div></div>';document.body.appendChild(d);wlRender();}
@@ -5456,3 +5468,20 @@ function trainGroups(){
   setInterval(pvPoll,15000);['visibilitychange','focus'].forEach(ev=>window.addEventListener(ev,()=>setTimeout(pvPoll,600)));
 })();
 
+
+/* --- Complete: esperando que el coach cargue la rutina --- */
+(function(){
+  const st=document.createElement('style');st.textContent=`.invbn{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:#1a1a1a;color:#fff}.invbn span{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#E0A99F}.invbn b{display:block;font-size:16px;margin:4px 0 2px}.invbn small{color:#cfcac2;font-size:12.5px}
+  .cxw{margin:14px 0;padding:20px 16px;border-radius:18px;background:var(--card,#fff);border:1px solid var(--line,#E7E2DA);text-align:center}.cxw .cxk{width:58px;height:58px;border-radius:50%;margin:0 auto 12px;background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px}.cxw h3{margin:0 0 6px;font-size:20px}.cxw p{margin:0 0 14px;color:#5A554E;font-size:14px;line-height:1.45}
+  .cxs{text-align:left;display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line,#E7E2DA);padding-top:14px}.cxs div{display:flex;gap:10px;align-items:center;font-size:14px}.cxs i{font-style:normal;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;background:#EFEAE2;color:#5A554E;flex:none}.cxs .ok i{background:#2E9D6B;color:#fff}.cxs .now i{background:#C0392B;color:#fff}.cxs .off{color:#9a948a}`;
+  document.head.appendChild(st);
+  const waiting=()=>{try{return typeof S!=='undefined'&&S.role==='client'&&S.user&&S.program==='complete'&&!(typeof DAYS!=='undefined'&&DAYS&&DAYS.length)&&!(typeof PROFILE!=='undefined'&&PROFILE&&PROFILE.status==='pending');}catch(e){return false;}};
+  window.cxWaitCard=function(){
+    const nm=String((S.user&&S.user.name)||'').trim().split(/\s+/)[0]||'';
+    const msg=encodeURIComponent('Hola Juanjo, ya llené mi registro en la app.');
+    return `<div class="cxw"><div class="cxk">🏋</div><h3>${nm?esc(nm)+', t':'T'}u coach está preparando tu rutina</h3><p>Juanjo revisa tu registro y diseña tu plan a tu medida: ejercicios, series y cargas. Te avisamos apenas esté listo.</p>
+    <div class="cxs"><div class="ok"><i>✓</i>Registro enviado</div><div class="now"><i>2</i>Tu coach diseña tu plan</div><div class="off"><i>3</i>Tu primer entrenamiento</div></div>
+    <a class="btn" style="display:block;text-align:center;padding:13px;margin-top:16px;text-decoration:none;color:inherit" href="https://wa.me/${COACH_WA}?text=${msg}" target="_blank" rel="noopener">Escribirle a Juanjo</a></div>`;};
+  const tv=trainView;trainView=function(){return waiting()?window.cxWaitCard():tv.apply(this,arguments);};
+  const hv=homeView;homeView=function(){const h=hv.apply(this,arguments);return waiting()?window.cxWaitCard()+h:h;};
+})();
