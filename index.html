@@ -2382,11 +2382,20 @@ function pendingView(){
   const nm=esc((PROFILE.full_name||'').split(' ')[0]||'');
   const msg=encodeURIComponent('Hola Juanjo, acabo de crear mi cuenta en la app ('+(ME.email||'')+'). ¿Me activas?');
   return authHead()+`<h2 class="h2" style="margin-top:14px">¡Listo${nm?', '+nm:''}! Tu registro quedó completo</h2><p class="lead">Ya llenaste todo. Solo falta que tu coach active tu cuenta y te asigne tu plan; en cuanto lo haga, entras a tu programa.</p>
-    <div class="note">Elige el plan que quieres y avísale a tu coach para que lo active más rápido.</div>${plansPublic()}
+    ${plansPublic('pend')}
     <a class="btn solid" style="display:block;text-align:center;padding:14px;margin-top:14px;text-decoration:none" href="https://wa.me/${COACH_WA}?text=${msg}" target="_blank" rel="noopener">Avisarle a mi coach</a>
     <button class="btn" data-act="pendchk" style="width:100%;padding:14px;margin-top:10px">Ya me activaron: revisar</button>
     <button class="lblbtn" data-act="pendout" style="display:block;margin:12px auto 0;color:var(--gray)">Cerrar sesión</button>`;
 }
+(function(){const st=document.createElement('style');st.textContent=`
+.plhero{border:2px solid var(--red-strong,var(--red,#C0392B));border-radius:20px;padding:20px 16px 16px;margin:14px 0 12px;background:linear-gradient(180deg,var(--red-tint,#FBEDEA),var(--card,#fff));text-align:center}
+.plbadge{display:inline-block;background:var(--red-strong,var(--red,#C0392B));color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 12px;border-radius:99px}
+.plhn{display:block;font-family:'Archivo';font-stretch:125%;font-size:22px;text-transform:uppercase;margin-top:10px}
+.plpr{font-size:42px;font-weight:800;line-height:1.1;margin-top:4px}.plpr em{font-size:16px;font-weight:500;color:var(--gray);font-style:normal;margin-left:2px}
+.plfree{font-weight:700;color:var(--red-strong,var(--red,#C0392B));margin-top:2px}.plsub{color:var(--gray);font-size:14px;margin:8px 0 4px}
+.plhero ul{text-align:left;margin:10px 4px 6px;padding-left:20px;font-size:14px}.plhero li{margin:4px 0}
+details.plmore{margin:6px 0 4px}details.plmore>summary{cursor:pointer;color:var(--gray);font-size:14px;text-align:center;padding:10px;list-style:none;text-decoration:underline}
+details.plmore>summary::-webkit-details-marker{display:none}`;document.head.appendChild(st);})();
 function consentView(){
   return authHead()+`<h2 class="h2" style="margin-top:14px">Tu información, protegida</h2>
    <p class="lead">ERRE Complete guarda tus datos de entrenamiento, tu peso, tus fotos de progreso y tus mensajes de forma privada. Solo tú y tu coach pueden verlos.</p>
@@ -3690,12 +3699,12 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 /* ---------- aviso de versión nueva ---------- */
-const APP_VER='24nov-0839';
+const APP_VER='24nov-1454';
 let NEWV=false,_pcT=0,_away=0,_hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')_hidAt=Date.now();else if(_hidAt){_away=Date.now()-_hidAt;_hidAt=0;setTimeout(()=>{_away=0;},8000);}});
 async function pwaHard(){try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.replace(location.pathname+'?u='+Date.now());}
 try{if(/[?&]u=\d+/.test(location.search))history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
 function pwaBanner(){if(document.getElementById('pwaUp'))return;const d=document.createElement('div');d.id='pwaUp';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:calc(100% - 24px);max-width:456px;z-index:90;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--btn,var(--ink,#1C1B19));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)';d.innerHTML='<span style="flex:1;font-size:13px;line-height:1.35"><b style="display:block;font-size:14px">Hay una versión nueva</b>Actualiza para ver lo último.</span><button id="pwaUpB" style="border:0;border-radius:99px;padding:9px 14px;font-weight:700;background:var(--red,#C0392B);color:#fff;cursor:pointer">Actualizar</button><button id="pwaUpX" aria-label="Luego" style="border:0;background:transparent;color:#bbb;padding:6px;cursor:pointer">✕</button>';document.body.appendChild(d);document.getElementById('pwaUpB').onclick=()=>pwaHard();document.getElementById('pwaUpX').onclick=()=>d.remove();}
-async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='24nov-0839'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
+async function pwaCheck(){try{if(!navigator.onLine||location.protocol==='file:')return;const r=await fetch('index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text(),m=t.match(/const APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER&&m[1]!=='24nov-1454'){if((performance.now()<25000||_away>=20000)&&!sessionStorage.getItem('erre_rl_'+m[1])){sessionStorage.setItem('erre_rl_'+m[1],'1');pwaHard();return;}NEWV=true;pwaBanner();}else if(m){NEWV=false;}}catch(e){}}
 const pwaCheckT=()=>{const n=Date.now();if(n-_pcT<5000)return;_pcT=n;pwaCheck();};
 setTimeout(pwaCheckT,1500);setInterval(pwaCheck,45*1000);['visibilitychange','focus','pageshow','online'].forEach(ev=>window.addEventListener(ev,()=>{if(document.visibilityState==='visible')pwaCheckT();}));
 setInterval(()=>{try{if(!NEWV)return;document.querySelectorAll('.top .who small, .top small').forEach(s=>{if(s.querySelector('.newv'))return;const b=document.createElement('button');b.className='newv';b.setAttribute('data-act','pwaup');b.textContent='● Nueva versión';s.appendChild(b);});}catch(e){}},800);
@@ -4230,7 +4239,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 
 /* Planes en la pantalla de entrada (sin cuenta): mismo diseño que dentro de la app */
 var PLPUB='complete';
-plansPublic=function(){
+var plansPublic1=function(){
   const P=PLD[PLPUB],seg=['basic','complete','elite'].map(k=>`<button class="${PLPUB===k?'on ':''}${k==='complete'?'pc':''}" data-act="plpub" data-v="${k}">${PLD[k].n}</button>`).join('');
   const rows=P.r.map(x=>`<div class="plr${x[4]?'':' no'}"><div class="ic" style="background:${x[0]}">${x[1]}</div><span>${x[2]}${x[3]?`<small>${x[3]}</small>`:''}</span><i class="ok">${x[4]?'✓':'—'}</i></div>`).join('');
   const msg=`Hola Juanjo, quiero información del plan ${P.n} de ERRE.`;
@@ -4238,6 +4247,12 @@ plansPublic=function(){
    <div class="pls">${seg}</div>
    <div class="plh ${P.cls}"><small>${P.tag}</small><b>${P.precio}<em>${P.per}</em></b><p>${P.txt}</p></div>
    ${rows}${PLAN_EXTRA[PLPUB]?planBtns(PLPUB,msg):`<a class="plcta" href="${planLink(PLPUB,msg)}" target="_blank" rel="noopener">Quiero ${P.n}</a>`}<div class="clk-sub">${PLPUB==='basic'?'Pagas seguro en Whop con el mismo correo de tu cuenta.':'Se abre un WhatsApp directo con tu coach.'}</div></div>`;
+};
+plansPublic=function(mode){
+  if(mode!=='pend')return plansPublic1();
+  const pb=PLAN_INFO.basic,msg='Hola Juanjo, quiero información del plan Basic de ERRE.';PLPUB='complete';
+  return `<div class="plhero"><span class="plbadge">Precio fundador</span><b class="plhn">ERRE Basic</b><div class="plpr">$24 USD<em>/mes</em></div><div class="plfree">7 días gratis para empezar</div><p class="plsub">${pb.t}</p><ul>${pb.b.map(x=>`<li>${x}</li>`).join('')}</ul>${planBtns('basic',msg)}</div>
+    <details class="plmore"><summary>¿Quieres coaching 1:1? Ver Complete</summary>${plansPublic1()}</details>`;
 };
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-act="plpub"]');if(!t)return;e.stopPropagation();PLPUB=t.getAttribute('data-v');try{const y=window.scrollY;if(typeof ME!=='undefined'&&ME&&PROFILE&&PROFILE.status==='pending')$('#app').innerHTML=pendingView();else showLogin();window.scrollTo(0,y);}catch(x){}},true);
 
@@ -4446,13 +4461,50 @@ details.acc>summary small{display:block;font-family:inherit;font-stretch:100%;fo
 .accbody{padding:0 14px 14px;border-top:1px solid var(--line)}
 #acct details.acc{border:1px solid var(--line);border-radius:14px;margin-bottom:10px;background:var(--card)}`;document.head.appendChild(st);})();
 
+/* --- registro visual: siluetas, días, nivel, horario --- */
+function bodySvg(k,zone){
+  const U=(zone==='all'||zone==='upper')?' on':'',L=(zone==='all'||zone==='lower')?' on':'',H=zone==='all'?' on':'';
+  const f=k==='f',tor=f?'M27 36Q27 30 36 30L64 30Q73 30 73 36L65 80L35 80Z':'M22 36Q22 30 32 30L68 30Q78 30 78 36L70 98L30 98Z';
+  const hip=f?'M35 80L65 80L73 110L27 110Z':'';
+  const arm=f?'M23 38Q16 40 16 48L17 90Q18 96 23 96Q28 96 28 90L29 44Z':'M16 38Q10 40 10 48L12 88Q13 94 19 94Q24 94 24 88L24 44Z';
+  const y0=f?110:98,leg=`M${f?28:30} ${y0}L49 ${y0}L47 178Q47 184 41 184Q35 184 35 178Z`;
+  return `<svg viewBox="0 0 100 190" aria-hidden="true"><circle class="bz${H}" cx="50" cy="16" r="11"/><path class="bz${U}" d="${tor}"/>${hip?`<path class="bz${L}" d="${hip}"/>`:''}<path class="bz${U}" d="${arm}"/><path class="bz${U}" d="${arm}" transform="translate(100 0) scale(-1 1)"/><path class="bz${L}" d="${leg}"/><path class="bz${L}" d="${leg}" transform="translate(100 0) scale(-1 1)"/></svg>`;
+}
+const SUNI={sun:'<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="7"/><g stroke-width="2.5" stroke-linecap="round"><path d="M20 4v5M20 31v5M4 20h5M31 20h5M8.7 8.7l3.5 3.5M27.8 27.8l3.5 3.5M31.3 8.7l-3.5 3.5M12.2 27.8l-3.5 3.5"/></g></svg>',
+ dusk:'<svg viewBox="0 0 40 40"><path d="M9 28a11 11 0 0 1 22 0Z"/><g stroke-width="2.5" stroke-linecap="round"><path d="M4 33h32M20 8v5M7 15l3.5 3.5M33 15l-3.5 3.5"/></g></svg>',
+ moon:'<svg viewBox="0 0 40 40"><path d="M26 6a14 14 0 1 0 8 25A12 12 0 0 1 26 6Z"/></svg>'};
+const obVisCss=document.createElement('style');obVisCss.textContent=`
+.bz{fill:#D3CEC6;transition:fill .2s}.bz.on{fill:var(--red-strong,var(--red,#C0392B))}
+.sxg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.sxc,.fzc,.lvc,.tmc{border:2px solid var(--line);border-radius:18px;background:var(--card);display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px 12px;font-family:inherit;color:inherit;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
+.sxc:active,.fzc:active,.lvc:active,.tmc:active{transform:scale(.97)}
+.sxc.on,.fzc.on,.lvc.on,.tmc.on{border-color:var(--red-strong,var(--red,#C0392B));background:var(--red-tint,#FBEDEA)}
+.sxc svg{width:78px;height:148px}.sxc b,.fzc b,.lvc b,.tmc b{font-size:15px;font-weight:700}
+.fzg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}.fzc{padding:12px 4px 10px}.fzc svg{width:56px;height:106px}.fzc b{font-size:13px;text-align:center;line-height:1.15}
+.fzc small{color:var(--gray);font-size:11px;text-align:center;line-height:1.2}
+.dgr{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px}
+.ddc{aspect-ratio:1;border-radius:50%;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:13px;font-family:inherit;color:inherit;padding:0;cursor:pointer;transition:all .15s}
+.ddc.on{background:var(--red-strong,var(--red,#C0392B));border-color:var(--red-strong,var(--red,#C0392B));color:#fff;transform:scale(1.06)}
+.dsum{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:14px}.dsum b{font-size:17px}
+.lvg,.tmg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.lvc svg{width:44px;height:36px}.lvc svg rect{fill:#D3CEC6}.lvc svg rect.on{fill:var(--red-strong,var(--red,#C0392B))}
+.tmc svg{width:38px;height:38px;fill:#B9B3AA;stroke:#B9B3AA}.tmc.on svg{fill:var(--red-strong,var(--red,#C0392B));stroke:var(--red-strong,var(--red,#C0392B))}
+`;document.head.appendChild(obVisCss);
+function sexCards(f){return `<div class="sxg">${[['Mujer','f'],['Hombre','m']].map(a=>`<button class="sxc${f.sex===a[0]?' on':''}" data-act="obset" data-f="sex" data-v="${a[0]}">${bodySvg(a[1],'all')}<b>${a[0]}</b></button>`).join('')}</div>`;}
+function focusCards(f){const k=f.sex==='Mujer'?'f':'m',fk=f.focus||(f.sex==='Mujer'?'gluteo':'balanceado');
+  return `<div class="fzg">${[['balanceado','Cuerpo completo','Sin énfasis','all'],['gluteo','Glúteo y pierna','Más pierna','lower'],['torso','Torso','Espalda, pecho, brazos','upper']].map(g=>`<button class="fzc${fk===g[0]?' on':''}" data-act="obset" data-f="focus" data-v="${g[0]}">${bodySvg(k,g[3])}<b>${g[1]}</b><small>${g[2]}</small></button>`).join('')}</div>`;}
+function dayCircles(f){const w=f.wd||[],ds=w.slice().sort((a,b)=>a-b);
+  return `<div class="dgr">${DNL.map((n,i)=>`<button class="ddc${w.includes(i)?' on':''}" data-act="obwd" data-v="${i}">${n}</button>`).join('')}</div><div class="dsum">${ds.length?`<b>${ds.length} día${ds.length>1?'s':''}</b> a la semana · ${ds.map(i=>DNL[i]).join(' · ')}`:'Toca los días en que puedes entrenar.'}</div>`;}
+function levelCards(f){return `<div class="lvg">${[['Principiante',1],['Intermedio',2],['Avanzado',3]].map(a=>`<button class="lvc${f.level===a[0]?' on':''}" data-act="obset" data-f="level" data-v="${a[0]}"><svg viewBox="0 0 44 36">${[1,2,3].map(i=>`<rect class="${i<=a[1]?'on':''}" x="${(i-1)*15}" y="${36-i*11}" width="11" height="${i*11}" rx="3"/>`).join('')}</svg><b>${a[0]}</b></button>`).join('')}</div>`;}
+function timeCards(f){return `<div class="tmg">${[['Mañana','sun'],['Tarde','dusk'],['Noche','moon']].map(a=>`<button class="tmc${f.time===a[0]?' on':''}" data-act="obset" data-f="time" data-v="${a[0]}">${SUNI[a[1]]}<b>${a[0]}</b></button>`).join('')}</div>`;}
+
 /* --- registro por pasos --- */
 (function(){
   const rend0=renderOnboarding;
   function steps(o){
     const f=o.form||{},full=o.type==='full',L=[];
     const err=()=>'';
-    L.push({t:'¿Cómo te llamas?',s:'Empecemos por lo básico.',b:()=>lab('Tu nombre')+inp('name',f.name,'Nombre')+lab('Sexo')+chipsH('sex',['Mujer','Hombre'],f.sex),
+    L.push({t:'¿Cómo te llamas?',s:'Empecemos por lo básico.',b:()=>lab('Tu nombre')+inp('name',f.name,'Nombre')+lab('Sexo')+sexCards(f),
       ok:()=>!(f.name||'').trim()?'Escribe tu nombre.':!f.sex?'Elige tu sexo.':''});
     L.push({t:'¿Cuándo naciste?',s:'Con tu edad ajustamos mejor tu plan.',b:()=>{const v=(f.yy&&f.mm&&f.dd)?`${String(f.yy).padStart(4,'0')}-${String(f.mm).padStart(2,'0')}-${String(f.dd).padStart(2,'0')}`:'';const mx=new Date().getFullYear()-10;return `<input class="fld wzdate" type="date" data-obdate="1" min="1920-01-01" max="${mx}-12-31" value="${v}">`;},
       ok:()=>{const dd=+f.dd,mm=+f.mm,yy=+f.yy;if(!(dd&&mm&&yy))return 'Elige tu fecha de nacimiento.';const t=new Date(yy,mm-1,dd);if(t.getDate()!==dd||t.getMonth()!==mm-1||t.getFullYear()!==yy||yy<1920||yy>new Date().getFullYear()-10)return 'Revisa tu fecha de nacimiento.';return '';}});
@@ -4461,10 +4513,10 @@ details.acc>summary small{display:block;font-family:inherit;font-stretch:100%;fo
     L.push({t:'¿Cuánto pesas hoy?',s:'Desliza la regla, usa − y +, o escríbelo. Ajusta a tu peso real.',b:()=>rulerH('weight','kg',30,200,0.1,70,1),
       ok:()=>!(+f.weight>=30&&+f.weight<=300)?'Indica tu peso.':''});
     L.push({t:'¿Cuál es tu objetivo?',s:'Puedes elegir más de uno.',b:()=>{const gl=f.goals||[];return GOALS.map(g=>`<button class="pcard sm${gl.includes(g[0])?' on':''}" data-act="obgoal" data-v="${g[0]}"><b>${g[1]}</b><small>${g[2]}</small></button>`).join('')+(gl.length>1?lab('¿Cuál es tu prioridad principal?')+chipsH('main',gl.map(x=>[x,GN[x]]),f.main):'');},ok:err});
-    if(o.plan==='basic') L.push({t:'¿En qué te quieres enfocar?',s:'Siempre trabajas todo el cuerpo; esto cambia el énfasis. Lo puedes cambiar después en tu perfil.',b:()=>{const fk=f.focus||(f.sex==='Mujer'?'gluteo':'balanceado');return [['balanceado','Cuerpo balanceado','Fuerza completa, sin énfasis'],['gluteo','Glúteo y pierna','Más volumen de pierna y glúteo'],['torso','Torso','Más espalda, pecho, hombros y brazos']].map(g=>`<button class="pcard sm${fk===g[0]?' on':''}" data-act="obset" data-f="focus" data-v="${g[0]}"><b>${g[1]}</b><small>${g[2]}</small></button>`).join('');},ok:err});
-    L.push({t:o.plan==='complete'?'Tu experiencia entrenando':'¿Cuál es tu nivel?',s:'',b:()=>chipsH('level',['Principiante','Intermedio','Avanzado'],f.level)+`<p class="hint">${LV[f.level]||''}</p><button class="lblbtn" data-act="oblv" style="color:var(--red-strong)">${o.lvl?'Ocultar ▴':'¿No sabes cuál elegir? ▾'}</button>${o.lvl?`<div class="note">${Object.entries(LV).map(([k,v])=>`<b>${k}:</b> ${v}`).join('<br>')}</div>`:''}`,ok:err});
-    L.push({t:'¿Qué días puedes entrenar?',s:'',b:()=>`<div class="chips">${DNL.map((n,i)=>`<button class="chip${(f.wd||[]).includes(i)?' on':''}" data-act="obwd" data-v="${i}">${n}</button>`).join('')}</div>`+(o.plan==='basic'?'<p class="hint">En Basic entrenas hasta 5 días de fuerza; los demás son descanso activo.</p>':''),ok:()=>(f.wd||[]).length<1?'Elige al menos un día para entrenar.':''});
-    if(full) L.push({t:'Tu horario',s:'',b:()=>lab('Tiempo por sesión')+chipsH('session',[['45','45 min'],['60','60 min'],['90','90 min']],f.session)+lab('¿Cuándo prefieres entrenar?')+chipsH('time',['Mañana','Tarde','Noche'],f.time),ok:err});
+    L.push({t:o.plan==='basic'?'¿En qué te quieres enfocar?':'¿Dónde quieres notar más cambio?',s:o.plan==='basic'?'Siempre trabajas todo el cuerpo; esto cambia el énfasis. Lo puedes cambiar después en tu perfil.':'Siempre trabajas todo el cuerpo; tu coach lo tendrá en cuenta al armar tu programa.',b:()=>focusCards(f),ok:err});
+    L.push({t:o.plan==='complete'?'Tu experiencia entrenando':'¿Cuál es tu nivel?',s:'',b:()=>levelCards(f)+`<p class="hint">${LV[f.level]||''}</p><button class="lblbtn" data-act="oblv" style="color:var(--red-strong)">${o.lvl?'Ocultar ▴':'¿No sabes cuál elegir? ▾'}</button>${o.lvl?`<div class="note">${Object.entries(LV).map(([k,v])=>`<b>${k}:</b> ${v}`).join('<br>')}</div>`:''}`,ok:err});
+    L.push({t:'¿Qué días puedes entrenar?',s:'',b:()=>dayCircles(f)+(o.plan==='basic'?'<p class="hint">En Basic entrenas hasta 5 días de fuerza; los demás son descanso activo.</p>':''),ok:()=>(f.wd||[]).length<1?'Elige al menos un día para entrenar.':''});
+    if(full) L.push({t:'Tu horario',s:'',b:()=>lab('Tiempo por sesión')+chipsH('session',[['45','45 min'],['60','60 min'],['90','90 min']],f.session)+lab('¿Cuándo prefieres entrenar?')+timeCards(f),ok:err});
     L.push({t:'¿Cómo nos conociste?',s:'Opcional. Nos ayuda a saber dónde encontrarte. Puedes saltar este paso.',b:()=>chipsH('src',['Instagram','YouTube','TikTok','WhatsApp','Un amigo o conocido','Juanjo Herrera (coach)','Una IA (ChatGPT, Claude…)','Otro'],f.src)+(f.src==='Otro'?inp('srcTxt',f.srcTxt,'¿Cuál?'):''),ok:()=>''});
     L.push({t:'Tu salud',s:'Tu coach lo revisa antes de asignarte ejercicios.',b:()=>lab('¿Tienes alguna molestia o lesión?')+chipsH('pain',['No','Sí'],f.pain)+(f.pain==='Sí'?inp('painTxt',f.painTxt,'¿Dónde y desde cuándo?'):'')+(f.sex==='Mujer'?lab('¿Estás embarazada?')+chipsH('preg',['No','Sí'],f.preg)+(f.preg==='Sí'?lab('¿Cuántas semanas llevas?')+inp('pregW',f.pregW,'Semanas (1 a 42)')+lab('¿Tu médico/a te autorizó a hacer ejercicio?')+chipsH('pregOk',['Sí','Aún no'],f.pregOk)+'<p class="hint">Adaptamos tu entrenamiento, el cardio y la alimentación.</p>':''):'')+(full?lab('Cirugías o condiciones médicas')+area('medical',f.medical,'Si no tienes, déjalo en blanco'):''),ok:err});
     if(full) L.push({t:'Tu día a día',s:'',b:()=>lab('Sueño promedio')+chipsH('sleep',['Menos de 6 h','6-7 h','7-8 h','Más de 8 h'],f.sleep)+lab('Estrés')+chipsH('stress',['Bajo','Medio','Alto'],f.stress)+lab('Comidas al día')+chipsH('meals',['2','3','4','5 o más'],f.meals)+lab('Restricciones o alergias alimentarias')+area('diet',f.diet,'Si no tienes, déjalo en blanco'),ok:err});
