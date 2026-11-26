@@ -115,7 +115,7 @@ function realDB(){
         sb.from('chat_messages').select('id,sender_id,kind,body,created_at').eq('client_id',cid).order('created_at').then(ok),
         sb.from('calls').select('starts_at').eq('client_id',cid).gte('starts_at',new Date(Date.now()-36e5).toISOString()).order('starts_at').limit(1).then(ok),
         sb.from('progress_photos').select('month,angle,taken_at').eq('client_id',cid).then(ok)]);
-      let extra=[];try{extra=ok(await sb.from('client_data').select('key,value').eq('client_id',cid).in('key',['wnotes','sleep','excom','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','prefs','ctasks','freeOk','prio','alimplan','refw']));}catch(e){}
+      let extra=[];try{extra=ok(await sb.from('client_data').select('key,value').eq('client_id',cid).in('key',['wnotes','sleep','excom','coachcom','logs','swaps','extras','cardio','cardioX','warmFA','fb','user','tasks','prefs','ctasks','freeOk','prio','alimplan','refw']));}catch(e){}
       const xv=k=>((extra.find(r=>r.key===k)||{}).value)||{};
       const data={};extra.forEach(r=>data[r.key]=r.value);
       return {profile,weights,steps,fb,chat,data,photos,call:calls[0]||null,wnotes:xv('wnotes'),sleep:xv('sleep'),excom:xv('excom')};
@@ -158,7 +158,7 @@ if(DB.updateClient){const _uc=DB.updateClient.bind(DB);DB.updateClient=async(cid
 if(DB.saveRoutine){const _sr=DB.saveRoutine.bind(DB);DB.saveRoutine=async(cid,n,d,uid)=>{const r=await _sr(cid,n,d,uid);try{if(uid&&cid!==uid){pushPlan(cid);DB.logAct(cid,'prog','Actualizó el programa «'+(n||'Programa')+'» ('+(d||[]).length+' workouts)');}}catch(e){}return r;};}
 let ME=null,PROFILE=null,LG={step:'email',email:'',err:'',busy:false},CHATT=null;
 const APPURL=()=>{try{const u=location.origin+location.pathname.replace(/[^/]*$/,'');return /^https?:/.test(u)?u:undefined;}catch(e){return undefined;}};
-const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom','ctasks','circuits','lowE','prs','grips','cirColors','freeOn','freeOk','tz','prio','alimplan'];
+const SLICES=['logs','swaps','extras','cardio','cardioX','tasks','warmFA','fb','sum','user','msSeen','lvSeen','wnotes','sleep','fidSeen','excom','coachcom','ctasks','circuits','lowE','prs','grips','cirColors','freeOn','freeOk','tz','prio','alimplan'];
 let HYD=false;/* true solo cuando ya se descargó lo guardado en la nube */
 const LAST={weights:{},steps:{},slices:{},prefs:'',fb:{},profile:'',chatKey:{},photos:{},upl:{}};
 let needs=false,syncing=false,pend=false,tmr=null;
@@ -422,11 +422,33 @@ const cpDisGet=()=>{try{return JSON.parse(localStorage.getItem(CPDIS_K)||'{}');}
 const cpDisSet=o=>{try{localStorage.setItem(CPDIS_K,JSON.stringify(o));}catch(e){}};
 const cpIni=n=>(n||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
 const cpRel=d=>{const n=diffD(today(),d);return n<=0?'Hoy':n===1?'Ayer':'Hace '+n+' d';};
+/* Progresión: ¿qué ejercicios de un cliente llevan varias sesiones con el mismo peso y con margen? (solo con sus registros) */
+function progSlots(logs){
+  const by={},tdy=today(),from=addD(tdy,-28);
+  Object.keys(logs||{}).forEach(k=>{const [date,did,bk,ii]=k.split('|');if(!date||bk==='warm'||bk==='calm'||bk==='cardio')return;
+    const sets=(logs[k]||[]).filter(x=>x&&x.done&&+x.kg>0&&+x.reps>0);if(!sets.length)return;
+    const kg=Math.max(...sets.map(x=>+x.kg)),rp=sets.map(x=>+x.rpe).filter(Boolean),sl=did+'|'+bk+'|'+ii;
+    (by[sl]=by[sl]||[]).push({date,kg,rpe:rp.length?rp.reduce((a,b)=>a+b,0)/rp.length:null,reps:Math.min(...sets.map(x=>+x.reps))});});
+  const out=[];
+  Object.keys(by).forEach(sl=>{const h=by[sl].sort((a,b)=>a.date<b.date?1:-1);if(h.length<3||h[0].date<from)return;
+    const L=h.slice(0,3);if(!L.every(x=>x.kg===L[0].kg))return;
+    if(L[0].rpe!=null&&L[0].rpe>7.5)return;
+    out.push({slot:sl,kg:L[0].kg,n:(()=>{let n=0;for(const x of h){if(x.kg===L[0].kg)n++;else break;}return n;})(),rpe:L[0].rpe,last:L[0].date,date:L[0].date});});
+  return out;
+}
+function cpProgHTML(d){
+  return cpWith(()=>{
+    const rows=[];progSlots(S.logs).forEach(x=>{const [did,bk,ii]=x.slot.split('|'),dy=DAYS.find(q=>q.id===did);if(!dy)return;
+      const id=withDate(x.date,()=>{const b=dy.blocks.find(q=>q.k===bk);if(!b||!b.items)return null;const it=itemsOf(dy,b)[+ii];return it?curEx(dy,bk,+ii,it):null;});
+      if(id&&!rows.some(r=>r.id===id))rows.push(Object.assign({id},x));});
+    if(!rows.length)return '';
+    return `<section class="sec"><div class="sec-h"><b>Listos para subir peso</b><em>${rows.length}</em></div><div class="note" style="margin-bottom:8px">Mismo peso en las últimas 3+ sesiones y esfuerzo moderado. Sugerencia: sube la carga ~2,5–5 % (o la mínima disponible) y confirma la técnica.</div>${rows.map(r=>`<div class="pfrow"><span><b>${esc(exName(r.id))}</b><small>${r.kg} kg · ${r.n} sesiones seguidas${r.rpe!=null?' · RPE prom. '+(Math.round(r.rpe*10)/10):''}</small></span><button class="lblbtn" data-act="exhist" data-id="${r.id}">Histórico</button></div>`).join('')}</section>`;});
+}
 function cpHomeData(){
   const C=(CP.clients||[]).filter(c=>c.status!=='archived'),H=CP.home||{fb:[],hi:[],cd:[],ca:[]},nm={};C.forEach(c=>nm[c.id]=c);const feed=[],al=[],tdy=today(),M=CP.meta||{rt:{},last:{}};
   (H.fb||[]).forEach(f=>{if(!nm[f.client_id])return;const g=GRN[f.grp]||f.grp;feed.push({d:f.log_date,cid:f.client_id,k:f.feel==='molestia'?'mol':'ses',t:'completó '+g,rpe:f.intensity,feel:R_FEELR[f.feel]||f.feel,q:[f.note,f.skip_reason?'No hizo todo: '+f.skip_reason:''].filter(Boolean).join(' · '),dur:f.duration_min});});
   (H.hi||[]).forEach(h=>{if(!nm[h.client_id])return;feed.push({d:bogota(h.created_at).date,cid:h.client_id,k:'hito',t:(h.body||'').replace(/^Hito logrado:\s*/,'desbloqueó: ')});});
-  const prefs={},calls={};(H.cd||[]).forEach(r=>{if(r.key==='prefs')prefs[r.client_id]=r.value||{};else if(r.key==='excom'){const since=addD(tdy,-14);Object.keys(r.value||{}).forEach(id=>(r.value[id]||[]).forEach(c=>{if(nm[r.client_id]&&c.d>=since)feed.push({d:c.d,cid:r.client_id,k:'com',t:'comentó en '+((E[id]||{}).n||id),q:c.t});}));}});
+  const prefs={},calls={},lgs={};(H.cd||[]).forEach(r=>{if(r.key==='logs')lgs[r.client_id]=r.value||{};if(r.key==='prefs')prefs[r.client_id]=r.value||{};else if(r.key==='excom'){const since=addD(tdy,-14);Object.keys(r.value||{}).forEach(id=>(r.value[id]||[]).forEach(c=>{if(nm[r.client_id]&&c.d>=since)feed.push({d:c.d,cid:r.client_id,k:'com',t:'comentó en '+((E[id]||{}).n||id),q:c.t});}));}});
   (H.ca||[]).forEach(c=>calls[c.client_id]=c.starts_at);
   feed.sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:0);
   C.forEach(c=>{
@@ -439,6 +461,7 @@ function cpHomeData(){
     }
     (H.fb||[]).filter(f=>f.client_id===c.id&&f.feel==='molestia'&&f.log_date>=addD(tdy,-7)).slice(0,1).forEach(f=>al.push({s:0,k:c.id+'|mol|'+f.log_date,cid:c.id,t:'Reportó una molestia',q:fdate(f.log_date)+(f.note?' · “'+f.note+'”':'')+' Revisa y ajusta la rutina.'}));
     if(coachP&&has&&pf.start){const P=PERIOD[planOf(c)],raw=Math.floor(diffD(monOf(tdy),pf.start)/7)+1;if(raw>=1){const wk=((raw-1)%P.weeks)+1;if(wk===P.weeks)al.push({s:1,k:c.id+'|meso|'+monOf(tdy),cid:c.id,t:'Última semana del mesociclo',q:'Programa el siguiente antes del domingo.'});}}
+    try{const pg=progSlots(lgs[c.id]||{});if(pg.length){const sig=pg.map(x=>x.last).sort().pop();al.push({s:1,k:c.id+'|prog|'+sig,cid:c.id,t:'Listo para subir peso en '+pg.length+' ejercicio'+(pg.length>1?'s':''),q:'Lleva varias sesiones con el mismo peso y con margen. Abre su ficha para ver cuáles.'});}}catch(x){}
     if(coachP&&!calls[c.id])al.push({s:2,k:c.id+'|call',cid:c.id,t:'Sin llamada 1:1 agendada',q:'Agéndala en su ficha, pestaña Hoy.'});
   });
   al.sort((a,b)=>a.s-b.s);
@@ -547,7 +570,7 @@ function coachRender(keepInput){
 <!--M1--><section class="sec"><div class="sec-h"><b>Peso</b><em>${last!=null?last.toFixed(1)+' kg':'Sin registros'}</em></div>${sparkOf(w7)}${delta!=null?`<div class="note">${delta>0?'+':delta<0?'−':''}${Math.abs(delta).toFixed(1)} kg en sus últimos registros</div>`:''}</section>
        ${(()=>{const wn=d.wnotes||{},ks=Object.keys(wn).sort().reverse().slice(0,10);return ks.length?`<section class="sec"><div class="sec-h"><b>Notas de pesaje</b><em>${ks.length}</em></div>${ks.map(k=>{const n=wn[k]||{};return `<div class="pfrow"><span><b>${fdate(k)}${n.w?' · '+(+n.w).toFixed(1)+' kg':''}</b><small>${(n.tags||[]).map(esc).join(' · ')}${n.note?'<br>“'+esc(n.note)+'”':''}</small></span></div>`;}).join('')}</section>`:'';})()}
        ${(()=>{const sl=d.sleep||{},ks=Object.keys(sl).sort().reverse().slice(0,10);if(!ks.length)return '';const hs=ks.map(k=>sl[k].h).filter(h=>h!=null),av=hs.length?hs.reduce((a,b)=>a+b,0)/hs.length:null;return `<section class="sec"><div class="sec-h"><b>Sueño</b><em>${av!=null?fmtHM(av)+' prom.':'—'}</em></div>${ks.map(k=>{const n=sl[k]||{};return `<div class="pfrow"><span><b>${n.h!=null||n.q?'<i class="sdot" style="background:'+(n.q?SLC[n.q]:slHC(n.h))+'"></i>':''}${fdate(k)}${n.h!=null?' · '+fmtHM(n.h):''}</b><small>${[n.q?'Calidad '+n.q:'',n.e?'Energía '+n.e:'',...(n.tags||[])].filter(Boolean).map(esc).join(' · ')}${n.note?'<br>“'+esc(n.note)+'”':''}</small></span></div>`;}).join('')}</section>`;})()}
-<!--M2-->${(()=>{const ec=d.excom||{},rows=[];Object.keys(ec).forEach(id=>(ec[id]||[]).forEach(c=>rows.push({id,d:c.d,t:c.t})));rows.sort((a,b)=>a.d<b.d?1:-1);return rows.length?`<section class="sec"><div class="sec-h"><b>Comentarios en ejercicios</b><em>${rows.length}</em></div>${rows.slice(0,12).map(c=>`<div class="pfrow"><span><b>${esc((E[c.id]||{}).n||c.id)} · ${fdate(c.d)}</b><small>“${esc(c.t)}”</small></span></div>`).join('')}</section>`:'';})()}
+<!--M2-->${(()=>{try{return cpProgHTML(d);}catch(e){return '';}})()}${(()=>{const ec=d.excom||{},rows=[];Object.keys(ec).forEach(id=>(ec[id]||[]).forEach(c=>rows.push({id,d:c.d,t:c.t})));rows.sort((a,b)=>a.d<b.d?1:-1);return rows.length?`<section class="sec"><div class="sec-h"><b>Comentarios en ejercicios</b><em>${rows.length}</em></div>${rows.slice(0,12).map(c=>`<div class="pfrow"><span><b>${esc((E[c.id]||{}).n||c.id)} · ${fdate(c.d)}</b><small>“${esc(c.t)}”</small></span></div>`).join('')}</section>`:'';})()}
 <!--M3--><section class="sec"><div class="sec-h"><b>Pasos</b><em>${avg!=null?avg.toLocaleString('es-CO'):'—'}</em></div><div class="note">Promedio de los últimos ${S7.length||0} días registrados. Meta: ${(p.step_goal||0).toLocaleString('es-CO')}.</div></section>
        <section class="sec"><div class="sec-h"><b>Sesiones recientes</b></div>${d.fb.length?d.fb.map(f=>`<div class="pfrow"><span><b>${GRN[f.grp]||f.grp} · ${fdate(f.log_date)}</b><small>${f.intensity?INT(f.intensity)+' ('+f.intensity+'/10)':'Sin intensidad'}${f.feel?' · '+(R_FEELR[f.feel]||f.feel):''}${f.feel==='molestia'?' ⚠':''}${f.duration_min?' · '+f.duration_min+' min':''}${f.skip_reason?'<br>No hizo todo: '+esc(f.skip_reason):''}${f.note?'<br>“'+esc(f.note)+'”':''}</small></span>${f.intensity?`<span class="rb" style="background:${RC[f.intensity-1]}">${f.intensity}</span>`:''}</div>`).join(''):'<div class="pfrow"><small>Aún no hay sesiones registradas.</small></div>'}</section>`;
       const P1=all.split('<!--M1-->'),P2=P1[1].split('<!--M2-->'),P3=P2[1].split('<!--M3-->');
@@ -802,7 +825,7 @@ function cpDayHTML(date){
           rows.push(`<span class="cpsc${l.done?' d':''}"><b>${q+1}</b>${l.reps!=null?l.reps:'—'}${l.kg!=null?' × '+l.kg+' kg':''}${l.rpe?' · RPE '+l.rpe:''}${l.drop?' · drop':''}${l.done?' ✓':''}</span>`);}
         const dn=L.filter(l=>l&&l.done).length,stt=pr.sets>0&&dn>=pr.sets?'ok':dn>0?'pa':'pe';btt++;if(stt==='ok')bdn++;
         const cm=(ec[id]||[]).filter(c=>c.d===date);
-        return `<div class="cpde"><div class="cpdn"><span class="cpth">${typeof thumb==='function'?thumb(id,'sm'):''}</span><span><b>${esc(e.n||id)}</b>${sw?'<small class="cpsw">Sustituido</small>':''}<small>${pr.sets} series × ${esc(String(pr.reps))}${pr.rest&&pr.rest!=='—'?' · descanso '+esc(String(pr.rest)):''}</small></span><span class="cpdt ${stt}">${stt==='ok'?'Completado':stt==='pa'?'Parcial':'Pendiente'}</span></div>
+        return `<div class="cpde"><div class="cpdn"><span class="cpth">${typeof thumb==='function'?thumb(id,'sm'):''}</span><span><b>${esc(e.n||id)}</b>${sw?'<small class="cpsw">Sustituido</small>':''}<small>${pr.sets} series × ${esc(String(pr.reps))}${pr.rest&&pr.rest!=='—'?' · descanso '+esc(String(pr.rest)):''}</small></span><span class="cpdt ${stt}">${stt==='ok'?'Completado':stt==='pa'?'Parcial':'Pendiente'}</span><button class="exmenu" data-act="exmenu" data-ex="${id}" aria-label="Histórico y comentarios">⋮${(ec[id]||[]).length||((((d.data||{}).coachcom)||{})[id]||[]).length?'<i class="exdot"></i>':''}</button></div>
           <div class="cpsrs">${rows.join('')}</div>${cm.map(c=>`<div class="cpcm"><b>💬 Comentario del cliente</b>${esc(c.t)}</div>`).join('')}</div>`;}).join('');
       return items?{k:b.k,g:GK[b.k]||'fu',d:bdn,t:btt,h:`<div class="cpdb">${SUBT[b.k]||b.t||b.k}</div>${items}`}:null;
     }).filter(Boolean);
@@ -1588,8 +1611,10 @@ const exName=id=>(E[id]||{}).n||'Ejercicio';
 const HX={id:null,m:null,mode:'kg'};
 const shHead=(t,s)=>`<div class="exhh"><span><b>${esc(t)}</b>${s?`<small>${esc(s)}</small>`:''}</span><button class="exx" data-act="exclose" aria-label="Cerrar">✕</button></div>`;
 function exMenuClose(){const e=document.getElementById('expop');if(e)e.remove();}
+const exCoach=()=>{try{return PROFILE&&PROFILE.role==='coach'&&CP&&CP.d&&CP.cid;}catch(e){return false;}};
+function exW(fn){if(!exCoach())return fn();return cpWith(()=>{const o=S.excom;S.excom=(CP.d.data||{}).excom||CP.d.excom||{};try{return fn();}finally{S.excom=o;}});}
 function exMenuOpen(id,btn){
-  exMenuClose();const n=((S.excom||{})[id]||[]).length;
+  exMenuClose();let n=0;exW(()=>{n=((S.excom||{})[id]||[]).length;});
   const p=document.createElement('div');p.id='expop';p.className='expop';
   p.innerHTML=`<button class="epi" data-act="exhist" data-id="${id}"><span class="epic">${ICON('hist',18)}</span>Histórico</button><button class="epi" data-act="excom" data-id="${id}"><span class="epic">${ICON('cmt',18)}</span>Comentarios${n?'<em class="exdot"></em>':''}</button>`;
   document.body.appendChild(p);
@@ -1638,18 +1663,26 @@ function exHistOpen(id,keep){
     <h3 class="exh3">Registros de ${MESES[+HX.m.slice(5)-1].toLowerCase()}</h3>${rows}</div>`;
 }
 function exComOpen(id){
-  const L=((S.excom||{})[id]||[]);
-  sheet(`<div class="exhs">`+shHead('Comentarios',exName(id))+(L.length?L.map((c,i)=>({c,i})).reverse().map(({c,i})=>`<div class="excm"><small>${fdl(c.d)}</small><p>${esc(c.t)}</p><button class="lblbtn" data-act="excdel" data-id="${id}" data-i="${i}" style="color:var(--gray)">Borrar</button></div>`).join(''):`<div class="note" style="margin:12px 0">Aún no hay comentarios. Escribe lo que quieras contarle a tu coach sobre este ejercicio: una molestia, una sensación, un ajuste.</div>`)+`<textarea id="exct" class="fld" rows="3" placeholder="Escribe un comentario para tu coach…"></textarea><button class="btn solid" data-act="excsave" data-id="${id}" style="width:100%;margin-top:8px;padding:12px">Guardar comentario</button></div>`);
+  const L=((S.excom||{})[id]||[]),co=exCoach(),CC=co?(((CP.d.data||{}).coachcom||{})[id]||[]):((S.coachcom||{})[id]||[]);
+  const ccBlock=CC.length?CC.map((c,i)=>({c,i})).reverse().map(({c,i})=>`<div class="excm" style="border-left:3px solid #C0392B"><small>${fdl(c.d)} · ${co?'Tu comentario':'Tu coach'}</small><p>${esc(c.t)}</p>${co?`<button class="lblbtn" data-act="exccdel" data-id="${id}" data-i="${i}" style="color:var(--gray)">Borrar</button>`:''}</div>`).join(''):'';
+  const cl=L.length?L.map((c,i)=>({c,i})).reverse().map(({c,i})=>`<div class="excm"><small>${fdl(c.d)}${co?' · Del cliente':''}</small><p>${esc(c.t)}</p>${co?'':`<button class="lblbtn" data-act="excdel" data-id="${id}" data-i="${i}" style="color:var(--gray)">Borrar</button>`}</div>`).join(''):`<div class="note" style="margin:12px 0">${co?'El cliente aún no ha comentado este ejercicio.':'Aún no hay comentarios. Escribe lo que quieras contarle a tu coach sobre este ejercicio: una molestia, una sensación, un ajuste.'}</div>`;
+  const form=co?`<textarea id="excct" class="fld" rows="3" placeholder="Escríbele a ${esc((S.user&&S.user.name)||'tu cliente')} sobre este ejercicio…"></textarea><button class="btn solid" data-act="excc" data-id="${id}" style="width:100%;margin-top:8px;padding:12px">Enviar comentario al cliente</button>`:`<textarea id="exct" class="fld" rows="3" placeholder="Escribe un comentario para tu coach…"></textarea><button class="btn solid" data-act="excsave" data-id="${id}" style="width:100%;margin-top:8px;padding:12px">Guardar comentario</button>`;
+  sheet(`<div class="exhs">`+shHead('Comentarios',exName(id))+ccBlock+cl+form+`</div>`);
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest&&e.target.closest('[data-act="exmenu"],[data-act="exhist"],[data-act="excom"],[data-act="exclose"],[data-act="exhm"],[data-act="exhmode"],[data-act="excsave"],[data-act="excdel"]');if(!t)return;
+  const t=e.target.closest&&e.target.closest('[data-act="exmenu"],[data-act="exhist"],[data-act="excom"],[data-act="exclose"],[data-act="exhm"],[data-act="exhmode"],[data-act="excsave"],[data-act="excdel"],[data-act="excc"],[data-act="exccdel"]');if(!t)return;
   e.stopPropagation();e.preventDefault();const a=t.dataset.act,id=t.dataset.id||t.dataset.ex;
   if(a==='exmenu'){if(document.getElementById('expop')){exMenuClose();}else exMenuOpen(id,t);}
-  else if(a==='exhist'){exMenuClose();exHistOpen(id);}
-  else if(a==='excom'){exMenuClose();exComOpen(id);}
+  else if(a==='exhist'){exMenuClose();exW(()=>exHistOpen(id));}
+  else if(a==='excom'){exMenuClose();exW(()=>exComOpen(id));}
   else if(a==='exclose'){closeSheet();exHistClose();}
-  else if(a==='exhm'){HX.m=t.dataset.m;exHistOpen(HX.id,true);}
-  else if(a==='exhmode'){HX.mode=t.dataset.v;exHistOpen(HX.id,true);}
+  else if(a==='exhm'){HX.m=t.dataset.m;exW(()=>exHistOpen(HX.id,true));}
+  else if(a==='exhmode'){HX.mode=t.dataset.v;exW(()=>exHistOpen(HX.id,true));}
+  else if(a==='excc'){const v=((document.getElementById('excct')||{}).value||'').trim();if(!v){toast('Escribe algo primero');return;}
+    const cc=Object.assign({},((CP.d.data||{}).coachcom)||{});(cc[id]=(cc[id]||[]).slice()).push({d:today(),t:v});
+    DB.upsert('client_data',[{client_id:CP.cid,key:'coachcom',value:cc,updated_at:new Date().toISOString()}],'client_id,key').then(()=>{CP.d.data=CP.d.data||{};CP.d.data.coachcom=cc;exW(()=>exComOpen(id));try{pushTo(CP.cid,'Tu coach te dejó un comentario','En '+exName(id));}catch(x){}toast('Comentario enviado ✓');if(CP.dayOpen)document.querySelector('#cpdv .cpdc').innerHTML=cpDayHTML(CP.dayOpen);}).catch(()=>toast('No se pudo guardar'));}
+  else if(a==='exccdel'){const cc=Object.assign({},((CP.d.data||{}).coachcom)||{}),L=(cc[id]||[]).slice();L.splice(+t.dataset.i,1);if(L.length)cc[id]=L;else delete cc[id];
+    DB.upsert('client_data',[{client_id:CP.cid,key:'coachcom',value:cc,updated_at:new Date().toISOString()}],'client_id,key').then(()=>{CP.d.data.coachcom=cc;exW(()=>exComOpen(id));}).catch(()=>toast('No se pudo borrar'));}
   else if(a==='excsave'){const v=((document.getElementById('exct')||{}).value||'').trim();if(!v){toast('Escribe algo primero');return;}
     S.excom=S.excom||{};(S.excom[id]=S.excom[id]||[]).push({d:today(),t:v});save();exComOpen(id);toast('Comentario guardado ✓');render();}
   else if(a==='excdel'){const L=(S.excom||{})[id]||[];L.splice(+t.dataset.i,1);if(!L.length)delete S.excom[id];save();exComOpen(id);render();}
