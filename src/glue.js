@@ -258,11 +258,23 @@ async function pullChat(){
     if(S.chat.length!==before||S.chatOpen){ if(!S.profile&&!(S.ob&&S.user==null))render(); }
   }catch(e){console.warn('chat',e);}
 }
+const HYD_EMPTY=v=>v==null||v===''||(Array.isArray(v)&&!v.length)||(typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length);
+/* Al bajar lo guardado en la nube NUNCA se borra lo que ya hay en este dispositivo: se unen por clave (la nube manda si hay choque). Lo unido se vuelve a subir. */
+function hydMerge(k,loc,rem){
+  if(k==='user'||k==='msSeen'||k==='lvSeen'||k==='fidSeen'||k==='tz')return HYD_EMPTY(rem)&&!HYD_EMPTY(loc)?loc:rem;
+  if(HYD_EMPTY(rem))return HYD_EMPTY(loc)?rem:loc;
+  if(HYD_EMPTY(loc))return rem;
+  try{
+    if(Array.isArray(rem)&&Array.isArray(loc)&&k==='circuits'){const ids=new Set(rem.map(x=>x&&x.id));return rem.concat(loc.filter(x=>x&&!ids.has(x.id)));}
+    if(!Array.isArray(rem)&&!Array.isArray(loc)&&typeof rem==='object'&&typeof loc==='object')return Object.assign({},loc,rem);
+  }catch(e){}
+  return rem;
+}
 async function applyRemote(d){
   const uid=ME.id;
   S.weights={};d.weights.forEach(r=>S.weights[r.log_date]=+r.kg);LAST.weights=Object.assign({},S.weights);
   S.steps={};d.steps.forEach(r=>S.steps[r.log_date]=r.steps);LAST.steps=Object.assign({},S.steps);
-  d.blobs.forEach(b=>{if(SLICES.includes(b.key)){S[b.key]=b.value;LAST.slices[b.key]=JSON.stringify(b.value);}
+  d.blobs.forEach(b=>{if(SLICES.includes(b.key)){S[b.key]=hydMerge(b.key,S[b.key],b.value);LAST.slices[b.key]=JSON.stringify(b.value);}
     else if(b.key==='prefs'){Object.assign(S,b.value);LAST.prefs=JSON.stringify({rem:S.rem,stepGoal:S.stepGoal,chatRead:S.chatRead,start:S.start,remmsg:S.remmsg});}});
   cxSync();
   mergeChat(d.chat);
@@ -912,15 +924,15 @@ async function enter(ses){
 }
 async function startClient(){
   await loadClientRoutine(ME.id);const d=await DB.load(ME.id);await applyRemote(d);
-  try{const rb=(d.blobs||[]).find(b=>b.key==='reset');if(rb&&String(rb.value)!==localStorage.getItem('erre_reset_seen')){
+  try{const rb=(d.blobs||[]).find(b=>b.key==='reset');if(rb&&localStorage.getItem('erre_reset_seen')===null){localStorage.setItem('erre_reset_seen',String(rb.value));}else if(rb&&String(rb.value)!==localStorage.getItem('erre_reset_seen')){
     const df=typeof defaultsS==='function'?defaultsS():{};SLICES.forEach(k=>{if(k==='user')return;S[k]=(k==='msSeen'||k==='lvSeen'||k==='fidSeen')?undefined:(df[k]!==undefined?df[k]:{});LAST.slices[k]=null;});
     S.weights={};S.steps={};LAST.weights={};LAST.steps={};LAST.fb={};S.msSeen=null;S.lvSeen=undefined;localStorage.setItem('erre_reset_seen',String(rb.value));}}catch(e){console.warn('reset',e);}
-  try{const ru=(d.blobs||[]).find(b=>b.key==='reset_user');if(ru&&String(ru.value)!==localStorage.getItem('erre_resetu_seen')){S.user=null;S.ob=null;S.assigned=null;LAST.slices.user=null;localStorage.setItem('erre_resetu_seen',String(ru.value));}}catch(e){console.warn('reset_user',e);}
+  try{const ru=(d.blobs||[]).find(b=>b.key==='reset_user');if(ru&&localStorage.getItem('erre_resetu_seen')===null){localStorage.setItem('erre_resetu_seen',String(ru.value));}else if(ru&&String(ru.value)!==localStorage.getItem('erre_resetu_seen')){S.user=null;S.ob=null;S.assigned=null;LAST.slices.user=null;localStorage.setItem('erre_resetu_seen',String(ru.value));}}catch(e){console.warn('reset_user',e);}
   S.mods=PROFILE.modules||[];S.program=planOf(PROFILE);S.elite=PROFILE.plan==='elite';S.role='client';
   if(S.user){S.user.plan=S.program;}
   else{S.ob={step:'type',plan:S.program,form:{name:PROFILE.full_name||'',goals:['complete'],main:'complete',days:4,level:'Principiante',pain:'No',wd:[0,1,3,4],session:'60'}};}
   S.sel=today();store.set('erre_state',S);
-  render();
+  render();setTimeout(()=>{try{SYNC.dirty();}catch(e){}},1200);
   clearInterval(CHATT);CHATT=setInterval(()=>{if(document.visibilityState==='visible'){pullChat();if(needs)SYNC.dirty();}},30000);
   try{if(DB.onChat)DB.onChat(()=>{if(document.visibilityState==='visible')pullChat();});}catch(e){}
 }
@@ -1779,7 +1791,7 @@ function cirRefresh(){const c=CB.c;document.querySelectorAll('.cirtv').forEach(b
 function cirBuilder(){
   const c=CB.c,tot=cirTotal(c);
   const rows=c.ex.map((e,i)=>`<div class="cirex"><div class="cirexh"><span class="cirn">${i+1}</span><input class="fld" data-cb="n" data-i="${i}" placeholder="Nombre del ejercicio" value="${esc(e.n||'')}"><span class="cirbt"><button class="rtb" data-act="cbmv" data-i="${i}" data-d="-1" aria-label="Subir">↑</button><button class="rtb" data-act="cbmv" data-i="${i}" data-d="1" aria-label="Bajar">↓</button><button class="rtb" data-act="cbdel" data-i="${i}" aria-label="Quitar">✕</button></span></div>
-     <div class="cirexb"><div><small class="cw">TRABAJO</small>${cirTm('w',i,e.w||0)}</div><div><small class="cr">DESCANSO</small>${cirTm('r',i,e.r||0)}</div></div></div>`).join('');
+     <div class="cirexb"><div><small class="cbkw">TRABAJO</small>${cirTm('w',i,e.w||0)}</div><div><small class="cbkr">DESCANSO</small>${cirTm('r',i,e.r||0)}</div></div></div>`).join('');
   sheet(`<h3>${CB.ctx==='coach'?'Circuito del coach':'Circuito'}</h3>
    <label class="pfl">Nombre</label><input class="fld" data-cb="name" placeholder="Ej. Zona 2 con remo y ski" value="${esc(c.name||'')}">
    <div class="cirgrid"><div><small>INICIO</small>${cirTm('prep',0,c.prep||0)}</div>

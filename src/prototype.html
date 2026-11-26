@@ -1816,10 +1816,17 @@ function breathTick(){
 function breathClose(){if(BR&&BR.t)clearInterval(BR.t);BR=null;const e=document.getElementById('bre');if(e){e.classList.remove('on');e.innerHTML='';}}
 
 /* ---------- temporizador de descanso ---------- */
-let tInt=null,tLeft=0;
-function startTimer(s){stopTimer();tLeft=s;$('#timer').classList.add('on');tick();tInt=setInterval(()=>{tLeft--;tick();if(tLeft<=0){stopTimer();try{navigator.vibrate&&navigator.vibrate(200)}catch(e){}}},1000);}
-function tick(){const m=Math.floor(tLeft/60),s=tLeft%60;$('#tt').textContent=m+':'+String(s).padStart(2,'0');}
-function stopTimer(){clearInterval(tInt);tInt=null;$('#timer').classList.remove('on');}
+/* Se calcula con la HORA DE FIN (no restando cada segundo): si la app queda en segundo plano o el celular la duerme, al volver el tiempo sigue exacto. Se guarda para sobrevivir a una recarga. */
+let tInt=null,tLeft=0,tEnd=0;
+function restBeep(){try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const c=new A(),o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.value=.12;o.connect(g);g.connect(c.destination);o.start();setTimeout(()=>{try{o.stop();c.close();}catch(e){}},350);}catch(e){}}
+function startTimer(s){stopTimer();tEnd=Date.now()+s*1000;try{localStorage.setItem('erre_rest_end',String(tEnd));}catch(e){}$('#timer').classList.add('on');tick();tInt=setInterval(tick,250);}
+function tick(){if(!tEnd)return;const ms=tEnd-Date.now();tLeft=Math.max(0,Math.ceil(ms/1000));const m=Math.floor(tLeft/60),s=tLeft%60;$('#tt').textContent=m+':'+String(s).padStart(2,'0');
+  if(ms<=0){const late=-ms>4000;stopTimer();try{navigator.vibrate&&navigator.vibrate(200)}catch(e){}if(late){try{toast('Descanso listo ✓');}catch(e){}}else restBeep();}}
+function stopTimer(){clearInterval(tInt);tInt=null;tEnd=0;try{localStorage.removeItem('erre_rest_end');}catch(e){}$('#timer').classList.remove('on');}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&tEnd)tick();});
+window.addEventListener('pageshow',()=>{if(tEnd)tick();});
+window.addEventListener('focus',()=>{if(tEnd)tick();});
+try{const e0=+localStorage.getItem('erre_rest_end');if(e0>Date.now()){tEnd=e0;$('#timer').classList.add('on');tick();tInt=setInterval(tick,250);}else if(e0)localStorage.removeItem('erre_rest_end');}catch(e){}
 $('#skip').addEventListener('click',stopTimer);
 
 render();
