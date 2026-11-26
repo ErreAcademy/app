@@ -5695,3 +5695,17 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   let LAST=0;const ensure=()=>{const n=Object.keys(E).length;if(n!==LAST){LAST=n;homeTags();}};window.homeTags=ensure;ensure();addEventListener('load',()=>{ensure();setTimeout(ensure,1500);setTimeout(ensure,5000);});
   if(typeof rtLoadCx==='function'){const l0=rtLoadCx;rtLoadCx=async function(){const r=await l0.apply(this,arguments);LAST=0;ensure();return r;};}
 })();
+
+/* --- Aviso al terminar el descanso entre series (notificación) ---
+   Al salir de la app con el descanso corriendo, se le pide al servidor que avise justo cuando termina; al volver se cancela. */
+(function(){
+  let armed=false;
+  const can=()=>{try{return ME&&PROFILE&&PROFILE.role!=='coach'&&typeof Notification!=='undefined'&&Notification.permission==='granted'&&DB&&DB.push;}catch(e){return false;}};
+  document.addEventListener('visibilitychange',()=>{
+    try{
+      if(document.visibilityState==='hidden'){
+        if(typeof tEnd!=='undefined'&&tEnd>Date.now()+3000&&can()){armed=true;DB.push({action:'rest',delay:Math.ceil((tEnd-Date.now())/1000)});}
+      }else if(armed){armed=false;if(can())DB.push({action:'rest_cancel'});}
+    }catch(e){}
+  });
+})();
